@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<script src="./support.js"></script>
+</head>
+<body>
+<x-dc>
+<helmet data-dc-atomics>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+body{margin:0;background:#08080a;font-family:Geist,ui-sans-serif,system-ui,sans-serif;-webkit-font-smoothing:antialiased}
+a{color:#fafafa;text-decoration:none}a:hover{color:#a3a3a3}
+*{box-sizing:border-box}
+::-webkit-scrollbar{width:0;height:0}
+@keyframes hpulse{0%,100%{opacity:1}50%{opacity:.3}}
+@keyframes hsheet{from{transform:translateY(100%)}to{transform:translateY(0)}}
+@keyframes hbounce{0%,80%,100%{transform:translateY(0);opacity:.4}40%{transform:translateY(-3px);opacity:1}}
+</style>
+</helmet>
+
+<template id="__bundler_thumbnail"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 200"><rect width="200" height="200" fill="#0a0a0a"/><rect x="58" y="58" width="84" height="84" rx="20" fill="#fafafa"/><text x="100" y="130" text-anchor="middle" font-family="Geist,sans-serif" font-size="62" font-weight="700" fill="#18181b">h</text></svg></template>
+
+<div style="height:100vh;display:flex;background:#0a0a0a;overflow:hidden">
+
+  <!-- ============ DESKTOP SIDEBAR ============ -->
+  <sc-if value="{{ isWide }}" hint-placeholder-val="{{ false }}">
+  <div style="width:328px;flex:none;height:100%;display:flex;flex-direction:column;border-right:1px solid rgba(255,255,255,.07);background:#0c0c0e">
+    <div style="flex:none;padding:18px 18px 14px;display:flex;flex-direction:column;gap:11px;border-bottom:1px solid rgba(255,255,255,.07)">
+      <div style="display:flex;align-items:center;gap:9px">
+        <div style="width:20px;height:20px;border-radius:5px;background:#fafafa;display:flex;align-items:center;justify-content:center;font:700 12px/1 Geist,sans-serif;color:#18181b">h</div>
+        <div style="font:600 14px/1 Geist,sans-serif;color:#fafafa;letter-spacing:-.01em">herdr</div>
+        <div style="display:flex;align-items:center;gap:5px;margin-left:auto;font:400 10.5px/1 'Geist Mono',monospace;color:#737378">
+          <span style="width:6px;height:6px;border-radius:50%;background:oklch(0.696 0.17 162.48);animation:hpulse 2.6s ease-in-out infinite"></span>
+          <span>{{ shortSession }}</span>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px">
+        <sc-for list="{{ nav }}" as="n" hint-placeholder-count="3">
+          <button onClick="{{ n.go }}" style="flex:1;display:flex;align-items:center;justify-content:center;gap:6px;padding:8px 6px;border-radius:9px;border:1px solid {{ n.border }};background:{{ n.bg }};cursor:pointer;min-height:36px" style-hover="background:rgba(255,255,255,.06)">
+            <span style="font:400 12px/1 'Geist Mono',monospace;color:{{ n.fg }}">{{ n.icon }}</span>
+            <span style="font:500 11px/1 Geist,sans-serif;color:{{ n.fg }}">{{ n.label }}</span>
+          </button>
+        </sc-for>
+      </div>
+    </div>
+
+    <div style="flex:1;min-height:0;overflow-y:auto;padding:14px 12px 20px">
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:0 6px 8px">
+        <div style="display:flex;align-items:center;gap:7px">
+          <span style="width:7px;height:7px;border-radius:2px;background:oklch(0.645 0.246 16.439)"></span>
+          <span style="font:600 10.5px/1 Geist,sans-serif;color:#fafafa;letter-spacing:.05em;text-transform:uppercase">Needs you</span>
+        </div>
+        <span style="font:500 10.5px/1 'Geist Mono',monospace;color:#737378">{{ blockedCount }}</span>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-bottom:18px">
+        <sc-for list="{{ blocked }}" as="a" hint-placeholder-count="2">
+          <button onClick="{{ a.open }}" style="width:100%;text-align:left;display:flex;flex-direction:column;gap:6px;padding:10px 11px;border-radius:10px;border:1px solid oklch(0.645 0.246 16.439 / 26%);background:oklch(0.645 0.246 16.439 / 8%);cursor:pointer;font-family:Geist,sans-serif" style-hover="border-color:oklch(0.645 0.246 16.439 / 55%)">
+            <span style="display:flex;align-items:center;gap:7px;width:100%">
+              <span style="font:600 12.5px/1 Geist,sans-serif;color:#fafafa">{{ a.name }}</span>
+              <span style="font:400 10.5px/1 'Geist Mono',monospace;color:#737378;margin-left:auto">{{ a.pane }}</span>
+            </span>
+            <span style="font:400 11.5px/1.4 Geist,sans-serif;color:#d4d4d8;text-wrap:pretty">{{ a.question }}</span>
+          </button>
+        </sc-for>
+      </div>
+
+      <sc-for list="{{ spaces }}" as="s" hint-placeholder-count="4">
+        <div style="margin-bottom:14px">
+          <button onClick="{{ s.open }}" style="width:100%;text-align:left;display:flex;align-items:center;gap:7px;padding:6px;border:none;background:transparent;cursor:pointer;border-radius:7px" style-hover="background:rgba(255,255,255,.04)">
+            <span style="font:600 11.5px/1 'Geist Mono',monospace;color:#fafafa">{{ s.label }}</span>
+            <span style="font:400 10px/1 'Geist Mono',monospace;color:{{ s.rollupColor }}">{{ s.rollup }}</span>
+            <span style="flex:1;height:1px;background:rgba(255,255,255,.07)"></span>
+            <span style="font:400 10px/1 'Geist Mono',monospace;color:#5c5c63">{{ s.counts }}</span>
+          </button>
+          <div style="display:flex;flex-direction:column;gap:3px;margin-top:4px">
+            <sc-for list="{{ s.agents }}" as="a" hint-placeholder-count="2">
+              <button onClick="{{ a.open }}" style="width:100%;text-align:left;display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;border:1px solid {{ a.selBorder }};background:{{ a.selBg }};cursor:pointer;font-family:Geist,sans-serif" style-hover="background:rgba(255,255,255,.05)">
+                <span style="width:7px;height:7px;border-radius:50%;flex:none;background:{{ a.dot }}"></span>
+                <span style="display:flex;flex-direction:column;gap:3px;min-width:0;flex:1">
+                  <span style="font:500 12.5px/1 Geist,sans-serif;color:#fafafa">{{ a.name }}</span>
+                  <span style="font:400 11px/1.3 Geist,sans-serif;color:#8a8a92;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ a.title }}</span>
+                </span>
+                <span style="font:400 10px/1 'Geist Mono',monospace;color:#5c5c63;flex:none">{{ a.pane }}</span>
+              </button>
+            </sc-for>
+          </div>
+        </div>
+      </sc-for>
+    </div>
+  </div>
+  </sc-if>
+
+  <div style="position:relative;flex:1;min-width:0;height:100%;display:flex;flex-direction:column;background:#0a0a0a;overflow:hidden">
+
+    <sc-if value="{{ isNarrow }}" hint-placeholder-val="{{ true }}">
+    <div style="height:44px;flex:none;display:flex;align-items:flex-end;justify-content:space-between;padding:0 20px 5px;font:600 13px/1 Geist,sans-serif;color:#fafafa;position:relative;z-index:5">
+      <div>9:41</div>
+      <div style="display:flex;align-items:center;gap:5px;font-size:11px;color:#d4d4d8">
+        <span style="font-family:'Geist Mono',monospace">LTE</span>
+        <span style="width:22px;height:11px;border:1px solid #52525b;border-radius:3px;display:inline-block;padding:1.5px"><span style="display:block;width:70%;height:100%;background:#fafafa;border-radius:1px"></span></span>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ AGENT INBOX ============ -->
+    <sc-if value="{{ isInbox }}" hint-placeholder-val="{{ true }}">
+    <div style="flex:1;min-height:0;display:flex;flex-direction:column">
+      <div style="flex:none;padding:{{ headPad }};border-bottom:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;gap:3px">
+        <div style="font:600 21px/1.1 Geist,sans-serif;color:#fafafa;letter-spacing:-.02em">Agents</div>
+        <div style="display:flex;align-items:center;gap:6px;font:400 11.5px/1 Geist,sans-serif;color:#737378">
+          <span style="width:6px;height:6px;border-radius:50%;background:oklch(0.696 0.17 162.48);animation:hpulse 2.6s ease-in-out infinite"></span>
+          <span>{{ sessionLine }}</span>
+        </div>
+      </div>
+
+      <div style="flex:1;min-height:0;overflow-y:auto;padding:14px 14px 96px">
+        <div style="display:flex;align-items:center;justify-content:space-between;padding:0 4px 8px">
+          <div style="display:flex;align-items:center;gap:7px">
+            <span style="width:7px;height:7px;border-radius:2px;background:oklch(0.645 0.246 16.439)"></span>
+            <span style="font:600 11.5px/1 Geist,sans-serif;color:#fafafa;letter-spacing:.04em;text-transform:uppercase">Needs you</span>
+          </div>
+          <span style="font:500 11px/1 'Geist Mono',monospace;color:#737378">{{ blockedCount }}</span>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:9px;margin-bottom:22px">
+          <sc-for list="{{ blocked }}" as="a" hint-placeholder-count="2">
+            <button onClick="{{ a.open }}" style="width:100%;text-align:left;display:flex;flex-direction:column;gap:9px;padding:13px 14px;border-radius:12px;border:1px solid oklch(0.645 0.246 16.439 / 28%);background:linear-gradient(180deg, oklch(0.645 0.246 16.439 / 9%), rgba(255,255,255,.02));cursor:pointer;font-family:Geist,sans-serif" style-hover="border-color:oklch(0.645 0.246 16.439 / 55%)">
+              <div style="display:flex;align-items:center;gap:8px;width:100%">
+                <span style="font:500 11px/1 'Geist Mono',monospace;color:oklch(0.75 0.16 16.4);padding:4px 7px;border-radius:6px;background:oklch(0.645 0.246 16.439 / 16%)">blocked</span>
+                <span style="font:600 13.5px/1 Geist,sans-serif;color:#fafafa">{{ a.name }}</span>
+                <span style="font:400 11.5px/1 'Geist Mono',monospace;color:#737378;margin-left:auto">{{ a.pane }}</span>
+              </div>
+              <div style="font:400 13px/1.45 Geist,sans-serif;color:#d4d4d8;text-wrap:pretty">{{ a.question }}</div>
+              <div style="font:400 11px/1 Geist,sans-serif;color:#737378"><span style="font-family:'Geist Mono',monospace">{{ a.space }}</span> · waiting {{ a.since }}</div>
+            </button>
+          </sc-for>
+        </div>
+
+        <sc-for list="{{ spaces }}" as="s" hint-placeholder-count="3">
+          <div style="margin-bottom:20px">
+            <div style="display:flex;align-items:center;gap:8px;padding:0 4px 9px">
+              <span style="font:600 11.5px/1 'Geist Mono',monospace;color:#fafafa">{{ s.label }}</span>
+              <span style="font:400 10.5px/1 'Geist Mono',monospace;color:#737378;padding:3px 6px;border:1px solid rgba(255,255,255,.1);border-radius:5px">{{ s.branch }}</span>
+              <span style="flex:1;height:1px;background:rgba(255,255,255,.07)"></span>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:7px">
+              <sc-for list="{{ s.agents }}" as="a" hint-placeholder-count="2">
+                <button onClick="{{ a.open }}" style="width:100%;text-align:left;display:flex;align-items:center;gap:11px;padding:12px 13px;border-radius:11px;border:1px solid rgba(255,255,255,.08);background:#141416;cursor:pointer;font-family:Geist,sans-serif" style-hover="background:#1b1b1f;border-color:rgba(255,255,255,.16)">
+                  <span style="width:8px;height:8px;border-radius:50%;flex:none;background:{{ a.dot }}"></span>
+                  <span style="display:flex;flex-direction:column;gap:4px;min-width:0;flex:1">
+                    <span style="display:flex;align-items:center;gap:7px">
+                      <span style="font:600 13.5px/1 Geist,sans-serif;color:#fafafa">{{ a.name }}</span>
+                      <span style="font:400 10.5px/1 'Geist Mono',monospace;color:#737378">{{ a.pane }}</span>
+                    </span>
+                    <span style="font:400 12px/1.35 Geist,sans-serif;color:#8a8a92;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ a.title }}</span>
+                  </span>
+                  <span style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none">
+                    <span style="font:500 10.5px/1 'Geist Mono',monospace;color:{{ a.dot }}">{{ a.status }}</span>
+                    <span style="font:400 10.5px/1 Geist,sans-serif;color:#5c5c63">{{ a.since }}</span>
+                  </span>
+                </button>
+              </sc-for>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ CHAT ============ -->
+    <sc-if value="{{ isChat }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;min-height:0;display:flex;flex-direction:column">
+      <div style="flex:none;display:flex;align-items:center;gap:10px;padding:{{ barPad }};border-bottom:1px solid rgba(255,255,255,.07)">
+        <button onClick="{{ goInbox }}" style="width:32px;height:32px;flex:none;border-radius:9px;border:1px solid rgba(255,255,255,.12);background:transparent;color:#d4d4d8;font:400 15px/1 Geist,sans-serif;cursor:pointer" style-hover="background:rgba(255,255,255,.06)">‹</button>
+        <div style="min-width:0;flex:1;display:flex;flex-direction:column;gap:3px">
+          <div style="display:flex;align-items:center;gap:7px">
+            <span style="font:600 14px/1 Geist,sans-serif;color:#fafafa">{{ active.name }}</span>
+            <span style="font:500 10px/1 'Geist Mono',monospace;color:{{ active.dot }};padding:3px 6px;border-radius:5px;background:rgba(255,255,255,.05)">{{ active.status }}</span>
+          </div>
+          <div style="font:400 11px/1 'Geist Mono',monospace;color:#737378;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ active.space }} · {{ active.pane }}</div>
+        </div>
+        <div style="flex:none;display:flex;padding:2px;border-radius:9px;background:#18181b;border:1px solid rgba(255,255,255,.08)">
+          <button onClick="{{ setBubbles }}" style="padding:6px 9px;border-radius:7px;border:none;cursor:pointer;font:500 10.5px/1 Geist,sans-serif;background:{{ bubbleBg }};color:{{ bubbleFg }}">chat</button>
+          <button onClick="{{ setRaw }}" style="padding:6px 9px;border-radius:7px;border:none;cursor:pointer;font:500 10.5px/1 'Geist Mono',monospace;background:{{ rawBg }};color:{{ rawFg }}">raw</button>
+        </div>
+      </div>
+
+      <div data-chat-scroll="1" style="flex:1;min-height:0;overflow:auto">
+      <sc-if value="{{ showRaw }}" hint-placeholder-val="{{ false }}">
+        <div style="padding:12px 0 20px">
+          <div style="padding:0 14px 10px;font:400 10.5px/1 'Geist Mono',monospace;color:#737378">pane.read · source=recent-unwrapped · lines=80</div>
+          <div style="font:400 11.5px/1.65 'Geist Mono',ui-monospace,monospace;white-space:pre;padding:0 14px">
+            <sc-for list="{{ rawLines }}" as="l" hint-placeholder-count="14">
+              <div style="color:{{ l.c }}">{{ l.t }}</div>
+            </sc-for>
+          </div>
+        </div>
+      </sc-if>
+
+      <sc-if value="{{ showBubbles }}" hint-placeholder-val="{{ true }}">
+      <div style="padding:{{ chatPad }};display:flex;flex-direction:column;gap:15px">
+        <sc-for list="{{ messages }}" as="m" hint-placeholder-count="6">
+          <div style="display:flex;flex-direction:column;gap:6px;align-items:{{ m.align }};width:100%">
+
+            <sc-if value="{{ m.isUser }}" hint-placeholder-val="{{ false }}">
+              <div style="max-width:84%;padding:10px 13px;border-radius:16px 16px 4px 16px;background:#fafafa;color:#18181b;font:400 13.5px/1.5 Geist,sans-serif;text-wrap:pretty">{{ m.text }}</div>
+              <div style="font:400 10px/1 'Geist Mono',monospace;color:#5c5c63">agent.prompt · {{ m.ts }}</div>
+            </sc-if>
+
+            <sc-if value="{{ m.isReasoning }}" hint-placeholder-val="{{ false }}">
+              <div style="width:100%;display:flex;flex-direction:column;gap:8px">
+                <button onClick="{{ m.toggle }}" style="align-self:flex-start;display:flex;align-items:center;gap:7px;padding:6px 9px;border-radius:8px;border:1px solid rgba(255,255,255,.08);background:transparent;cursor:pointer;min-height:32px" style-hover="background:rgba(255,255,255,.05)">
+                  <span style="font:400 11px/1 'Geist Mono',monospace;color:#8a8a92">{{ m.chev }}</span>
+                  <span style="font:400 11.5px/1 Geist,sans-serif;color:#8a8a92">{{ m.text }}</span>
+                </button>
+                <sc-if value="{{ m.open }}" hint-placeholder-val="{{ false }}">
+                  <div style="padding-left:12px;border-left:2px solid rgba(255,255,255,.1);font:400 12.5px/1.65 Geist,sans-serif;color:#8a8a92;white-space:pre-wrap;text-wrap:pretty">{{ m.out }}</div>
+                </sc-if>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ m.isText }}" hint-placeholder-val="{{ true }}">
+              <div style="width:100%;display:flex;flex-direction:column;gap:7px">
+                <div style="font:400 13.5px/1.6 Geist,sans-serif;color:#e4e4e7;white-space:pre-wrap;text-wrap:pretty">{{ m.text }}</div>
+                <div style="display:flex;gap:4px">
+                  <sc-for list="{{ m.actions }}" as="ac" hint-placeholder-count="2">
+                    <button onClick="{{ ac.run }}" style="width:30px;height:30px;border-radius:7px;border:none;background:transparent;color:#5c5c63;font:400 12px/1 'Geist Mono',monospace;cursor:pointer" style-hover="background:rgba(255,255,255,.06);color:#d4d4d8">{{ ac.icon }}</button>
+                  </sc-for>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ m.isTool }}" hint-placeholder-val="{{ false }}">
+              <div style="width:100%;border:1px solid rgba(255,255,255,.08);border-radius:11px;background:#121214;overflow:hidden">
+                <button onClick="{{ m.toggle }}" style="width:100%;text-align:left;display:flex;align-items:center;gap:8px;padding:10px 11px;border:none;background:transparent;cursor:pointer" style-hover="background:rgba(255,255,255,.03)">
+                  <span style="font:400 10px/1 'Geist Mono',monospace;color:#8a8a92;flex:none">{{ m.chev }}</span>
+                  <span style="font:500 10px/1 'Geist Mono',monospace;color:#d4d4d8;padding:3px 6px;border-radius:5px;background:rgba(255,255,255,.06);flex:none">{{ m.tool }}</span>
+                  <span style="font:400 11.5px/1 'Geist Mono',monospace;color:#a3a3a3;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1">{{ m.text }}</span>
+                  <span style="font:400 10px/1 'Geist Mono',monospace;color:{{ m.okColor }};flex:none">{{ m.okLabel }}</span>
+                </button>
+                <sc-if value="{{ m.open }}" hint-placeholder-val="{{ true }}">
+                  <div style="padding:10px 11px;border-top:1px solid rgba(255,255,255,.06);font:400 11px/1.6 'Geist Mono',monospace;color:#8a8a92;white-space:pre-wrap">{{ m.out }}</div>
+                </sc-if>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ m.isCode }}" hint-placeholder-val="{{ false }}">
+              <div style="width:100%;border:1px solid rgba(255,255,255,.1);border-radius:11px;background:#0d0d0f;overflow:hidden">
+                <div style="display:flex;align-items:center;gap:8px;padding:9px 11px;border-bottom:1px solid rgba(255,255,255,.07);background:#121214">
+                  <span style="font:400 10.5px/1 'Geist Mono',monospace;color:#8a8a92;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ m.file }}</span>
+                  <span style="font:400 10px/1 'Geist Mono',monospace;color:#5c5c63">{{ m.lang }}</span>
+                  <button onClick="{{ m.copy }}" style="padding:5px 8px;border-radius:6px;border:1px solid rgba(255,255,255,.12);background:transparent;color:#d4d4d8;font:400 10px/1 'Geist Mono',monospace;cursor:pointer;min-height:28px" style-hover="background:rgba(255,255,255,.07)">{{ m.copyLabel }}</button>
+                </div>
+                <div style="overflow-x:auto;padding:10px 0">
+                  <div style="font:400 11.5px/1.7 'Geist Mono',ui-monospace,monospace">
+                    <sc-for list="{{ m.lines }}" as="l" hint-placeholder-count="5">
+                      <div style="display:flex">
+                        <span style="flex:none;width:32px;text-align:right;padding-right:10px;color:#4a4a52;user-select:none">{{ l.num }}</span>
+                        <span style="display:flex;padding-right:14px">
+                          <sc-for list="{{ l.tokens }}" as="t" hint-placeholder-count="4">
+                            <span style="color:{{ t.c }};white-space:pre">{{ t.t }}</span>
+                          </sc-for>
+                        </span>
+                      </div>
+                    </sc-for>
+                  </div>
+                </div>
+              </div>
+            </sc-if>
+
+            <sc-if value="{{ m.isDiff }}" hint-placeholder-val="{{ false }}">
+              <button onClick="{{ goDiff }}" style="width:100%;text-align:left;padding:0;border:1px solid rgba(255,255,255,.1);border-radius:11px;background:#121214;overflow:hidden;cursor:pointer" style-hover="border-color:rgba(255,255,255,.22)">
+                <div style="display:flex;align-items:center;gap:9px;padding:11px 12px">
+                  <span style="width:26px;height:26px;flex:none;border-radius:7px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font:500 11px/1 'Geist Mono',monospace;color:#d4d4d8">◫</span>
+                  <span style="display:flex;flex-direction:column;gap:3px;min-width:0;flex:1">
+                    <span style="font:500 12px/1 'Geist Mono',monospace;color:#fafafa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ m.file }}</span>
+                    <span style="font:400 10.5px/1 Geist,sans-serif;color:#737378">{{ m.text }}</span>
+                  </span>
+                  <span style="display:flex;align-items:center;gap:6px;flex:none;font:500 11px/1 'Geist Mono',monospace">
+                    <span style="color:oklch(0.72 0.16 162)">+34</span><span style="color:oklch(0.68 0.2 16)">−12</span><span style="color:#5c5c63">›</span>
+                  </span>
+                </div>
+                <div style="border-top:1px solid rgba(255,255,255,.06);padding:8px 12px;font:400 10.5px/1.5 'Geist Mono',monospace;color:#737378;white-space:pre">{{ m.out }}</div>
+              </button>
+            </sc-if>
+
+            <sc-if value="{{ m.isBlocked }}" hint-placeholder-val="{{ false }}">
+              <div style="width:100%;border:1px solid oklch(0.645 0.246 16.439 / 32%);border-radius:12px;background:linear-gradient(180deg, oklch(0.645 0.246 16.439 / 10%), rgba(255,255,255,.02));padding:13px;display:flex;flex-direction:column;gap:11px">
+                <div style="display:flex;align-items:center;gap:7px">
+                  <span style="font:500 10px/1 'Geist Mono',monospace;color:oklch(0.75 0.16 16.4);padding:3px 6px;border-radius:5px;background:oklch(0.645 0.246 16.439 / 16%)">blocked</span>
+                  <span style="font:400 10.5px/1 Geist,sans-serif;color:#8a8a92">approval requested {{ m.ts }}</span>
+                </div>
+                <div style="font:400 13.5px/1.5 Geist,sans-serif;color:#fafafa;text-wrap:pretty">{{ m.text }}</div>
+                <div style="font:400 11.5px/1.6 'Geist Mono',monospace;color:#a3a3a3;padding:9px 10px;border-radius:8px;background:rgba(0,0,0,.4);border:1px solid rgba(255,255,255,.06);white-space:pre-wrap">{{ m.out }}</div>
+                <div style="display:flex;gap:7px;flex-wrap:wrap">
+                  <sc-for list="{{ m.choices }}" as="c" hint-placeholder-count="3">
+                    <button onClick="{{ c.send }}" style="padding:9px 13px;border-radius:9px;border:1px solid {{ c.border }};background:{{ c.bg }};color:{{ c.fg }};font:500 12.5px/1 Geist,sans-serif;cursor:pointer;min-height:40px" style-hover="opacity:.85">{{ c.label }}</button>
+                  </sc-for>
+                </div>
+                <sc-if value="{{ showCalls }}" hint-placeholder-val="{{ true }}">
+                  <div style="font:400 10px/1 'Geist Mono',monospace;color:#5c5c63">agent.send_keys → {{ active.pane }}</div>
+                </sc-if>
+              </div>
+            </sc-if>
+
+          </div>
+        </sc-for>
+
+        <sc-if value="{{ isWorking }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;align-items:center;gap:9px;padding:2px 0">
+            <span style="display:flex;gap:3px;align-items:center">
+              <span style="width:5px;height:5px;border-radius:50%;background:#8a8a92;animation:hbounce 1.2s ease-in-out infinite"></span>
+              <span style="width:5px;height:5px;border-radius:50%;background:#8a8a92;animation:hbounce 1.2s ease-in-out .15s infinite"></span>
+              <span style="width:5px;height:5px;border-radius:50%;background:#8a8a92;animation:hbounce 1.2s ease-in-out .3s infinite"></span>
+            </span>
+            <span style="font:400 11.5px/1 'Geist Mono',monospace;color:#8a8a92">{{ workingLabel }}</span>
+          </div>
+        </sc-if>
+      </div>
+      </sc-if>
+      </div>
+
+      <div style="flex:none;padding:{{ composerPad }};background:#0a0a0a;border-top:1px solid rgba(255,255,255,.07);display:flex;flex-direction:column;gap:9px">
+        <div style="display:flex;gap:6px;overflow-x:auto;padding-bottom:1px">
+          <sc-for list="{{ quick }}" as="q" hint-placeholder-count="4">
+            <button onClick="{{ q.send }}" style="flex:none;padding:7px 11px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:#141416;color:#d4d4d8;font:400 11.5px/1 'Geist Mono',monospace;cursor:pointer;min-height:34px" style-hover="background:#1e1e22">{{ q.label }}</button>
+          </sc-for>
+        </div>
+        <div style="border-radius:18px;border:1px solid rgba(255,255,255,.14);background:#141416;padding:11px 12px 9px;display:flex;flex-direction:column;gap:8px">
+          <textarea placeholder="{{ inputPlaceholder }}" value="{{ draft }}" onChange="{{ onDraft }}" rows="1" style="width:100%;resize:none;border:none;outline:none;background:transparent;color:#fafafa;font:400 14px/1.45 Geist,sans-serif;max-height:96px"></textarea>
+          <div style="display:flex;align-items:center;gap:6px">
+            <sc-for list="{{ inputActions }}" as="ia" hint-placeholder-count="3">
+              <button onClick="{{ ia.run }}" style="width:32px;height:32px;flex:none;border-radius:9px;border:1px solid rgba(255,255,255,.1);background:transparent;color:#8a8a92;font:400 12px/1 'Geist Mono',monospace;cursor:pointer" style-hover="background:rgba(255,255,255,.06);color:#fafafa">{{ ia.icon }}</button>
+            </sc-for>
+            <span style="flex:1"></span>
+            <span style="font:400 10px/1 'Geist Mono',monospace;color:#5c5c63">{{ sendHint }}</span>
+            <button onClick="{{ send }}" style="width:34px;height:34px;flex:none;border-radius:10px;border:none;background:{{ sendBg }};color:{{ sendFg }};font:600 15px/1 Geist,sans-serif;cursor:pointer" style-hover="opacity:.86">↑</button>
+          </div>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ DIFF VIEWER ============ -->
+    <sc-if value="{{ isDiff }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;min-height:0;display:flex;flex-direction:column">
+      <div style="flex:none;display:flex;align-items:center;gap:10px;padding:{{ barPad }};border-bottom:1px solid rgba(255,255,255,.07)">
+        <button onClick="{{ goChat }}" style="width:32px;height:32px;flex:none;border-radius:9px;border:1px solid rgba(255,255,255,.12);background:transparent;color:#d4d4d8;font:400 15px/1 Geist,sans-serif;cursor:pointer" style-hover="background:rgba(255,255,255,.06)">‹</button>
+        <div style="min-width:0;flex:1;display:flex;flex-direction:column;gap:3px">
+          <div style="font:600 12.5px/1 'Geist Mono',monospace;color:#fafafa;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ diffFile }}</div>
+          <div style="display:flex;gap:8px;font:400 10.5px/1 'Geist Mono',monospace"><span style="color:oklch(0.72 0.16 162)">+{{ diffAdd }}</span><span style="color:oklch(0.68 0.2 16)">−{{ diffDel }}</span><span style="color:#737378">{{ diffLang }}</span></div>
+        </div>
+        <button onClick="{{ toggleWrap }}" style="flex:none;padding:8px 10px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:transparent;color:#d4d4d8;font:400 10.5px/1 'Geist Mono',monospace;cursor:pointer;min-height:34px" style-hover="background:rgba(255,255,255,.06)">wrap {{ wrapLabel }}</button>
+      </div>
+
+      <div style="flex:none;display:flex;gap:6px;overflow-x:auto;padding:{{ stripPad }};border-bottom:1px solid rgba(255,255,255,.07)">
+        <sc-for list="{{ files }}" as="f" hint-placeholder-count="3">
+          <button onClick="{{ f.pick }}" style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 10px;border-radius:8px;border:1px solid {{ f.border }};background:{{ f.bg }};cursor:pointer;font:400 11px/1 'Geist Mono',monospace;color:{{ f.fg }};min-height:34px" style-hover="border-color:rgba(255,255,255,.24)">
+            <span>{{ f.name }}</span><span style="color:oklch(0.72 0.16 162)">+{{ f.add }}</span><span style="color:oklch(0.68 0.2 16)">−{{ f.del }}</span>
+          </button>
+        </sc-for>
+      </div>
+
+      <div style="flex:1;min-height:0;overflow:auto;padding-bottom:92px">
+        <div style="font:400 11.5px/1.7 'Geist Mono',ui-monospace,monospace;min-width:100%">
+          <sc-for list="{{ diffLines }}" as="l" hint-placeholder-count="18">
+            <div style="display:flex;background:{{ l.bg }};border-left:2px solid {{ l.mark }}">
+              <span style="flex:none;width:34px;text-align:right;padding-right:9px;color:#4a4a52;user-select:none">{{ l.num }}</span>
+              <span style="flex:none;width:13px;color:{{ l.signColor }};user-select:none">{{ l.sign }}</span>
+              <span style="display:flex;flex-wrap:{{ wrapFlex }};padding-right:16px">
+                <sc-for list="{{ l.tokens }}" as="t" hint-placeholder-count="4">
+                  <span style="color:{{ t.c }};white-space:pre">{{ t.t }}</span>
+                </sc-for>
+              </span>
+            </div>
+          </sc-for>
+        </div>
+      </div>
+
+      <div style="flex:none;position:absolute;left:0;right:0;bottom:0;padding:12px 14px 24px;background:linear-gradient(180deg, rgba(10,10,10,0), #0a0a0a 40%);display:flex;gap:8px">
+        <button onClick="{{ goChat }}" style="flex:1;padding:12px;border-radius:11px;border:1px solid rgba(255,255,255,.14);background:#141416;color:#fafafa;font:500 13px/1 Geist,sans-serif;cursor:pointer;min-height:46px" style-hover="background:#1e1e22">Back to chat</button>
+        <button onClick="{{ copyPath }}" style="flex:none;padding:12px 15px;border-radius:11px;border:none;background:#fafafa;color:#18181b;font:500 13px/1 Geist,sans-serif;cursor:pointer;min-height:46px" style-hover="background:#d4d4d8">{{ copyLabel }}</button>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ SPACES ============ -->
+    <sc-if value="{{ isSpaces }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;min-height:0;display:flex;flex-direction:column">
+      <div style="flex:none;padding:{{ headPad }};display:flex;align-items:center;justify-content:space-between;border-bottom:1px solid rgba(255,255,255,.07)">
+        <div style="display:flex;flex-direction:column;gap:3px">
+          <div style="font:600 21px/1.1 Geist,sans-serif;color:#fafafa;letter-spacing:-.02em">Spaces</div>
+          <div style="font:400 11.5px/1 Geist,sans-serif;color:#737378">{{ spaceSummary }}</div>
+        </div>
+        <button onClick="{{ openCreateSpace }}" style="height:34px;padding:0 12px;border-radius:9px;border:none;background:#fafafa;color:#18181b;font:500 12.5px/1 Geist,sans-serif;cursor:pointer">＋ New</button>
+      </div>
+
+      <div style="flex:1;min-height:0;overflow-y:auto;padding:{{ pagePad }};display:flex;flex-direction:column;gap:10px">
+        <sc-for list="{{ spaces }}" as="s" hint-placeholder-count="4">
+          <div style="flex:none;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:#141416;overflow:hidden">
+            <button onClick="{{ s.open }}" style="width:100%;text-align:left;display:flex;align-items:center;gap:10px;padding:13px;border:none;background:transparent;cursor:pointer;font-family:Geist,sans-serif" style-hover="background:rgba(255,255,255,.03)">
+              <span style="width:30px;height:30px;flex:none;border-radius:8px;background:rgba(255,255,255,.06);display:flex;align-items:center;justify-content:center;font:600 12px/1 'Geist Mono',monospace;color:#d4d4d8">{{ s.initial }}</span>
+              <span style="display:flex;flex-direction:column;gap:4px;min-width:0;flex:1">
+                <span style="display:flex;align-items:center;gap:7px">
+                  <span style="font:600 13.5px/1 'Geist Mono',monospace;color:#fafafa">{{ s.label }}</span>
+                  <sc-if value="{{ s.hasWorktree }}" hint-placeholder-val="{{ false }}">
+                    <span style="font:400 9.5px/1 'Geist Mono',monospace;color:oklch(0.75 0.14 250);padding:3px 5px;border-radius:4px;background:oklch(0.6 0.15 250 / 16%)">worktree</span>
+                  </sc-if>
+                </span>
+                <span style="font:400 11px/1 Geist,sans-serif;color:#737378;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ s.cwd }}</span>
+              </span>
+              <span style="display:flex;flex-direction:column;align-items:flex-end;gap:4px;flex:none">
+                <span style="font:400 10.5px/1 'Geist Mono',monospace;color:{{ s.rollupColor }}">{{ s.rollup }}</span>
+                <span style="font:400 10.5px/1 Geist,sans-serif;color:#5c5c63">{{ s.counts }}</span>
+              </span>
+            </button>
+            <div style="display:flex;border-top:1px solid rgba(255,255,255,.06)">
+              <button onClick="{{ s.open }}" style="flex:1;padding:10px;border:none;background:transparent;color:#d4d4d8;font:400 11.5px/1 Geist,sans-serif;cursor:pointer;min-height:44px" style-hover="background:rgba(255,255,255,.05)">Tabs</button>
+              <span style="width:1px;background:rgba(255,255,255,.06)"></span>
+              <button onClick="{{ s.rename }}" style="flex:1;padding:10px;border:none;background:transparent;color:#d4d4d8;font:400 11.5px/1 Geist,sans-serif;cursor:pointer;min-height:44px" style-hover="background:rgba(255,255,255,.05)">Rename</button>
+              <span style="width:1px;background:rgba(255,255,255,.06)"></span>
+              <button onClick="{{ s.close }}" style="flex:1;padding:10px;border:none;background:transparent;color:oklch(0.72 0.19 16.4);font:400 11.5px/1 Geist,sans-serif;cursor:pointer;min-height:44px" style-hover="background:oklch(0.645 0.246 16.439 / 12%)">Close</button>
+            </div>
+          </div>
+        </sc-for>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ SPACE DETAIL ============ -->
+    <sc-if value="{{ isSpace }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;min-height:0;display:flex;flex-direction:column">
+      <div style="flex:none;display:flex;align-items:center;gap:10px;padding:{{ barPad }};border-bottom:1px solid rgba(255,255,255,.07)">
+        <button onClick="{{ goSpaces }}" style="width:32px;height:32px;flex:none;border-radius:9px;border:1px solid rgba(255,255,255,.12);background:transparent;color:#d4d4d8;font:400 15px/1 Geist,sans-serif;cursor:pointer" style-hover="background:rgba(255,255,255,.06)">‹</button>
+        <div style="min-width:0;flex:1;display:flex;flex-direction:column;gap:3px">
+          <div style="font:600 14.5px/1 'Geist Mono',monospace;color:#fafafa">{{ space.label }}</div>
+          <div style="font:400 11px/1 Geist,sans-serif;color:#737378;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ space.cwd }}</div>
+        </div>
+        <button onClick="{{ renameSpace }}" style="flex:none;height:32px;padding:0 10px;border-radius:8px;border:1px solid rgba(255,255,255,.12);background:transparent;color:#d4d4d8;font:400 11px/1 Geist,sans-serif;cursor:pointer" style-hover="background:rgba(255,255,255,.06)">Rename</button>
+      </div>
+
+      <div style="flex:none;display:flex;align-items:center;gap:6px;padding:{{ stripPad }};overflow-x:auto;border-bottom:1px solid rgba(255,255,255,.07)">
+        <sc-for list="{{ tabs }}" as="t" hint-placeholder-count="3">
+          <button onClick="{{ t.pick }}" style="flex:none;display:flex;align-items:center;gap:7px;padding:8px 11px;border-radius:9px;border:1px solid {{ t.border }};background:{{ t.bg }};cursor:pointer;min-height:36px" style-hover="border-color:rgba(255,255,255,.26)">
+            <span style="font:500 12px/1 'Geist Mono',monospace;color:{{ t.fg }}">{{ t.label }}</span>
+            <sc-if value="{{ t.attention }}" hint-placeholder-val="{{ false }}">
+              <span style="width:6px;height:6px;border-radius:50%;background:oklch(0.645 0.246 16.439)"></span>
+            </sc-if>
+            <span style="font:400 10px/1 'Geist Mono',monospace;color:#5c5c63">{{ t.paneCount }}</span>
+          </button>
+        </sc-for>
+        <button onClick="{{ openCreateTab }}" style="flex:none;width:36px;height:36px;border-radius:9px;border:1px dashed rgba(255,255,255,.2);background:transparent;color:#8a8a92;font:400 14px/1 Geist,sans-serif;cursor:pointer" style-hover="border-color:rgba(255,255,255,.4);color:#fafafa">＋</button>
+      </div>
+
+      <div style="flex:1;min-height:0;overflow-y:auto;padding:{{ pagePad }};display:flex;flex-direction:column;gap:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+          <div style="display:flex;align-items:center;gap:8px;min-width:0">
+            <span style="font:600 11.5px/1 Geist,sans-serif;color:#fafafa;letter-spacing:.04em;text-transform:uppercase">{{ tab.label }}</span>
+            <span style="font:400 10.5px/1 'Geist Mono',monospace;color:#737378">{{ tab.id }}</span>
+          </div>
+          <div style="display:flex;gap:6px;flex:none">
+            <button onClick="{{ renameTab }}" style="padding:6px 9px;border-radius:7px;border:1px solid rgba(255,255,255,.12);background:transparent;color:#d4d4d8;font:400 10.5px/1 Geist,sans-serif;cursor:pointer;min-height:32px" style-hover="background:rgba(255,255,255,.06)">Rename</button>
+            <button onClick="{{ closeTab }}" style="padding:6px 9px;border-radius:7px;border:1px solid oklch(0.645 0.246 16.439 / 30%);background:transparent;color:oklch(0.72 0.19 16.4);font:400 10.5px/1 Geist,sans-serif;cursor:pointer;min-height:32px" style-hover="background:oklch(0.645 0.246 16.439 / 12%)">Close tab</button>
+          </div>
+        </div>
+
+        <sc-for list="{{ panes }}" as="p" hint-placeholder-count="3">
+          <div style="flex:none;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:#121214;overflow:hidden">
+            <div style="display:flex;align-items:center;gap:9px;padding:11px 12px;border-bottom:1px solid rgba(255,255,255,.06)">
+              <span style="width:8px;height:8px;flex:none;border-radius:50%;background:{{ p.dot }}"></span>
+              <span style="display:flex;flex-direction:column;gap:3px;min-width:0;flex:1">
+                <span style="font:500 12.5px/1 'Geist Mono',monospace;color:#fafafa">{{ p.label }}</span>
+                <span style="font:400 10.5px/1 Geist,sans-serif;color:#737378;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ p.sub }}</span>
+              </span>
+              <span style="font:400 10px/1 'Geist Mono',monospace;color:#5c5c63;flex:none">{{ p.id }}</span>
+            </div>
+            <div style="padding:10px 12px;font:400 10.5px/1.6 'Geist Mono',monospace;color:#8a8a92;white-space:pre;overflow-x:auto">{{ p.tail }}</div>
+            <div style="display:flex;border-top:1px solid rgba(255,255,255,.06)">
+              <button onClick="{{ p.open }}" style="flex:1;padding:10px;border:none;background:transparent;color:#d4d4d8;font:400 11px/1 Geist,sans-serif;cursor:pointer;min-height:44px" style-hover="background:rgba(255,255,255,.05)">{{ p.openLabel }}</button>
+              <span style="width:1px;background:rgba(255,255,255,.06)"></span>
+              <button onClick="{{ p.rename }}" style="flex:1;padding:10px;border:none;background:transparent;color:#d4d4d8;font:400 11px/1 Geist,sans-serif;cursor:pointer;min-height:44px" style-hover="background:rgba(255,255,255,.05)">Rename</button>
+              <span style="width:1px;background:rgba(255,255,255,.06)"></span>
+              <button onClick="{{ p.close }}" style="flex:1;padding:10px;border:none;background:transparent;color:oklch(0.72 0.19 16.4);font:400 11px/1 Geist,sans-serif;cursor:pointer;min-height:44px" style-hover="background:oklch(0.645 0.246 16.439 / 12%)">Close</button>
+            </div>
+          </div>
+        </sc-for>
+
+        <button onClick="{{ openSplit }}" style="padding:13px;border-radius:12px;border:1px dashed rgba(255,255,255,.18);background:transparent;color:#8a8a92;font:400 12px/1 Geist,sans-serif;cursor:pointer;min-height:48px" style-hover="border-color:rgba(255,255,255,.36);color:#fafafa">＋ Split a new pane</button>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ SETTINGS ============ -->
+    <sc-if value="{{ isSettings }}" hint-placeholder-val="{{ false }}">
+    <div style="flex:1;min-height:0;display:flex;flex-direction:column">
+      <div style="flex:none;padding:{{ headPad }};border-bottom:1px solid rgba(255,255,255,.07)">
+        <div style="font:600 21px/1.1 Geist,sans-serif;color:#fafafa;letter-spacing:-.02em">Settings</div>
+      </div>
+      <div style="flex:1;min-height:0;overflow-y:auto;padding:{{ pagePad }};display:flex;flex-direction:column;gap:20px">
+
+        <div style="display:flex;flex-direction:column;gap:9px">
+          <div style="font:600 11px/1 Geist,sans-serif;color:#8a8a92;letter-spacing:.05em;text-transform:uppercase">Theme</div>
+          <div style="display:flex;gap:8px">
+            <sc-for list="{{ themes }}" as="t" hint-placeholder-count="3">
+              <button onClick="{{ t.pick }}" style="flex:1;display:flex;flex-direction:column;gap:9px;padding:11px;border-radius:11px;border:1px solid {{ t.border }};background:{{ t.cardBg }};cursor:pointer;min-height:74px" style-hover="border-color:rgba(255,255,255,.28)">
+                <span style="display:flex;gap:4px">
+                  <span style="width:14px;height:14px;border-radius:4px;background:{{ t.s1 }}"></span>
+                  <span style="width:14px;height:14px;border-radius:4px;background:{{ t.s2 }}"></span>
+                  <span style="width:14px;height:14px;border-radius:4px;background:{{ t.s3 }}"></span>
+                </span>
+                <span style="font:500 11.5px/1.2 Geist,sans-serif;color:{{ t.fg }};text-align:left">{{ t.name }}</span>
+              </button>
+            </sc-for>
+          </div>
+          <div style="font:400 10.5px/1.5 'Geist Mono',monospace;color:#5c5c63">writes [theme] in config.toml → server.reload_config</div>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font:600 11px/1 Geist,sans-serif;color:#8a8a92;letter-spacing:.05em;text-transform:uppercase">Behavior</div>
+          <sc-for list="{{ toggles }}" as="t" hint-placeholder-count="3">
+            <button onClick="{{ t.flip }}" style="display:flex;align-items:center;gap:11px;padding:12px 13px;border-radius:11px;border:1px solid rgba(255,255,255,.08);background:#141416;cursor:pointer;text-align:left;min-height:54px" style-hover="border-color:rgba(255,255,255,.16)">
+              <span style="display:flex;flex-direction:column;gap:3px;flex:1;min-width:0">
+                <span style="font:500 12.5px/1 Geist,sans-serif;color:#fafafa">{{ t.name }}</span>
+                <span style="font:400 10.5px/1.4 Geist,sans-serif;color:#737378">{{ t.desc }}</span>
+              </span>
+              <span style="flex:none;width:38px;height:22px;border-radius:11px;background:{{ t.trackBg }};position:relative">
+                <span style="position:absolute;top:2px;left:{{ t.knobLeft }};width:18px;height:18px;border-radius:50%;background:{{ t.knobBg }};transition:left .16s"></span>
+              </span>
+            </button>
+          </sc-for>
+        </div>
+
+        <div style="display:flex;flex-direction:column;gap:8px">
+          <div style="font:600 11px/1 Geist,sans-serif;color:#8a8a92;letter-spacing:.05em;text-transform:uppercase">Server</div>
+          <div style="border:1px solid rgba(255,255,255,.08);border-radius:11px;background:#141416;padding:13px;display:flex;flex-direction:column;gap:10px">
+            <sc-for list="{{ serverInfo }}" as="r" hint-placeholder-count="4">
+              <div style="display:flex;justify-content:space-between;gap:10px;font:400 11.5px/1 'Geist Mono',monospace">
+                <span style="color:#737378">{{ r.k }}</span>
+                <span style="color:#d4d4d8;text-align:right;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ r.v }}</span>
+              </div>
+            </sc-for>
+          </div>
+          <div style="font:400 10.5px/1.5 'Geist Mono',monospace;color:#5c5c63">svelte → go bridge → herdr socket</div>
+          <button onClick="{{ reloadConfig }}" style="padding:12px;border-radius:11px;border:1px solid rgba(255,255,255,.12);background:transparent;color:#d4d4d8;font:500 12.5px/1 Geist,sans-serif;cursor:pointer;min-height:46px" style-hover="background:rgba(255,255,255,.06)">Reload config</button>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ BOTTOM NAV ============ -->
+    <sc-if value="{{ showNav }}" hint-placeholder-val="{{ true }}">
+    <div style="position:absolute;left:0;right:0;bottom:0;z-index:20;display:flex;padding:8px 14px 22px;gap:6px;background:linear-gradient(180deg, rgba(10,10,10,.5), #0a0a0a 40%);border-top:1px solid rgba(255,255,255,.07)">
+      <sc-for list="{{ nav }}" as="n" hint-placeholder-count="3">
+        <button onClick="{{ n.go }}" style="flex:1;display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 4px;border-radius:10px;border:none;background:{{ n.bg }};cursor:pointer;min-height:50px" style-hover="background:rgba(255,255,255,.05)">
+          <span style="font:400 15px/1 'Geist Mono',monospace;color:{{ n.fg }}">{{ n.icon }}</span>
+          <span style="font:500 10px/1 Geist,sans-serif;color:{{ n.fg }}">{{ n.label }}</span>
+        </button>
+      </sc-for>
+    </div>
+    </sc-if>
+
+    <!-- ============ SHEET ============ -->
+    <sc-if value="{{ sheetOpen }}" hint-placeholder-val="{{ false }}">
+    <div style="position:absolute;inset:0;z-index:40;display:flex;flex-direction:column;justify-content:flex-end">
+      <button onClick="{{ closeSheet }}" style="position:absolute;inset:0;border:none;background:rgba(0,0,0,.62);cursor:pointer"></button>
+      <div style="position:relative;border-radius:22px 22px 34px 34px;background:#141416;border:1px solid rgba(255,255,255,.1);border-bottom:none;padding:16px 16px 28px;display:flex;flex-direction:column;gap:14px;animation:hsheet .22s cubic-bezier(.32,.72,0,1)">
+        <div style="width:36px;height:4px;border-radius:2px;background:rgba(255,255,255,.16);align-self:center"></div>
+        <div style="display:flex;flex-direction:column;gap:5px">
+          <div style="font:600 16px/1.25 Geist,sans-serif;color:#fafafa;letter-spacing:-.01em">{{ sheet.title }}</div>
+          <div style="font:400 12px/1.45 Geist,sans-serif;color:#8a8a92;text-wrap:pretty">{{ sheet.body }}</div>
+        </div>
+
+        <sc-if value="{{ sheet.hasInput }}" hint-placeholder-val="{{ true }}">
+          <div style="display:flex;flex-direction:column;gap:8px">
+            <input value="{{ sheetValue }}" onChange="{{ onSheetValue }}" placeholder="{{ sheet.placeholder }}" style="width:100%;padding:13px;border-radius:11px;border:1px solid rgba(255,255,255,.14);background:#0a0a0a;color:#fafafa;font:400 14px/1 'Geist Mono',monospace;outline:none;min-height:48px" />
+            <sc-if value="{{ sheet.hasCwd }}" hint-placeholder-val="{{ false }}">
+              <input value="{{ sheetCwd }}" onChange="{{ onSheetCwd }}" placeholder="~/code/project" style="width:100%;padding:13px;border-radius:11px;border:1px solid rgba(255,255,255,.14);background:#0a0a0a;color:#fafafa;font:400 14px/1 'Geist Mono',monospace;outline:none;min-height:48px" />
+            </sc-if>
+          </div>
+        </sc-if>
+
+        <sc-if value="{{ showCalls }}" hint-placeholder-val="{{ true }}">
+          <div style="font:400 10px/1.5 'Geist Mono',monospace;color:#5c5c63">{{ sheet.call }}</div>
+        </sc-if>
+
+        <div style="display:flex;gap:8px">
+          <button onClick="{{ closeSheet }}" style="flex:1;padding:14px;border-radius:12px;border:1px solid rgba(255,255,255,.14);background:transparent;color:#fafafa;font:500 13.5px/1 Geist,sans-serif;cursor:pointer;min-height:50px" style-hover="background:rgba(255,255,255,.06)">Cancel</button>
+          <button onClick="{{ confirmSheet }}" style="flex:1;padding:14px;border-radius:12px;border:none;background:{{ sheet.ctaBg }};color:{{ sheet.ctaFg }};font:600 13.5px/1 Geist,sans-serif;cursor:pointer;min-height:50px" style-hover="opacity:.86">{{ sheet.cta }}</button>
+        </div>
+      </div>
+    </div>
+    </sc-if>
+
+    <!-- ============ TOAST ============ -->
+    <sc-if value="{{ toast }}" hint-placeholder-val="{{ false }}">
+      <div style="position:absolute;left:14px;right:14px;bottom:92px;z-index:60;padding:12px 14px;border-radius:12px;background:#1e1e22;border:1px solid rgba(255,255,255,.14);box-shadow:0 12px 30px -8px rgba(0,0,0,.8);display:flex;align-items:center;gap:9px">
+        <span style="width:6px;height:6px;border-radius:50%;background:oklch(0.696 0.17 162.48);flex:none"></span>
+        <span style="font:400 12px/1.4 'Geist Mono',monospace;color:#e4e4e7">{{ toast }}</span>
+      </div>
+    </sc-if>
+
+  </div>
+</div>
+
+</x-dc>
+<script type="text/x-dc" data-dc-script data-props="{&quot;$preview&quot;:{&quot;width&quot;:1180,&quot;height&quot;:800},&quot;layout&quot;:{&quot;editor&quot;:&quot;enum&quot;,&quot;options&quot;:[&quot;auto&quot;,&quot;phone&quot;,&quot;desktop&quot;],&quot;default&quot;:&quot;auto&quot;,&quot;tsType&quot;:&quot;string&quot;,&quot;section&quot;:&quot;Layout&quot;},&quot;showSocketCalls&quot;:{&quot;editor&quot;:&quot;boolean&quot;,&quot;default&quot;:true,&quot;tsType&quot;:&quot;boolean&quot;,&quot;section&quot;:&quot;Layout&quot;}}">
+const GREEN="oklch(0.696 0.17 162.48)",AMBER="oklch(0.769 0.188 70.08)",RED="oklch(0.645 0.246 16.439)",REDT="oklch(0.72 0.19 16.4)";
+const DOT={working:AMBER,blocked:RED,done:GREEN,idle:"#737378",unknown:"#52525b"};
+const KW=/^(const|let|var|function|return|if|else|for|while|import|from|export|default|class|new|await|async|type|interface|as|in|of|null|true|false|each|lang|style)$/;
+const C={kw:"oklch(0.78 0.14 300)",str:"oklch(0.82 0.13 92)",num:"oklch(0.78 0.13 250)",fn:"oklch(0.8 0.11 195)",cmt:"#5c5c63",punc:"#8a8a92",def:"#d4d4d8",tag:"oklch(0.8 0.12 165)"};
+const SCR="<"+"script";
+const ESCR="<"+"/script>";
+
+function tok(s){
+  if(/^\s*(\/\/|#)/.test(s))return[{t:s,c:C.cmt}];
+  const out=[];const re=/(\s+)|("[^"]*"|'[^']*'|`[^`]*`)|(\b\d+(?:\.\d+)?\b)|([A-Za-z_$][\w$]*)|([^\s\w$"'`])/g;let m;
+  while((m=re.exec(s))){
+    const w=m[0];
+    if(m[1])out.push({t:w,c:C.def});
+    else if(m[2])out.push({t:w,c:C.str});
+    else if(m[3])out.push({t:w,c:C.num});
+    else if(m[4]){
+      const next=s[re.lastIndex];
+      out.push({t:w,c:KW.test(w)?C.kw:next==="("?C.fn:/^[A-Z]/.test(w)?C.tag:C.def});
+    } else out.push({t:w,c:C.punc});
+  }
+  return out.length?out:[{t:" ",c:C.def}];
+}
+
+const SPACES=[
+ {id:"w1",label:"hedr-web",cwd:"~/code/hedr-web",branch:"feat/chat-ui",worktree:false,tabs:[
+   {id:"w1:t1",label:"agents",panes:[
+     {id:"w1:p1",label:"claude",sub:"claude · editing PaneGrid.svelte",status:"working",agent:true,tail:"● Editing src/lib/PaneGrid.svelte\n  ⎿ +34 −12"},
+     {id:"w1:p2",label:"codex",sub:"codex · approval requested",status:"blocked",agent:true,tail:"? Allow write to src/routes/+layout.svelte  (y/n/a)"}]},
+   {id:"w1:t2",label:"server",panes:[
+     {id:"w1:p3",label:"dev",sub:"bun run dev · :5173",status:"idle",agent:false,tail:"VITE v6.0.3  ready in 412 ms\n➜ Local: http://localhost:5173/"}]},
+   {id:"w1:t3",label:"logs",panes:[
+     {id:"w1:p4",label:"tail",sub:"tail -f .herdr/server.log",status:"idle",agent:false,tail:"12:04:02 pane.agent_status_changed w1:p1 working\n12:04:19 pane.output_matched w1:p3"}]}]},
+ {id:"w2",label:"api",cwd:"~/code/api",branch:"main",worktree:false,tabs:[
+   {id:"w2:t1",label:"main",panes:[
+     {id:"w2:p1",label:"codex",sub:"codex · migration written",status:"done",agent:true,tail:"✔ wrote migrations/0031_pane_tokens.sql"},
+     {id:"w2:p2",label:"psql",sub:"psql herdr_dev",status:"idle",agent:false,tail:"herdr_dev=#"}]}]},
+ {id:"w3",label:"api/billing",cwd:"~/.herdr/worktrees/api/billing",branch:"worktree/billing",worktree:true,tabs:[
+   {id:"w3:t1",label:"main",panes:[
+     {id:"w3:p1",label:"claude",sub:"claude · run migration?",status:"blocked",agent:true,tail:"? Run `bun run db:migrate` against herdr_dev?  (y/n)"}]}]},
+ {id:"w4",label:"dotfiles",cwd:"~/dotfiles",branch:"main",worktree:false,tabs:[
+   {id:"w4:t1",label:"main",panes:[
+     {id:"w4:p1",label:"zsh",sub:"interactive shell",status:"idle",agent:false,tail:"~/dotfiles ❯"}]}]}
+];
+
+const META={
+ "w1:p1":{name:"claude",title:"Rework pane grid to CSS grid",since:"now",q:""},
+ "w1:p2":{name:"codex",title:"Allow write to +layout.svelte?",since:"4m",q:"Allow write to src/routes/+layout.svelte?"},
+ "w2:p1":{name:"codex",title:"Add pane_tokens migration",since:"18m",q:""},
+ "w3:p1":{name:"claude",title:"Run db:migrate against herdr_dev?",since:"11m",q:"Run bun run db:migrate against herdr_dev?"}
+};
+
+const CHOICES=[
+ {label:"Yes",key:"y",bg:"#fafafa",fg:"#18181b",border:"#fafafa"},
+ {label:"Yes, don't ask",key:"a",bg:"rgba(255,255,255,.07)",fg:"#fafafa",border:"rgba(255,255,255,.16)"},
+ {label:"No",key:"n",bg:"transparent",fg:REDT,border:"oklch(0.645 0.246 16.439 / 40%)"},
+ {label:"esc",key:"esc",bg:"transparent",fg:"#8a8a92",border:"rgba(255,255,255,.12)"}
+];
+
+const SNIPPET=[
+ '<div class="grid" style:--cols={cols}>',
+ '  {#each panes as pane (pane.id)}',
+ '    <PaneCell {pane} focused={pane.id === focusedId} />',
+ '  {/each}',
+ '</div>'];
+
+const DIFFS={
+ "src/lib/PaneGrid.svelte":{add:21,del:7,lang:"svelte",lines:[
+  ["11"," ",SCR+' lang="ts">'],
+  ["12"," ","  import PaneCell from './PaneCell.svelte';"],
+  ["13","-","  let { panes, focusedId } = $props();"],
+  ["13","+","  let { panes, focusedId, cols = 2 } = $props();"],
+  ["14","+","  const rows = $derived(Math.ceil(panes.length / cols));"],
+  ["15"," ",ESCR],
+  ["16"," ",""],
+  ["17","-",'<div class="grid">'],
+  ["17","+",'<div class="grid" style:--cols={cols} style:--rows={rows}>'],
+  ["18"," ","  {#each panes as pane (pane.id)}"],
+  ["19","-","    <PaneCell {pane} />"],
+  ["19","+","    <PaneCell {pane} focused={pane.id === focusedId} />"],
+  ["20"," ","  {/each}"],
+  ["21"," ","</div>"],
+  ["22"," ",""],
+  ["23"," ","<style>"],
+  ["24","-","  .grid { display: flex; flex-wrap: wrap; }"],
+  ["24","+","  .grid {"],
+  ["25","+","    display: grid;"],
+  ["26","+","    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));"],
+  ["27","+","    gap: 1px;"],
+  ["28","+","  }"],
+  ["29"," ","</style>"]]},
+ "src/routes/+layout.svelte":{add:9,del:3,lang:"svelte",lines:[
+  ["4"," ","  import { session } from '$lib/socket';"],
+  ["5","-","  const spaces = session.workspaces;"],
+  ["5","+","  // bootstrap from session.snapshot, then live-patch from events"],
+  ["6","+","  const spaces = $derived(session.workspaces);"],
+  ["7","+","  session.subscribe(['workspace.updated', 'pane.agent_status_changed']);"],
+  ["8"," ",ESCR]]},
+ "src/lib/socket.ts":{add:4,del:2,lang:"ts",lines:[
+  ["30"," ","export async function prompt(target: string, text: string) {"],
+  ["31","-","  return call('agent.prompt', { target, text });"],
+  ["31","+","  return call('agent.prompt', {"],
+  ["32","+","    target, text,"],
+  ["33","+","    wait: { until: ['idle', 'blocked'], timeout_ms: 900000 }"],
+  ["34","+","  });"],
+  ["35"," ","}"]]}
+};
+
+const RAWCOL=[["> herdr pane read w1:p1 --source recent-unwrapped","#5c5c63"],["","#d4d4d8"],
+ ["● Read src/lib/PaneGrid.svelte (44 lines)","#d4d4d8"],
+ ["  ⎿ flex-wrap grid, no explicit column control","#737378"],
+ ["","#d4d4d8"],
+ ["● Update src/lib/PaneGrid.svelte","#d4d4d8"],
+ ["  ⎿ Updated with 34 additions and 12 removals","#737378"],
+ ["","#d4d4d8"],
+ ['    17 -  <div class="grid">',REDT],
+ ['    17 +  <div class="grid" style:--cols={cols}>',GREEN],
+ ["    19 -    <PaneCell {pane} />",REDT],
+ ["    19 +    <PaneCell {pane} focused={...} />",GREEN],
+ ["","#d4d4d8"],
+ ["● Bash(bun run check)","#d4d4d8"],
+ ["  ⎿ svelte-check found 0 errors, 0 warnings",GREEN],
+ ["","#d4d4d8"],
+ ["● Editing src/lib/PaneCell.svelte…",AMBER]];
+
+class Component extends DCLogic {
+  state={view:"inbox",pane:"w1:p1",mode:"chat",spaceId:"w1",tabId:"w1:t1",
+    sheet:null,sv:"",scwd:"",toast:"",wrap:false,theme:"herdr-dark",
+    diff:"src/lib/PaneGrid.svelte",copied:false,copied2:false,draft:"",
+    open:{r0:false,t0:true},tg:{notify:true,follow:true,ansi:false},
+    w:typeof window!=="undefined"?window.innerWidth:1200};
+  _scroll=React.createRef();
+  _raw=React.createRef();
+
+  componentDidMount(){
+    this._r=()=>{const w=window.innerWidth;if(Math.abs(w-this.state.w)>8)this.setState({w:w});};
+    window.addEventListener("resize",this._r);this._r();
+    this.toBottom();
+  }
+  toBottom(){
+    const pin=()=>{const el=document.querySelector("[data-chat-scroll]");if(el)el.scrollTop=el.scrollHeight;};
+    pin();requestAnimationFrame(pin);setTimeout(pin,80);setTimeout(pin,220);
+  }
+  componentDidUpdate(pp,ps){
+    if(ps.pane!==this.state.pane||ps.mode!==this.state.mode||ps.view!==this.state.view)this.toBottom();
+  }
+  componentWillUnmount(){clearTimeout(this._t);window.removeEventListener("resize",this._r);}
+  flash(t){clearTimeout(this._t);this.setState({toast:t});this._t=setTimeout(()=>this.setState({toast:""}),2200);}
+  go(view,extra){this.setState(Object.assign({view:view},extra||{}));}
+  space(){return SPACES.find(s=>s.id===this.state.spaceId)||SPACES[0];}
+  tab(){const s=this.space();return s.tabs.find(t=>t.id===this.state.tabId)||s.tabs[0];}
+  paneOf(id){for(const s of SPACES)for(const t of s.tabs)for(const p of t.panes)if(p.id===id)return{s:s,t:t,p:p};return {s:SPACES[0],t:SPACES[0].tabs[0],p:SPACES[0].tabs[0].panes[0]};}
+  openPane(id){const f=this.paneOf(id);this.setState({view:"chat",pane:id,spaceId:f.s.id,tabId:f.t.id,mode:"chat"});}
+
+  sheetFor(kind,ctx){
+    const sp=this.space(),tb=this.tab();
+    const S={
+      space:{title:"New space",body:"Creates a workspace with its first tab and root pane.",cta:"Create",ctaBg:"#fafafa",ctaFg:"#18181b",hasInput:true,hasCwd:true,placeholder:"label",call:"workspace.create { cwd, label, focus: false }"},
+      tab:{title:"New tab",body:"Another terminal layout inside "+sp.label+".",cta:"Create",ctaBg:"#fafafa",ctaFg:"#18181b",hasInput:true,placeholder:"logs",call:'tab.create { workspace_id: "'+sp.id+'", label }'},
+      split:{title:"Split a pane",body:"Adds a pane to "+tb.label+", splitting right.",cta:"Split",ctaBg:"#fafafa",ctaFg:"#18181b",hasInput:true,placeholder:"tests",call:'pane.split { direction: "right", ratio: 0.5 }'},
+      renameSpace:{title:"Rename space",body:"Sidebar label only — the cwd is unchanged.",cta:"Save",ctaBg:"#fafafa",ctaFg:"#18181b",hasInput:true,placeholder:"label",call:"workspace.rename { workspace_id, label }"},
+      renameTab:{title:"Rename tab",body:"Label for this layout.",cta:"Save",ctaBg:"#fafafa",ctaFg:"#18181b",hasInput:true,placeholder:"label",call:"tab.rename { tab_id, label }"},
+      renamePane:{title:"Rename pane",body:"Label shown on the pane frame.",cta:"Save",ctaBg:"#fafafa",ctaFg:"#18181b",hasInput:true,placeholder:"label",call:"pane.rename { pane_id, label }"},
+      closeSpace:{title:"Close "+(ctx||"space")+"?",body:"Closes Herdr state and every pane inside it. Running processes are killed. A worktree checkout on disk is left alone.",cta:"Close space",ctaBg:RED,ctaFg:"#fff",call:"workspace.close { workspace_id }"},
+      closeTab:{title:"Close tab?",body:"Closes every pane in this layout. If it is the last tab, the space closes too.",cta:"Close tab",ctaBg:RED,ctaFg:"#fff",call:"tab.close { tab_id }"},
+      closePane:{title:"Close pane?",body:"Terminates the terminal and anything running in it.",cta:"Close pane",ctaBg:RED,ctaFg:"#fff",call:"pane.close { pane_id }"}
+    }[kind];
+    return Object.assign({kind:kind,ctx:ctx,hasInput:false,hasCwd:false,placeholder:""},S);
+  }
+  ask(kind,ctx,prefill){this.setState({sheet:this.sheetFor(kind,ctx),sv:prefill||"",scwd:""});}
+
+  confirm(){
+    const sh=this.state.sheet;if(!sh)return;
+    const v=this.state.sv||sh.placeholder||"";
+    const msg={space:"workspace.create → "+v,tab:"tab.create → "+v,split:"pane.split right → "+v,
+      renameSpace:"workspace.rename → "+v,renameTab:"tab.rename → "+v,renamePane:"pane.rename → "+v,
+      closeSpace:"workspace.close "+(sh.ctx||""),closeTab:"tab.close "+this.tab().id,closePane:"pane.close "+(sh.ctx||"")}[sh.kind];
+    this.setState({sheet:null,sv:"",scwd:""});this.flash(msg);
+  }
+
+  buildMessages(){
+    const id=this.state.pane,f=this.paneOf(id),p=f.p,m=META[id]||{name:p.label,title:p.sub};
+    const st=this.state;
+    const mk=o=>Object.assign({isUser:false,isText:false,isTool:false,isDiff:false,isBlocked:false,isCode:false,isReasoning:false,align:"flex-start",text:"",out:"",ts:"",actions:[],choices:[],lines:[]},o);
+    const actions=[{icon:"⧉",run:()=>this.flash("copied to clipboard")},{icon:"↻",run:()=>this.flash("agent.prompt · retry sent")}];
+    const out=[];
+
+    if(p.status==="blocked"){
+      out.push(mk({isUser:true,align:"flex-end",text:id==="w3:p1"?"pull latest and set up billing":"add the layout guard we talked about",ts:"11m"}));
+      out.push(mk({isText:true,text:"Ready to apply. This step needs your approval before I continue.",actions:actions}));
+      out.push(mk({isBlocked:true,text:m.q,ts:m.since,out:p.tail,
+        choices:CHOICES.map(c=>Object.assign({},c,{send:()=>this.flash("agent.send_keys "+id+" → "+c.key)}))}));
+      return out;
+    }
+    if(p.status==="done"){
+      out.push(mk({isUser:true,align:"flex-end",text:"add a migration for pane tokens",ts:"22m"}));
+      out.push(mk({isTool:true,tool:"bash",text:"bun run db:generate",okLabel:"ok",okColor:GREEN,open:!!st.open.t0,
+        toggle:()=>this.setState({open:Object.assign({},st.open,{t0:!st.open.t0})}),chev:st.open.t0?"▾":"▸",
+        out:"✔ 0031_pane_tokens.sql\n1 table altered, 2 indexes added"}));
+      out.push(mk({isText:true,text:"Migration written and applied to herdr_dev. Nothing to review beyond the SQL file.",actions:actions}));
+      return out;
+    }
+    if(!p.agent){
+      out.push(mk({isText:true,text:"This pane is a plain terminal, not an agent. Switch to raw to read its scrollback, or use pane.run to send a command.",actions:[]}));
+      return out;
+    }
+
+    out.push(mk({isUser:true,align:"flex-end",text:"the pane grid wraps badly on narrow screens — move it to CSS grid with an explicit column count",ts:"6m"}));
+    out.push(mk({isReasoning:true,text:"Thought for 8s",open:!!st.open.r0,chev:st.open.r0?"▾":"▸",
+      toggle:()=>this.setState({open:Object.assign({},st.open,{r0:!st.open.r0})}),
+      out:"PaneGrid uses flex-wrap, so cells reflow unpredictably at narrow widths.\nAn explicit column count passed as a prop, plus a derived row count, gives deterministic layout and keeps PaneCell unchanged."}));
+    out.push(mk({isTool:true,tool:"read",text:"src/lib/PaneGrid.svelte",okLabel:"44 lines",okColor:"#737378",
+      open:!!st.open.t0,chev:st.open.t0?"▾":"▸",toggle:()=>this.setState({open:Object.assign({},st.open,{t0:!st.open.t0})}),
+      out:".grid { display: flex; flex-wrap: wrap; }\n→ no explicit column control"}));
+    out.push(mk({isText:true,text:"Switched it to CSS grid with a cols prop and a derived rows value. PaneCell now also gets a focused flag so the frame can highlight without a store lookup.",actions:actions}));
+    out.push(mk({isCode:true,file:"src/lib/PaneGrid.svelte",lang:"svelte",copyLabel:st.copied2?"copied":"copy",
+      copy:()=>{this.setState({copied2:true});this.flash("snippet copied");setTimeout(()=>this.setState({copied2:false}),1600);},
+      lines:SNIPPET.map((l,i)=>({num:String(17+i),tokens:tok(l)}))}));
+    out.push(mk({isDiff:true,file:"src/lib/PaneGrid.svelte",text:"3 files changed",out:"+ grid-template-columns: repeat(var(--cols), minmax(0, 1fr));"}));
+    return out;
+  }
+
+  renderVals(){
+    const st=this.state,me=this.paneOf(st.pane),p=me.p,pm=META[st.pane]||{};
+    const sp=this.space(),tb=this.tab();
+    const forced=this.props.layout||"auto";
+    const wide=forced==="auto"?st.w>=880:forced==="desktop";
+    // on desktop the sidebar IS the agent inbox, and lists every space
+    let v=st.view;
+    if(wide&&v==="inbox")v="chat";
+    if(wide&&v==="spaces")v="space";
+    const blockedPanes=[];
+    SPACES.forEach(s=>s.tabs.forEach(t=>t.panes.forEach(x=>{if(x.status==="blocked")blockedPanes.push({s:s,p:x});})));
+    const dk=DIFFS[st.diff];
+    const spacesTabActive=v==="spaces"||v==="space";
+    const gutter=wide?"max(28px, calc(50% - 430px))":"14px";
+
+    return {
+      isWide:wide,isNarrow:!wide,showCalls:this.props.showSocketCalls!==false,
+      chatPad:wide?("26px "+gutter+" 26px"):"16px 14px 20px",
+      composerPad:wide?("14px "+gutter+" 22px"):"10px 12px 20px",
+
+      pagePad:wide?("22px "+gutter+" 40px"):"14px 14px 96px",
+      headPad:wide?("14px "+gutter+" 14px"):"6px 18px 12px",
+      barPad:wide?("12px "+gutter+" 12px"):"4px 14px 11px",
+      stripPad:wide?("11px "+gutter):"11px 14px",
+      wrapFlex:st.wrap?"wrap":"nowrap",
+      isInbox:v==="inbox",isChat:v==="chat",isDiff:v==="diff",isSpaces:v==="spaces",isSpace:v==="space",isSettings:v==="settings",
+      showNav:!wide&&(v==="inbox"||v==="spaces"||v==="settings"||v==="space"),
+      sessionLine:"default session · "+SPACES.length+" spaces · connected",
+      shortSession:"default",
+      goInbox:()=>this.go(wide?"chat":"inbox"),goSpaces:()=>this.go(wide?"space":"spaces"),
+      goChat:()=>this.go("chat"),goDiff:()=>this.go("diff"),
+      nav:[["chat","◉","Agents"],["spaces","⌗","Spaces"],["settings","⚙","Settings"]].map(a=>{
+        const key=a[0]==="chat"?(wide?"chat":"inbox"):a[0];
+        const on=a[0]==="spaces"?spacesTabActive:(a[0]==="chat"?(v==="chat"||v==="diff"||v==="inbox"):a[0]===v);
+        return {icon:a[1],label:a[2],go:()=>this.go(a[0]==="spaces"&&wide?"space":key),
+          bg:on?"rgba(255,255,255,.08)":"transparent",fg:on?"#fafafa":"#5c5c63",
+          border:on?"rgba(255,255,255,.16)":"rgba(255,255,255,.08)"};
+      }),
+
+      blockedCount:String(blockedPanes.length),
+      blocked:blockedPanes.map(b=>({name:(META[b.p.id]||{}).name||b.p.label,pane:b.p.id,space:b.s.label,
+        question:(META[b.p.id]||{}).q||b.p.sub,since:(META[b.p.id]||{}).since||"",open:()=>this.openPane(b.p.id)})),
+
+      spaces:SPACES.map(s=>{
+        const all=[];s.tabs.forEach(t=>t.panes.forEach(x=>all.push(x)));
+        const ag=all.filter(x=>x.agent),bl=ag.some(x=>x.status==="blocked"),wk=ag.some(x=>x.status==="working");
+        return {label:s.label,branch:s.branch,cwd:s.cwd,initial:s.label.slice(0,2),hasWorktree:s.worktree,
+          rollup:bl?"blocked":wk?"working":ag.length?"idle":"—",
+          rollupColor:bl?RED:wk?AMBER:"#737378",
+          counts:s.tabs.length+(s.tabs.length===1?" tab · ":" tabs · ")+all.length+(all.length===1?" pane":" panes"),
+          open:()=>this.setState({view:"space",spaceId:s.id,tabId:s.tabs[0].id}),
+          rename:()=>{this.setState({spaceId:s.id});this.ask("renameSpace",s.label,s.label);},
+          close:()=>{this.setState({spaceId:s.id});this.ask("closeSpace",s.label);},
+          agents:ag.map(x=>({name:(META[x.id]||{}).name||x.label,pane:x.id,title:(META[x.id]||{}).title||x.sub,
+            status:x.status,dot:DOT[x.status],since:(META[x.id]||{}).since||"",open:()=>this.openPane(x.id),
+            selBg:x.id===st.pane?"rgba(255,255,255,.07)":"transparent",
+            selBorder:x.id===st.pane?"rgba(255,255,255,.16)":"transparent"}))};
+      }),
+      spaceSummary:(()=>{const t=SPACES.reduce((n,s)=>n+s.tabs.length,0);return SPACES.length+(SPACES.length===1?" space · ":" spaces · ")+t+(t===1?" tab":" tabs");})(),
+      openCreateSpace:()=>this.ask("space"),
+
+      space:{label:sp.label,cwd:sp.cwd},
+      renameSpace:()=>this.ask("renameSpace",sp.label,sp.label),
+      tabs:sp.tabs.map(t=>({label:t.label,paneCount:String(t.panes.length),
+        attention:t.panes.some(x=>x.status==="blocked"),
+        border:t.id===tb.id?"rgba(255,255,255,.28)":"rgba(255,255,255,.1)",
+        bg:t.id===tb.id?"rgba(255,255,255,.08)":"transparent",
+        fg:t.id===tb.id?"#fafafa":"#8a8a92",pick:()=>this.setState({tabId:t.id})})),
+      tab:{label:tb.label,id:tb.id},
+      openCreateTab:()=>this.ask("tab"),openSplit:()=>this.ask("split"),
+      renameTab:()=>this.ask("renameTab",tb.label,tb.label),closeTab:()=>this.ask("closeTab"),
+      panes:tb.panes.map(x=>({id:x.id,label:x.label,sub:x.sub,tail:x.tail,dot:DOT[x.status],
+        openLabel:x.agent?"Chat":"Read",
+        open:()=>x.agent?this.openPane(x.id):this.setState({view:"chat",pane:x.id,mode:"raw"}),
+        rename:()=>this.ask("renamePane",x.id,x.label),close:()=>this.ask("closePane",x.id)})),
+
+      active:{name:pm.name||p.label,status:p.status,dot:DOT[p.status],space:me.s.label,pane:p.id},
+      showRaw:st.mode==="raw",showBubbles:st.mode==="chat",
+      setRaw:()=>this.setState({mode:"raw"}),setBubbles:()=>this.setState({mode:"chat"}),
+      bubbleBg:st.mode==="chat"?"#fafafa":"transparent",bubbleFg:st.mode==="chat"?"#18181b":"#8a8a92",
+      rawBg:st.mode==="raw"?"#fafafa":"transparent",rawFg:st.mode==="raw"?"#18181b":"#8a8a92",
+      rawLines:RAWCOL.map(r=>({t:r[0]||" ",c:r[1]})),
+      messages:this.buildMessages(),
+      isWorking:p.status==="working",workingLabel:"working · editing PaneCell.svelte",
+      quick:(p.status==="blocked"?["y","n","esc","ctrl+c","/status"]:["continue","run tests","git diff","esc","ctrl+c"]).map(q=>({
+        label:q,send:()=>this.flash((q.length<5?"agent.send_keys → ":"agent.prompt → ")+q)})),
+      inputActions:[{icon:"⌘",run:()=>this.flash("saved prompts")},{icon:"⌥",run:()=>this.flash("raw key sender")},{icon:"@",run:()=>this.flash("attach a repo path")}],
+      inputPlaceholder:"Prompt "+(pm.name||p.label)+"…",
+      sendHint:p.status==="blocked"?"blocked — answer above":"agent.prompt",
+      sendBg:st.draft?"#fafafa":"rgba(255,255,255,.12)",sendFg:st.draft?"#18181b":"#5c5c63",
+      draft:st.draft,onDraft:e=>this.setState({draft:e.target.value}),
+      send:()=>{if(!this.state.draft)return;this.flash("agent.prompt → "+p.id);this.setState({draft:""});},
+
+      diffFile:st.diff,diffAdd:String(dk.add),diffDel:String(dk.del),diffLang:dk.lang,
+      files:Object.keys(DIFFS).map(k=>({name:k.split("/").pop(),add:String(DIFFS[k].add),del:String(DIFFS[k].del),
+        border:k===st.diff?"rgba(255,255,255,.28)":"rgba(255,255,255,.1)",
+        bg:k===st.diff?"rgba(255,255,255,.07)":"transparent",fg:k===st.diff?"#fafafa":"#8a8a92",
+        pick:()=>this.setState({diff:k})})),
+      diffLines:dk.lines.map(r=>({num:r[0],sign:r[1],tokens:tok(r[2]),
+        bg:r[1]==="+"?"oklch(0.696 0.17 162.48 / 9%)":r[1]==="-"?"oklch(0.645 0.246 16.439 / 9%)":"transparent",
+        mark:r[1]==="+"?GREEN:r[1]==="-"?RED:"transparent",
+        signColor:r[1]==="+"?GREEN:r[1]==="-"?REDT:"#4a4a52"})),
+      wrapCss:st.wrap?"pre-wrap":"pre",wrapLabel:st.wrap?"on":"off",
+      toggleWrap:()=>this.setState({wrap:!st.wrap}),
+      copyLabel:st.copied?"Copied":"Copy path",
+      copyPath:()=>{this.setState({copied:true});this.flash("copied "+st.diff);setTimeout(()=>this.setState({copied:false}),1600);},
+
+      themes:[["herdr-dark","#0a0a0a","#fafafa",GREEN],["ash","#18181b","#a1a1aa","#e4e4e7"],["gruvbox","#282828","#ebdbb2","#d79921"]].map(t=>({
+        name:t[0],s1:t[1],s2:t[2],s3:t[3],fg:st.theme===t[0]?"#fafafa":"#8a8a92",
+        border:st.theme===t[0]?"rgba(255,255,255,.3)":"rgba(255,255,255,.08)",
+        cardBg:st.theme===t[0]?"rgba(255,255,255,.05)":"#141416",
+        pick:()=>{this.setState({theme:t[0]});this.flash('[theme] name = "'+t[0]+'"');}})),
+      toggles:[["notify","Push when blocked","Notify on pane.agent_status_changed → blocked"],
+        ["follow","Follow focused pane","Open whatever the desktop client has focused"],
+        ["ansi","Keep ANSI colors in raw","pane.read --format ansi"]].map(t=>({
+        name:t[1],desc:t[2],trackBg:st.tg[t[0]]?GREEN:"rgba(255,255,255,.14)",
+        knobLeft:st.tg[t[0]]?"18px":"2px",knobBg:st.tg[t[0]]?"#0a0a0a":"#fafafa",
+        flip:()=>{const n=Object.assign({},this.state.tg);n[t[0]]=!n[t[0]];this.setState({tg:n});}})),
+      serverInfo:[{k:"bridge",v:"go · :7331"},{k:"herdr socket",v:"~/.config/herdr/herdr.sock"},{k:"herdr version",v:"0.8.2"},{k:"protocol",v:"ok"},{k:"bridge uptime",v:"6d 4h"}],
+      reloadConfig:()=>this.flash("server.reload_config → ok"),
+
+      sheetOpen:!!st.sheet,sheet:st.sheet||{},
+      sheetValue:st.sv,sheetCwd:st.scwd,
+      onSheetValue:e=>this.setState({sv:e.target.value}),onSheetCwd:e=>this.setState({scwd:e.target.value}),
+      closeSheet:()=>this.setState({sheet:null,sv:"",scwd:""}),confirmSheet:()=>this.confirm(),
+      toast:st.toast
+    };
+  }
+}
+</script>
+</body>
+</html>
