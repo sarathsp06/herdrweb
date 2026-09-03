@@ -1,0 +1,45 @@
+@import '@fontsource/geist-sans/400.css';
+@import '@fontsource/geist-sans/500.css';
+@import '@fontsource/geist-sans/600.css';
+@import '@fontsource/geist-sans/700.css';
+@import '@fontsource/geist-mono/400.css';
+@import '@fontsource/geist-mono/500.css';
+@import '@fontsource/geist-mono/600.css';
+@import './lib/tokens.css';
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; height: 100%; }
+
+body {
+  background: var(--page-bg);
+  color: var(--text-1);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.45;
+  -webkit-font-smoothing: antialiased;
+  overscroll-behavior: none;
+}
+
+#app { min-height: 100%; background: var(--app-bg); }
+
+button { font-family: inherit; color: inherit; cursor: pointer; }
+
+.mono { font-family: var(--font-mono); font-feature-settings: 'tnum' 1; }
+.prose { text-wrap: pretty; }
+
+/* hide scrollbars but keep scrolling */
+* { scrollbar-width: none; }
+*::-webkit-scrollbar { width: 0; height: 0; }
+
+:focus-visible { outline: 2px solid var(--control-selected-2); outline-offset: 2px; }
+
+@keyframes hpulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
+@keyframes hsheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
+@keyframes hbounce { 0%, 100% { transform: translateY(0); opacity: 0.5; } 50% { transform: translateY(-4px); opacity: 1; } }
+
+.screen-title { font-size: 21px; line-height: 1.1; font-weight: 600; letter-spacing: -0.02em; }
+.section-label {
+  font-size: 11px; font-weight: 600; text-transform: uppercase;
+  letter-spacing: 0.05em; color: var(--text-3b);
+}
