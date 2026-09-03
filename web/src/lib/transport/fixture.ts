@@ -1,4 +1,4 @@
-import type { Call, CallResult, ConnState, Message, SessionEvent, Snapshot } from '$lib/protocol';
+import type { Call, CallResult, ConnState, SessionEvent, Snapshot } from '$lib/protocol';
 import type { Transport } from './index';
 
 // README mock: four spaces. Agent panes carry transcripts; the diff fixture
@@ -95,32 +95,6 @@ export const FIXTURE_SNAPSHOT: Snapshot = {
       worktree: null,
       tabs: [{ id: 'w4:t1', label: 'shell', panes: [pane('w4:p1', 'zsh', 'zsh', 'idle', false, ['~/dotfiles ❯'])] }]
     }
-  ]
-};
-
-export const FIXTURE_TRANSCRIPTS: Record<string, Message[]> = {
-  'w1:p2': [
-    { kind: 'user', id: 'm1', text: 'Wire the chat/raw switch into the pane route and keep scroll pinned.', caption: 'agent.prompt · 6m' },
-    { kind: 'reasoning', id: 'm2', summary: 'Thought for 8s', body: 'The switch changes mode; scrolling must re-pin after paint. Use tick() then scroll.' },
-    { kind: 'agent', id: 'm3', text: 'Added a two-segment switch and a post-update scroll. Applying the layout patch now.' },
-    { kind: 'tool', id: 'm4', name: 'read_file', arg: 'src/routes/+layout.svelte', result: '44 lines', ok: true, output: 'export let data;\n// ...layout...' },
-    { kind: 'code', id: 'm5', path: 'src/routes/+layout.svelte', lang: 'svelte', code: "<script lang=\"ts\">\n  import '../app.css';\n  let { children } = $props();\n</script>\n{@render children()}" },
-    { kind: 'diff', id: 'm6', files: [{ path: 'src/routes/+layout.svelte', add: 24, del: 0 }], add: 24, del: 0, preview: '+  import { session } from "$lib/session/store";' },
-    { kind: 'blocked', id: 'm7', question: 'Apply patch to src/routes/+layout.svelte?', terminal: '? Apply patch to src/routes/+layout.svelte? (y/n)\n  1 file changed, 24 insertions(+)', age: '4m' }
-  ],
-  'w1:p1': [
-    { kind: 'user', id: 'a1', text: 'Run the unit tests and keep them green.', caption: 'agent.prompt · 2m' },
-    { kind: 'agent', id: 'a2', text: 'Running vitest in watch mode.' },
-    { kind: 'working', id: 'a3', label: 'working · editing PaneCell.svelte' }
-  ],
-  'w2:p1': [
-    { kind: 'user', id: 'b1', text: 'Add an index to speed up the invoices query.', caption: 'agent.prompt · 20m' },
-    { kind: 'agent', id: 'b2', text: 'Wrote migration 0042 adding a composite index. Done.' },
-    { kind: 'diff', id: 'b3', files: [{ path: 'migrations/0042_add_index.sql', add: 6, del: 0 }], add: 6, del: 0, preview: '+CREATE INDEX idx_invoices_customer ON invoices(customer_id, created_at);' }
-  ],
-  'w3:p1': [
-    { kind: 'user', id: 'c1', text: 'Clean up the legacy billing columns.', caption: 'agent.prompt · 1m' },
-    { kind: 'blocked', id: 'c2', question: 'Drop column invoices.legacy_total? This is irreversible.', terminal: '? Drop column invoices.legacy_total? This is irreversible. (y/n)', age: '1m' }
   ]
 };
 

@@ -12,12 +12,11 @@ test.describe('routes reachable (phone)', () => {
     await expect(page.getByRole('button', { name: /hedr-web/ }).first()).toBeVisible();
   });
 
-  test('agent row opens chat with the blocked approval card', async ({ page }) => {
+  test('agent row opens the pane (raw terminal)', async ({ page }) => {
     await page.goto('/' + q);
     await page.getByRole('button', { name: /codex w1:p2/ }).first().click();
     await expect(page).toHaveURL(/\/pane\/w1(%3A|:)p2/);
-    await expect(page.getByText('blocked', { exact: true }).first()).toBeVisible();
-    await expect(page.getByRole('button', { name: 'Yes', exact: true })).toBeVisible();
+    await expect(page.getByPlaceholderText('Message the agent')).toBeVisible();
   });
 
   test('composer shows nav keys and no free-text chips', async ({ page }) => {
@@ -27,13 +26,10 @@ test.describe('routes reachable (phone)', () => {
     await expect(page.getByRole('button', { name: 'run tests' })).toHaveCount(0);
   });
 
-  test('raw mode shows the pane.read caption when dev captions on', async ({ page }) => {
-    await page.goto('/pane/w1%3Ap2' + q);
-    // enable dev captions via settings toggle then return
+  test('pane shows the pane.read caption when dev captions on', async ({ page }) => {
     await page.goto('/settings' + q);
     await page.locator('.row', { hasText: 'Developer captions' }).getByRole('switch').click();
     await page.goto('/pane/w1%3Ap2' + q);
-    await page.getByRole('button', { name: 'raw' }).click();
     await expect(page.getByText(/pane\.read . source=recent_unwrapped/)).toBeVisible();
   });
 

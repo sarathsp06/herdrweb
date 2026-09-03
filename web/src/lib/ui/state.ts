@@ -3,7 +3,6 @@ import { browser } from '$app/environment';
 import type { Config } from '$lib/protocol';
 
 // View-local UI state (selection, draft, collapse, theme, toggles, toast, sheet).
-export const mode = writable<'chat' | 'raw'>('chat');
 export const draft = writable<string>('');
 export const wrap = writable<boolean>(false);
 export const toast = writable<string>('');

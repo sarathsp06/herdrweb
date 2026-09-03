@@ -3,7 +3,7 @@
   import { goto } from '$app/navigation';
   import { session } from '$lib/session/live';
   import { findPaneIn } from '$lib/session/derive';
-  import { navOpen, mode } from '$lib/ui/state';
+  import { navOpen } from '$lib/ui/state';
   import StatusPill from '$lib/ui/StatusPill.svelte';
 
   const s = session();
@@ -56,12 +56,6 @@
   </nav>
   <div class="right">
     {#if paneRef}<StatusPill status={paneRef.pane.status} />{/if}
-    {#if onPane}
-      <div class="switch">
-        <button class:active={$mode === 'chat'} onclick={() => mode.set('chat')}>chat</button>
-        <button class:active={$mode === 'raw'} onclick={() => mode.set('raw')}>raw</button>
-      </div>
-    {/if}
     <button class="gear" class:active={path.startsWith('/settings')} aria-label="settings" title="settings" onclick={() => goto('/settings')}>⚙</button>
   </div>
 </header>
@@ -81,9 +75,6 @@
   .crumb.link:hover { color: var(--text-1); background: var(--surface-tint); }
   .crumb.cur { color: var(--text-1); font-weight: 600; }
   .right { display: flex; align-items: center; gap: 8px; flex: none; }
-  .switch { display: flex; background: var(--code-surface); border: 1px solid var(--control); border-radius: var(--r-chip); overflow: hidden; }
-  .switch button { min-height: 32px; padding: 0 12px; background: none; border: none; color: var(--text-3); font-size: 12px; }
-  .switch button.active { color: var(--app-bg); background: var(--text-1); }
   .gear { width: 34px; height: 34px; flex: none; border-radius: var(--r-chip); border: 1px solid var(--control); background: var(--card); color: var(--text-2); font-size: 15px; }
   .gear:hover, .gear.active { background: var(--surface-tint); color: var(--text-1); }
 </style>

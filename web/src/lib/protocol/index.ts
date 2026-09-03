@@ -81,20 +81,6 @@ export type Call =
 
 export type CallResult = { ok?: boolean; lines?: string[]; read?: { text?: string }; [k: string]: unknown };
 
-// ---- Chat transcript message kinds ----
-export interface CodeLine { tokens: { text: string; cls?: string }[] }
-export interface DiffFile { path: string; add: number; del: number }
-
-export type Message =
-  | { kind: 'user'; id: string; text: string; caption: string }
-  | { kind: 'reasoning'; id: string; summary: string; body: string }
-  | { kind: 'agent'; id: string; text: string }
-  | { kind: 'tool'; id: string; name: string; arg: string; result: string; ok: boolean; output: string }
-  | { kind: 'code'; id: string; path: string; lang: string; code: string }
-  | { kind: 'diff'; id: string; files: DiffFile[]; add: number; del: number; preview: string }
-  | { kind: 'blocked'; id: string; question: string; terminal: string; age: string }
-  | { kind: 'working'; id: string; label: string };
-
 export interface Config {
   theme: 'herdr-dark' | 'ash' | 'gruvbox' | 'solarized-light';
   notify: boolean; // push when blocked

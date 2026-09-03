@@ -59,7 +59,7 @@
       rows="1"
     ></textarea>
     <div class="foot">
-      <span class="hint mono">{blocked ? 'blocked — answer above' : $config.devCaptions ? 'agent.prompt' : ''}</span>
+      <span class="hint mono">{blocked ? 'agent blocked — reply or use the keys above' : $config.devCaptions ? 'agent.prompt' : ''}</span>
       <button class="send" class:ready={$draft.trim().length > 0} aria-label="send" onclick={() => send()}>↑</button>
     </div>
   </div>
