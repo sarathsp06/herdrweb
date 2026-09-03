@@ -1,0 +1,29 @@
+{
+  "type": "snapshot",
+  "spaces": [
+    {
+      "id": "w1",
+      "label": "api",
+      "cwd": "~/code/api",
+      "branch": "main",
+      "worktree": "~/.herdr/worktrees/api",
+      "tabs": [
+        {
+          "id": "w1:t1",
+          "label": "edit",
+          "panes": [
+            {
+              "id": "w1:p1",
+              "label": "claude",
+              "sub": "claude · editing PaneCell.svelte",
+              "status": "working",
+              "agent": true,
+              "tail": ["compiling…", "ok"]
+            }
+          ]
+        }
+      ]
+    }
+  ],
+  "focus": { "spaceId": "w1", "tabId": "w1:t1", "paneId": "w1:p1" }
+}
