@@ -1,12 +1,27 @@
+<div align="center">
+
+<img src="web/static/icon-192.png" width="88" alt="Herdr Web logo" />
+
 # Herdr Web
+
+**Your coding agents, in one inbox — on any device.**
+
+[![Release](https://img.shields.io/github/v/release/sarathsp06/herdrweb?sort=semver&style=flat-square)](https://github.com/sarathsp06/herdrweb/releases)
+[![Go](https://img.shields.io/badge/Go-1.24-00ADD8?style=flat-square&logo=go)](go.mod)
+[![Platforms](https://img.shields.io/badge/platforms-linux%20%7C%20macOS-555?style=flat-square)](#install)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](https://opensource.org/license/mit)
+
+[Install](#install) · [Screens](#screens) · [Mobile](#mobile) · [Contributing](#contributing)
+
+</div>
 
 A single-operator web client for [Herdr](https://herdr.dev), the terminal/agent
 multiplexer. The organizing idea: **agents, not terminals, are the primary
 objects.** The default screen is an inbox of every coding agent across your
-spaces, sorted so the ones that need you surface first. Raw terminal scrollback
-is available but never the default.
+spaces, sorted so the ones that need you surface first; raw terminal scrollback
+is one tap away but never the default.
 
-It ships as **one self-contained Go binary**: a SvelteKit UI embedded into a Go
+It ships as **one self-contained Go binary** — a SvelteKit UI embedded into a Go
 bridge that owns a single connection to the Herdr socket
 (`~/.config/herdr/herdr.sock`) and fans live session data to the browser.
 
@@ -15,21 +30,13 @@ browser (SvelteKit)  ⇄  Go bridge (herdr-bridge)  ⇄  Herdr socket
         WebSocket + embedded static assets, one loopback origin
 ```
 
-## Screenshots
+## Features
 
-| Inbox (agents + spaces) | Spaces | Space detail |
-|---|---|---|
-| ![Inbox](docs/screenshots/inbox.png) | ![Spaces](docs/screenshots/spaces.png) | ![Space detail](docs/screenshots/space-detail.png) |
-
-| Raw terminal pane | Settings |
-|---|---|
-| ![Pane](docs/screenshots/pane.png) | ![Settings](docs/screenshots/settings.png) |
-
-Desktop layout (≥ 880px) — the sidebar *is* the inbox:
-
-![Desktop](docs/screenshots/desktop.png)
-
-> Captured against a live bridge (`make run`) with `make screenshots`.
+- **Agent inbox first** — every agent across your spaces, blocked ones on top; status shown by glyph, colour, and word.
+- **Raw terminal panes** — exact scrollback via `pane.read`, auto-fit to any phone width, with a key row and a composer.
+- **Installable PWA + push** — add to home screen and get a Web Push when an agent blocks or finishes, even with the app closed.
+- **One binary, zero deps** — the UI is embedded; drop `herdr-bridge` on a machine and run it.
+- **Live & multiplexed** — one Herdr connection fanned to every browser over a thin WebSocket pass-through.
 
 # Using Herdr Web
 
@@ -46,9 +53,28 @@ herdr-bridge        # serves http://127.0.0.1:7331
 ```
 
 Open <http://127.0.0.1:7331>. The bridge connects to your running Herdr server
-and streams live spaces, tabs, panes, and agent status. Append `?fixtures=1` to
-any URL to explore the mocked dataset without a live server. To use it from your
+and streams live spaces, tabs, panes, and agent status. To use it from your
 **phone**, see [Mobile](#mobile).
+
+> [!TIP]
+> Append `?fixtures=1` to any URL to explore the mocked dataset without a live
+> Herdr server.
+
+## Screenshots
+
+| Inbox (agents + spaces) | Spaces | Space detail |
+|---|---|---|
+| ![Inbox](docs/screenshots/inbox.png) | ![Spaces](docs/screenshots/spaces.png) | ![Space detail](docs/screenshots/space-detail.png) |
+
+| Raw terminal pane | Settings |
+|---|---|
+| ![Pane](docs/screenshots/pane.png) | ![Settings](docs/screenshots/settings.png) |
+
+Desktop layout (≥ 880px) — the sidebar *is* the inbox:
+
+![Desktop](docs/screenshots/desktop.png)
+
+> Captured against a live bridge (`make run`) with `make screenshots`.
 
 ## Screens
 
@@ -108,8 +134,12 @@ nav_corner = "bottom-right"  # phone nav button: bottom-right | bottom-left | to
 dev_captions = false   # show socket-call captions (developer setting)
 ```
 
-The bridge binds to `127.0.0.1:7331` by default (loopback only, no auth —
-single operator on localhost). Override with `-addr`, `-socket`, and `-config`.
+Flags: `-addr` (listen address), `-socket` (Herdr socket path), `-config`.
+
+> [!WARNING]
+> The bridge has **no authentication** and binds `127.0.0.1:7331` (loopback)
+> by design — one operator, one machine. Only expose it over a private network
+> such as a [tailnet](#mobile); never bind `0.0.0.0`.
 
 # Contributing
 
