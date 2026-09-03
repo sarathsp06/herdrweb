@@ -34,6 +34,24 @@ Desktop layout (≥ 880px) — the sidebar *is* the inbox:
 
 ## Quick start
 
+### Install a release (recommended)
+
+Every `v*` tag publishes a prebuilt, self-contained binary for `linux` and
+`darwin` on `amd64`/`arm64`. Grab the one for your OS/arch from the
+[releases page](https://github.com/sarathsp06/herdrweb/releases) — the binary
+embeds the UI, so there is nothing else to install:
+
+```bash
+VER=0.1.0                    # latest tag on the releases page
+OS=darwin ARCH=arm64         # or OS=linux; ARCH=amd64
+curl -fsSL "https://github.com/sarathsp06/herdrweb/releases/download/v${VER}/herdrweb_${VER}_${OS}_${ARCH}.tar.gz" | tar -xz
+./herdr-bridge               # serves http://127.0.0.1:7331
+```
+
+Verify the download against the release's `checksums.txt` if you like.
+
+### Build from source
+
 ```bash
 make build      # builds the SvelteKit UI, embeds it, compiles the binary -> bin/herdr-bridge
 make run        # build + run the bridge on http://127.0.0.1:7331
@@ -41,7 +59,8 @@ make run        # build + run the bridge on http://127.0.0.1:7331
 
 Open <http://127.0.0.1:7331>. The bridge connects to your running Herdr server
 and streams live spaces, tabs, panes, and agent status. Append `?fixtures=1` to
-any URL to explore the mocked dataset without a live server.
+any URL to explore the mocked dataset without a live server. To reach it from
+your **phone**, see [Mobile](#mobile-install-as-an-app--push-when-blocked).
 
 ### Development
 
@@ -97,20 +116,26 @@ single operator on localhost). Override with `-addr`, `-socket`, and `-config`.
 The UI is an installable PWA. On a phone, open the bridge and use the browser's
 **Add to Home Screen**; it launches standalone (own icon, no browser chrome).
 
-The typical setup is the Go bridge on your workstation reached from the phone
-over **Tailscale**. Two requirements for background push:
+The bridge binds to loopback only (see [Configuration](#configuration)), so to
+reach it from your phone put both devices on a
+**[Tailscale](https://tailscale.com) tailnet**. The recommended path is
+`tailscale serve`, which fronts the loopback bridge with a real HTTPS cert —
+also the **only** way background push works, since service workers and Web Push
+require a secure context (HTTPS or `localhost`):
 
-1. **A secure context.** Service workers and Web Push require HTTPS (or
-   `localhost`). Serve the bridge over your tailnet with a real cert:
+```bash
+tailscale serve --bg --https=443 127.0.0.1:7331
+```
 
-   ```bash
-   tailscale serve --bg --https=443 127.0.0.1:7331
-   ```
+Open `https://<machine>.<tailnet>.ts.net` on the phone and **Add to Home
+Screen** to install it. Then enable alerts in **Settings → Push when blocked**
+and accept the permission prompt; on iOS the app must be home-screen-installed
+first (iOS ≥ 16.4).
 
-   Then open `https://<machine>.<tailnet>.ts.net` on the phone and install it.
-2. **Enable notifications.** In **Settings → Push when blocked**, toggle it on
-   and accept the permission prompt. On iOS the app must be home-screen-installed
-   first (iOS ≥ 16.4).
+> **Plain-HTTP fallback (no push).** Bind the tailnet IP directly with
+> `./herdr-bridge -addr "$(tailscale ip -4):7331"` and open
+> `http://<tailnet-ip>:7331`. Reachable, but not a secure context — PWA install
+> and push are unavailable. Never bind `0.0.0.0`; the bridge has no auth.
 
 When an agent pane transitions to `blocked`, the bridge sends a Web Push
 (VAPID) to every enrolled browser; tapping it opens that pane's chat — even with
@@ -143,12 +168,20 @@ cd web && npm run test:e2e   # Playwright e2e (routes, breakpoint, sheet flows)
 
 ## Releases
 
-Cross-compiled, self-contained binaries are cut with
-[GoReleaser](https://goreleaser.com):
+Cross-compiled, self-contained binaries (`linux`/`darwin` × `amd64`/`arm64`)
+are cut with [GoReleaser](https://goreleaser.com). Pushing a `v*` tag runs the
+[release workflow](.github/workflows/release.yml), which builds the binaries and
+attaches them (with `checksums.txt`) to the GitHub Release:
+
+```bash
+git tag -a v0.1.0 -m "v0.1.0" && git push origin v0.1.0
+```
+
+Build locally without publishing:
 
 ```bash
 make snapshot   # local release build (no publish)
-make release    # tagged release
+make release    # tagged release (needs a tag)
 ```
 
 ## Credits
