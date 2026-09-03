@@ -6,6 +6,9 @@ project_name: herdrweb
 before:
   hooks:
     - make web
+    # `make web` rebuilds internal/webui/dist and removes the tracked .gitkeep;
+    # restore it so the tree is clean, else `goreleaser release` refuses to run.
+    - git checkout -- internal/webui/dist/.gitkeep
 
 builds:
   - id: herdr-bridge
