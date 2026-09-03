@@ -33,22 +33,10 @@ Desktop layout (≥ 880px) — the sidebar *is* the inbox:
 
 ## Quick start
 
-### Install (one line)
+### Install
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/sarathsp06/herdrweb/main/install.sh | sh
-```
-
-### Manual download
-
-Grab a prebuilt binary for your OS/arch (`linux`/`darwin` × `amd64`/`arm64`)
-from the [releases page](https://github.com/sarathsp06/herdrweb/releases):
-
-```bash
-VER=0.1.0                    # latest tag on the releases page
-OS=darwin ARCH=arm64         # or OS=linux; ARCH=amd64
-curl -fsSL "https://github.com/sarathsp06/herdrweb/releases/download/v${VER}/herdrweb_${VER}_${OS}_${ARCH}.tar.gz" | tar -xz
-./herdr-bridge               # serves http://127.0.0.1:7331
 ```
 
 ### Build from source
@@ -61,7 +49,7 @@ make run        # build + run the bridge on http://127.0.0.1:7331
 Open <http://127.0.0.1:7331>. The bridge connects to your running Herdr server
 and streams live spaces, tabs, panes, and agent status. Append `?fixtures=1` to
 any URL to explore the mocked dataset without a live server. To reach it from
-your **phone**, see [Mobile](#mobile-install-as-an-app--push-when-blocked).
+your **phone**, see [Mobile](#mobile).
 
 ### Development
 
@@ -116,36 +104,22 @@ dev_captions = false   # show socket-call captions (developer setting)
 The bridge binds to `127.0.0.1:7331` by default (loopback only, no auth —
 single operator on localhost). Override with `-addr`, `-socket`, and `-config`.
 
-## Mobile (install as an app + push when blocked)
+## Mobile
 
-The UI is an installable PWA. On a phone, open the bridge and use the browser's
-**Add to Home Screen**; it launches standalone (own icon, no browser chrome).
+The UI is an installable PWA — on a phone, **Add to Home Screen** to launch it
+standalone. Push alerts (an agent needs you, even with the app closed) require a
+**secure context**, so the bridge has to be reached over HTTPS.
 
-The bridge binds to loopback only (see [Configuration](#configuration)), so to
-reach it from your phone put both devices on a
-**[Tailscale](https://tailscale.com) tailnet**. The recommended path is
-`tailscale serve`, which fronts the loopback bridge with a real HTTPS cert —
-also the **only** way background push works, since service workers and Web Push
-require a secure context (HTTPS or `localhost`):
+The easy option is [Tailscale](https://tailscale.com): put both devices on the
+tailnet, then front the loopback bridge with a cert —
 
 ```bash
 tailscale serve --bg --https=443 127.0.0.1:7331
 ```
 
-Open `https://<machine>.<tailnet>.ts.net` on the phone and **Add to Home
-Screen** to install it. Then enable alerts in **Settings → Push when blocked**
-and accept the permission prompt; on iOS the app must be home-screen-installed
-first (iOS ≥ 16.4).
-
-> **Plain-HTTP fallback (no push).** Bind the tailnet IP directly with
-> `./herdr-bridge -addr "$(tailscale ip -4):7331"` and open
-> `http://<tailnet-ip>:7331`. Reachable, but not a secure context — PWA install
-> and push are unavailable. Never bind `0.0.0.0`; the bridge has no auth.
-
-When an agent pane transitions to `blocked`, the bridge sends a Web Push
-(VAPID) to every enrolled browser; tapping it opens that pane's chat — even with
-the app closed. VAPID keys and subscriptions are stored next to the config
-(`webpush.json`, `push-subs.json`); dead subscriptions are pruned automatically.
+Open `https://<machine>.<tailnet>.ts.net` on the phone, install it, and enable
+**Settings → Push when blocked** (iOS needs the app installed first). Any other
+HTTPS front — a reverse proxy, your own cert — works just as well.
 
 ## Layout
 
