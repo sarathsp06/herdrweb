@@ -20,9 +20,10 @@ test.describe('routes reachable (phone)', () => {
     await expect(page.getByRole('button', { name: 'Yes', exact: true })).toBeVisible();
   });
 
-  test('composer chips switch when blocked', async ({ page }) => {
+  test('composer shows nav keys and no free-text chips', async ({ page }) => {
     await page.goto('/pane/w1%3Ap2' + q);
-    await expect(page.getByRole('button', { name: '/status' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'up' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'enter' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'run tests' })).toHaveCount(0);
   });
 
@@ -33,7 +34,7 @@ test.describe('routes reachable (phone)', () => {
     await page.locator('.row', { hasText: 'Developer captions' }).getByRole('switch').click();
     await page.goto('/pane/w1%3Ap2' + q);
     await page.getByRole('button', { name: 'raw' }).click();
-    await expect(page.getByText(/pane\.read . source=recent-unwrapped/)).toBeVisible();
+    await expect(page.getByText(/pane\.read . source=recent_unwrapped/)).toBeVisible();
   });
 
   test('diff viewer toggles wrap', async ({ page }) => {

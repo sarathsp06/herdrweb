@@ -6,7 +6,7 @@
   import { width, BREAKPOINT } from '$lib/layout/responsive';
   import { config, navOpen } from '$lib/ui/state';
   import Sidebar from '$lib/screens/Sidebar.svelte';
-  import TabBar from '$lib/screens/TabBar.svelte';
+  import Breadcrumbs from '$lib/screens/Breadcrumbs.svelte';
   import Toast from '$lib/ui/Toast.svelte';
   import BottomSheet from '$lib/ui/BottomSheet.svelte';
 
@@ -55,30 +55,23 @@
     </div>
   {/if}
 
-  <main class="content" class:desktop class:full={fullscreen}>
-    {@render children()}
-  </main>
-
-  {#if !desktop && !fullscreen}
-    <TabBar {path} />
-  {/if}
-
-  {#if !$navOpen && !fullscreen}
-    <button class="navopen" aria-label="show navigation" title="show navigation" onclick={() => navOpen.set(true)}>☰</button>
-  {/if}
+  <div class="mainwrap">
+    <Breadcrumbs />
+    <main class="content" class:desktop class:full={fullscreen}>
+      {@render children()}
+    </main>
+  </div>
 </div>
 <Toast />
 <BottomSheet />
 
 <style>
-  .shell { min-height: 100vh; display: flex; }
-  .content { flex: 1; min-width: 0; }
+  .shell { height: 100vh; display: flex; overflow: hidden; }
+  .mainwrap { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100vh; }
+  .content { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; }
   .shell.desktop .content { padding: 0 max(28px, calc(50% - 560px)); }
   .shell.desktop .content.full { padding: 0; }
 
   .backdrop { position: fixed; inset: 0; z-index: 45; border: none; background: rgba(0, 0, 0, 0.5); }
   .drawer { position: fixed; top: 0; left: 0; bottom: 0; z-index: 46; width: min(88vw, 340px); background: var(--sidebar-bg); border-right: 1px solid var(--hairline); overflow-y: auto; box-shadow: 0 0 40px rgba(0, 0, 0, 0.45); }
-
-  .navopen { position: fixed; top: 10px; left: 10px; z-index: 44; width: 36px; height: 36px; border-radius: var(--r-chip); border: 1px solid var(--control); background: var(--card); color: var(--text-1); font-size: 16px; line-height: 1; box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3); }
-  .navopen:hover { background: var(--surface-tint); }
 </style>

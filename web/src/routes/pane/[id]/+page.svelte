@@ -3,9 +3,8 @@
   import { page } from '$app/stores';
   import { session } from '$lib/session/live';
   import { findPaneIn } from '$lib/session/derive';
-  import { mode, lastPane, config, navOpen } from '$lib/ui/state';
+  import { mode, lastPane, config } from '$lib/ui/state';
   import { getTranscript } from '$lib/chat/transcripts';
-  import StatusPill from '$lib/ui/StatusPill.svelte';
   import Composer from '$lib/chat/Composer.svelte';
   import UserBubble from '$lib/chat/UserBubble.svelte';
   import Reasoning from '$lib/chat/Reasoning.svelte';
@@ -76,17 +75,6 @@
 
 {#if ref}
   <section class="chat">
-    <header class="bar">
-      <button class="back" onclick={() => navOpen.update((v) => !v)} aria-label="toggle navigation">☰</button>
-      <div class="title">
-        <div class="line1"><span class="name">{ref.pane.label}</span> <StatusPill status={ref.pane.status} /></div>
-        <div class="line2 mono">{ref.space.label} · {ref.pane.id}</div>
-      </div>
-      <div class="switch">
-        <button class:active={$mode === 'chat'} onclick={() => mode.set('chat')} disabled={!ref.pane.agent}>chat</button>
-        <button class:active={$mode === 'raw'} onclick={() => mode.set('raw')}>raw</button>
-      </div>
-    </header>
 
     <div class="scroll" bind:this={scroller} onscroll={onScroll}>
       {#if $mode === 'raw'}
@@ -117,20 +105,11 @@
 {/if}
 
 <style>
-  .chat { display: flex; flex-direction: column; height: 100vh; }
-  .bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--hairline); }
-  .back { width: 32px; height: 32px; border-radius: var(--r-chip); border: none; background: none; color: var(--text-2); font-size: 22px; }
-  .title { flex: 1; min-width: 0; }
-  .line1 { display: flex; align-items: center; gap: 8px; font-size: 14px; font-weight: 600; }
-  .line2 { font-size: 11px; color: var(--text-4); }
-  .switch { display: flex; background: var(--code-surface); border: 1px solid var(--control); border-radius: var(--r-chip); overflow: hidden; }
-  .switch button { min-height: 32px; padding: 0 12px; background: none; border: none; color: var(--text-3); font-size: 12px; }
-  .switch button.active { background: var(--text-on-light); color: var(--text-1); background: #18181b; }
+  .chat { display: flex; flex-direction: column; height: 100%; }
   .scroll { flex: 1; overflow-y: auto; padding: 14px; }
   .transcript { display: flex; flex-direction: column; gap: 14px; max-width: 860px; margin: 0 auto; }
   .cap { font-size: 10.5px; color: var(--text-4); margin-bottom: 8px; }
   .raw { margin: 0; font-size: 14px; line-height: 1.6; color: var(--text-1); white-space: pre; overflow-x: auto; }
   .raw .add { color: var(--done); } .raw .del { color: var(--blocked-badge-text); } .raw .ok { color: var(--working); }
   .missing { padding: 40px; color: var(--text-4); }
-  @media (min-width: 880px) { .chat { height: 100vh; } }
 </style>
