@@ -17,20 +17,19 @@ browser (SvelteKit)  ⇄  Go bridge (herdr-bridge)  ⇄  Herdr socket
 
 ## Screenshots
 
-| Inbox (spaces + agents) | Chat — blocked approval | Diff viewer |
+| Inbox (agents + spaces) | Spaces | Space detail |
 |---|---|---|
-| ![Inbox](docs/screenshots/inbox.png) | ![Chat](docs/screenshots/chat-blocked.png) | ![Diff](docs/screenshots/diff.png) |
+| ![Inbox](docs/screenshots/inbox.png) | ![Spaces](docs/screenshots/spaces.png) | ![Space detail](docs/screenshots/space-detail.png) |
 
-| Spaces | Space detail | Settings |
-|---|---|---|
-| ![Spaces](docs/screenshots/spaces.png) | ![Space detail](docs/screenshots/space-detail.png) | ![Settings](docs/screenshots/settings.png) |
+| Raw terminal pane | Settings |
+|---|---|
+| ![Pane](docs/screenshots/pane.png) | ![Settings](docs/screenshots/settings.png) |
 
 Desktop layout (≥ 880px) — the sidebar *is* the inbox:
 
 ![Desktop](docs/screenshots/desktop.png)
 
-> Screenshots are generated with `make screenshots` against the built binary in
-> fixtures mode (`?fixtures=1`), which renders the README mock dataset.
+> Captured against a live bridge (`make run`) with `make screenshots`.
 
 ## Quick start
 
@@ -77,18 +76,20 @@ the socket traffic so the UI has live data during development.
   glyph + label + branch) and an **agents** section (status glyph + name +
   subtitle, with a grouped/flat toggle). Blocked agents sort first. Status is
   carried by glyph shape, colour, and word — never colour alone.
-- **Chat** (`/pane/:id`) — the core screen. One component per transcript kind
-  (user prompt, reasoning, agent text, tool call, code block, diff summary) and
-  the **blocked approval card**, whose Yes / Yes-don't-ask / No / esc buttons send
-  `agent.send_keys`. A `chat / raw` switch reveals coloured scrollback via
-  `pane.read`. The composer's quick-send chips change when the pane is blocked.
+- **Pane** (`/pane/:id`) — the core screen: raw terminal scrollback via
+  `pane.read`, auto-fit to the viewport width (a box diagram keeps its columns
+  on any phone) and follow-on-new-output. The composer routes by pane kind —
+  agent panes use `agent.prompt` + `agent.send_keys`, plain terminals use
+  `pane.send_text` + `pane.send_keys` — above a key row (↑ ↓ ← → ⏎ esc ⌃C).
 - **Diff viewer** (`/pane/:id/diff`) — unified diff highlighted with Shiki, a
   per-file chip strip, a soft-wrap toggle, and add/remove row tints.
 - **Spaces** (`/spaces`) + **space detail** (`/spaces/:id`) — space cards with
   rollup status; detail with a tab strip, pane cards, and add-tab / split-pane
   affordances.
-- **Settings** (`/settings`) — theme picker, behaviour toggles, and a read-only
-  server card. Writes persist to `config.toml` and call `server.reload_config`.
+- **Settings** (`/settings`) — theme picker (herdr-dark / ash / gruvbox /
+  solarized-light), UI text size, phone nav-button placement, and behaviour
+  toggles (push-when-blocked, follow focused pane, keep ANSI in raw, developer
+  captions). Writes persist to `config.toml` and call `server.reload_config`.
 
 Every mutating action routes through a confirmation **bottom sheet** first —
 nothing mutates on a single tap — and confirming fires a toast.
@@ -101,10 +102,12 @@ UI preferences live under a `[web]` table in the Herdr config
 
 ```toml
 [web]
-theme = "herdr-dark"   # herdr-dark | ash | gruvbox
-notify = true          # push when blocked
+theme = "herdr-dark"   # herdr-dark | ash | gruvbox | solarized-light
+notify = true          # push when an agent needs you (blocked/done)
 follow = true          # follow the focused pane
 ansi = true            # keep ANSI colours in raw mode
+font_scale = 1.0       # UI text-size multiplier
+nav_corner = "bottom-right"  # phone nav button: bottom-right | bottom-left | top
 dev_captions = false   # show socket-call captions (developer setting)
 ```
 
