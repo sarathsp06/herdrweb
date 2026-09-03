@@ -80,4 +80,10 @@
   .raw { margin: 0; font-size: 14px; line-height: 1.6; color: var(--text-1); white-space: pre; overflow-x: auto; }
   .raw .add { color: var(--done); } .raw .del { color: var(--blocked-badge-text); } .raw .ok { color: var(--working); }
   .missing { padding: 40px; color: var(--text-4); }
+  /* Narrow viewports (phones, small windows) can't show a desktop-width
+     terminal; soft-wrap so lines fit instead of scrolling sideways. Wider
+     screens keep true columns with horizontal scroll. */
+  @media (max-width: 879px) {
+    .raw { white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: hidden; }
+  }
 </style>
