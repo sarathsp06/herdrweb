@@ -3,10 +3,12 @@
   import { config, showToast } from '$lib/ui/state';
   import Toggle from '$lib/ui/Toggle.svelte';
   const s = session();
-  const themes: { id: 'herdr-dark' | 'ash' | 'gruvbox'; swatches: string[] }[] = [
+  type ThemeId = 'herdr-dark' | 'ash' | 'gruvbox' | 'solarized-light';
+  const themes: { id: ThemeId; swatches: string[] }[] = [
     { id: 'herdr-dark', swatches: ['#0a0a0a', '#fafafa', '#f0a500'] },
     { id: 'ash', swatches: ['#0d0d0f', '#e4e4e7', '#c9b458'] },
-    { id: 'gruvbox', swatches: ['#1d2021', '#ebdbb2', '#b8bb26'] }
+    { id: 'gruvbox', swatches: ['#1d2021', '#ebdbb2', '#b8bb26'] },
+    { id: 'solarized-light', swatches: ['#fdf6e3', '#586e75', '#b58900'] }
   ];
   const sizes: { label: string; scale: number }[] = [
     { label: 'S', scale: 0.9 },
@@ -24,7 +26,7 @@
   }
   async function reload() { await persist(); await s.request({ method: 'server.reload_config', params: {} }).catch(() => {}); showToast('config reloaded'); }
   function setConfig(patch: Partial<typeof $config>) { config.update((c) => ({ ...c, ...patch })); persist(); }
-  function pickTheme(id: 'herdr-dark' | 'ash' | 'gruvbox') {
+  function pickTheme(id: ThemeId) {
     config.update((c) => ({ ...c, theme: id }));
     document.documentElement.dataset.theme = id;
     reload();

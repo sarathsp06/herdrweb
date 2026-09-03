@@ -84,3 +84,63 @@
   --working: oklch(0.8 0.13 80);
   --done: oklch(0.72 0.13 140);
 }
+
+/* Solarized Light — the one light theme; overrides the full palette (surfaces,
+   text, control overlays, status, syntax, diff) so dark-assuming components
+   invert correctly. */
+[data-theme='solarized-light'] {
+  color-scheme: light;
+
+  --app-bg: #fdf6e3;      /* base3 */
+  --page-bg: #eae3d0;
+  --sidebar-bg: #eee8d5;  /* base2 */
+  --raised: #fbf3dd;
+  --card: #f5edd9;
+  --code-surface: #eee8d5;
+  --card-hover: #e9e1cd;
+  --toast-bg: #fbf3dd;
+
+  --text-1: #002b36;      /* base03 */
+  --text-on-light: #fdf6e3;
+  --text-2: #073642;      /* base02 */
+  --text-2b: #586e75;     /* base01 */
+  --text-3: #586e75;
+  --text-3b: #657b83;     /* base00 */
+  --text-4: #93a1a1;      /* base1 */
+  --text-disabled: #a9b3ac;
+  --gutter: #93a1a1;
+  --gutter-2: #839496;
+
+  --hairline: rgba(0, 43, 54, 0.10);
+  --control: rgba(0, 43, 54, 0.16);
+  --control-input: rgba(0, 43, 54, 0.20);
+  --control-selected: rgba(0, 43, 54, 0.22);
+  --control-selected-2: rgba(0, 43, 54, 0.38);
+  --surface-tint: rgba(0, 43, 54, 0.05);
+  --surface-tint-2: rgba(0, 43, 54, 0.08);
+
+  --working: #b58900;     /* yellow */
+  --blocked: #dc322f;     /* red */
+  --blocked-text: #c1201d;
+  --blocked-badge-text: #b31916;
+  --done: #859900;        /* green */
+  --idle: #93a1a1;
+  --unknown: #839496;
+  --worktree-text: #268bd2;   /* blue */
+  --worktree-bg: rgba(38, 139, 210, 0.14);
+
+  --blocked-grad: linear-gradient(180deg, rgba(220, 50, 47, 0.10), rgba(0, 43, 54, 0.02));
+  --blocked-border: rgba(220, 50, 47, 0.32);
+
+  --syn-keyword: #859900;
+  --syn-string: #2aa198;
+  --syn-number: #d33682;
+  --syn-func: #268bd2;
+  --syn-comp: #6c71c4;
+  --syn-comment: #93a1a1;
+  --syn-punct: #657b83;
+  --syn-default: #073642;
+
+  --diff-add-bg: rgba(133, 153, 0, 0.14);
+  --diff-del-bg: rgba(220, 50, 47, 0.12);
+}

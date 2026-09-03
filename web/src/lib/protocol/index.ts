@@ -96,7 +96,7 @@ export type Message =
   | { kind: 'working'; id: string; label: string };
 
 export interface Config {
-  theme: 'herdr-dark' | 'ash' | 'gruvbox';
+  theme: 'herdr-dark' | 'ash' | 'gruvbox' | 'solarized-light';
   notify: boolean; // push when blocked
   follow: boolean; // follow focused pane
   ansi: boolean; // keep ANSI colors in raw

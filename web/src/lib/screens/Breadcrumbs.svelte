@@ -83,7 +83,7 @@
   .right { display: flex; align-items: center; gap: 8px; flex: none; }
   .switch { display: flex; background: var(--code-surface); border: 1px solid var(--control); border-radius: var(--r-chip); overflow: hidden; }
   .switch button { min-height: 32px; padding: 0 12px; background: none; border: none; color: var(--text-3); font-size: 12px; }
-  .switch button.active { color: var(--text-1); background: #18181b; }
+  .switch button.active { color: var(--app-bg); background: var(--text-1); }
   .gear { width: 34px; height: 34px; flex: none; border-radius: var(--r-chip); border: 1px solid var(--control); background: var(--card); color: var(--text-2); font-size: 15px; }
   .gear:hover, .gear.active { background: var(--surface-tint); color: var(--text-1); }
 </style>

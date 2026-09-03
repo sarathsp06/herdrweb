@@ -30,7 +30,7 @@
   .pill { font-size: 10.5px; font-weight: 600; color: var(--blocked-badge-text); border: 1px solid var(--blocked-border); border-radius: var(--r-badge); padding: 2px 7px; }
   .age { font-size: 11px; color: var(--blocked-text); margin-left: auto; }
   .q { font-size: 13.5px; margin: 0 0 10px; color: var(--text-1); }
-  .term { background: rgba(0, 0, 0, 0.4); border-radius: var(--r-chip); padding: 10px 12px; font-size: 11.5px; color: var(--text-2b); white-space: pre-wrap; margin: 0 0 12px; }
+  .term { background: var(--code-surface); border: 1px solid var(--hairline); border-radius: var(--r-chip); padding: 10px 12px; font-size: 11.5px; color: var(--text-2b); white-space: pre-wrap; margin: 0 0 12px; }
   .btns { display: flex; gap: 8px; flex-wrap: wrap; }
   .btns button { min-height: 44px; padding: 0 16px; border-radius: var(--r-btn); font-weight: 600; font-size: 13.5px; border: 1px solid var(--control); background: none; color: var(--text-2); }
   .yes { background: var(--text-1); color: var(--text-on-light); border-color: transparent; }
