@@ -386,6 +386,7 @@ func (h *Hub) Handler() (http.Handler, error) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", h.handleWS)
 	mux.HandleFunc("/api/config", h.handleConfig)
+	mux.HandleFunc("/api/health", h.handleHealth)
 	mux.HandleFunc("/api/push/key", h.handlePushKey)
 	mux.HandleFunc("/api/push/subscribe", h.handlePushSubscribe)
 	mux.Handle("/", ui)

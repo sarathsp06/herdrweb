@@ -5,7 +5,6 @@
   import { rollupOf, countsOf, monogram, primaryPaneOf } from '$lib/session/derive';
   import { openSheet, showToast } from '$lib/ui/state';
   import StatusDot from '$lib/ui/StatusDot.svelte';
-  import Card from '$lib/ui/Card.svelte';
   import ButtonRow from '$lib/ui/ButtonRow.svelte';
 
   const s = session();

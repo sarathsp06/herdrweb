@@ -16,7 +16,7 @@ test.describe('routes reachable (phone)', () => {
     await page.goto('/' + q);
     await page.getByRole('button', { name: /codex w1:p2/ }).first().click();
     await expect(page).toHaveURL(/\/pane\/w1(%3A|:)p2/);
-    await expect(page.getByPlaceholderText('Message the agent')).toBeVisible();
+    await expect(page.getByPlaceholder('Message the agent')).toBeVisible();
   });
 
   test('composer shows nav keys and no free-text chips', async ({ page }) => {
