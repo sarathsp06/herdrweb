@@ -7,6 +7,7 @@
   import StatusPill from '$lib/ui/StatusPill.svelte';
 
   const s = session();
+  let { showNav = true }: { showNav?: boolean } = $props();
   const spaces = s.spaces;
   const path = $derived($page.url.pathname);
 
@@ -43,7 +44,7 @@
 </script>
 
 <header class="crumbbar">
-  <button class="nav" aria-label="toggle navigation" title="navigation" onclick={() => navOpen.update((v) => !v)}>☰</button>
+  {#if showNav}<button class="nav" aria-label="toggle navigation" title="navigation" onclick={() => navOpen.update((v) => !v)}>☰</button>{/if}
   <nav class="crumbs" aria-label="breadcrumb">
     {#each crumbs as c, i}
       {#if i > 0}<span class="sep" aria-hidden="true">/</span>{/if}

@@ -19,6 +19,10 @@
   const path = $derived($page.url.pathname);
   // Full-screen pushes: chat and diff hide the tab bar and use the full width.
   const fullscreen = $derived(path.startsWith('/pane/'));
+  const navCorner = $derived($config.navCorner ?? 'bottom-right');
+  const fab = $derived(!desktop && navCorner !== 'top');
+  // Raise the FAB above the pane composer (chat route only; diff has a short footer).
+  const fabRaised = $derived(fullscreen && !path.endsWith('/diff'));
 
   // Initialise nav visibility per breakpoint once: open on desktop, closed
   // (drawer) on phones.
@@ -56,12 +60,21 @@
   {/if}
 
   <div class="mainwrap">
-    <Breadcrumbs />
+    <Breadcrumbs showNav={!fab} />
     <main class="content" class:desktop class:full={fullscreen}>
       {@render children()}
     </main>
   </div>
 </div>
+{#if fab && !$navOpen}
+  <button
+    class="navfab {navCorner}"
+    class:raised={fabRaised}
+    aria-label="toggle navigation"
+    title="navigation"
+    onclick={() => navOpen.set(true)}
+  >☰</button>
+{/if}
 <Toast />
 <BottomSheet />
 
@@ -74,4 +87,10 @@
 
   .backdrop { position: fixed; inset: 0; z-index: 45; border: none; background: rgba(0, 0, 0, 0.5); }
   .drawer { position: fixed; top: 0; left: 0; bottom: 0; z-index: 46; width: min(88vw, 340px); background: var(--sidebar-bg); border-right: 1px solid var(--hairline); overflow-y: auto; box-shadow: 0 0 40px rgba(0, 0, 0, 0.45); }
+  .navfab { position: fixed; z-index: 50; width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--control); background: var(--card); color: var(--text-1); font-size: 19px; line-height: 1; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4); bottom: calc(16px + env(safe-area-inset-bottom)); }
+  .navfab:active { background: var(--surface-tint); }
+  .navfab.bottom-right { right: 16px; }
+  .navfab.bottom-left { left: 16px; }
+  /* Clear the pane composer so the FAB doesn't cover the send button. */
+  .navfab.raised { bottom: calc(132px + env(safe-area-inset-bottom)); }
 </style>

@@ -1,7 +1,8 @@
 <script lang="ts">
   import { session } from '$lib/session/live';
   import { draft, config, showToast } from '$lib/ui/state';
-  let { paneId, blocked }: { paneId: string; blocked: boolean } = $props();
+  import type { Call } from '$lib/protocol';
+  let { paneId, blocked, agent = true }: { paneId: string; blocked: boolean; agent?: boolean } = $props();
   const s = session();
   let ta: HTMLTextAreaElement | undefined = $state();
 
@@ -13,15 +14,22 @@
   function send(text?: string) {
     const t = (text ?? $draft).trim();
     if (!t) return;
-    // Clear the composer as soon as the prompt is submitted; agent.prompt's
-    // wait resolves only when the agent next goes idle/blocked (long-lived), so
-    // the UI must not block on it.
+    // Clear the composer as soon as input is submitted. For agents, agent.prompt's
+    // wait resolves only when the agent next goes idle/blocked (long-lived), so the
+    // UI must not block on it. Terminals are not agents: type the literal text then
+    // press Enter via the pane.* API (agent.* is a silent no-op on a plain pane).
     draft.set('');
     if (ta) ta.style.height = 'auto';
-    showToast('prompt sent');
-    void s
-      .request({ method: 'agent.prompt', params: { target: paneId, text: t, wait: { until: ['idle', 'blocked'], timeout_ms: 900000 } } })
-      .catch(() => {});
+    if (agent) {
+      showToast('prompt sent');
+      void s
+        .request({ method: 'agent.prompt', params: { target: paneId, text: t, wait: { until: ['idle', 'blocked'], timeout_ms: 900000 } } })
+        .catch(() => {});
+      return;
+    }
+    showToast('sent to terminal');
+    void s.request({ method: 'pane.send_text', params: { pane_id: paneId, text: t } }).catch(() => {});
+    void s.request({ method: 'pane.send_keys', params: { pane_id: paneId, keys: ['enter'] } }).catch(() => {});
   }
   const NAV: { k: string; glyph: string; label: string }[] = [
     { k: 'up', glyph: '↑', label: 'up' },
@@ -33,7 +41,10 @@
     { k: 'ctrl+c', glyph: '⌃C', label: 'ctrl+c' }
   ];
   function sendKey(k: string) {
-    void s.request({ method: 'agent.send_keys', params: { target: paneId, keys: [k] } }).catch(() => {});
+    const call: Call = agent
+      ? { method: 'agent.send_keys', params: { target: paneId, keys: [k] } }
+      : { method: 'pane.send_keys', params: { pane_id: paneId, keys: [k] } };
+    void s.request(call).catch(() => {});
     showToast(`sent ${k} → ${paneId}`);
   }
   function onKeydown(e: KeyboardEvent) {
@@ -55,11 +66,11 @@
       bind:value={$draft}
       oninput={autogrow}
       onkeydown={onKeydown}
-      placeholder="Message the agent"
+      placeholder={agent ? 'Message the agent' : 'Type into terminal'}
       rows="1"
     ></textarea>
     <div class="foot">
-      <span class="hint mono">{blocked ? 'agent blocked — reply or use the keys above' : $config.devCaptions ? 'agent.prompt' : ''}</span>
+      <span class="hint mono">{blocked ? 'agent blocked — reply or use the keys above' : $config.devCaptions ? (agent ? 'agent.prompt' : 'pane.send_text') : ''}</span>
       <button class="send" class:ready={$draft.trim().length > 0} aria-label="send" onclick={() => send()}>↑</button>
     </div>
   </div>

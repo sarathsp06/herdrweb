@@ -77,6 +77,8 @@ export type Call =
   | { method: 'pane.split'; params: { pane_id: string; direction: 'right' | 'down'; ratio: number } }
   | { method: 'pane.rename'; params: { pane_id: string; label: string } }
   | { method: 'pane.close'; params: { pane_id: string } }
+  | { method: 'pane.send_text'; params: { pane_id: string; text: string } }
+  | { method: 'pane.send_keys'; params: { pane_id: string; keys: string[] } }
   | { method: 'server.reload_config'; params: Record<string, never> };
 
 export type CallResult = { ok?: boolean; lines?: string[]; read?: { text?: string }; [k: string]: unknown };
@@ -88,6 +90,7 @@ export interface Config {
   ansi: boolean; // keep ANSI colors in raw
   devCaptions: boolean; // show socket-call captions (developer setting, off by default)
   fontScale: number; // webapp text-size multiplier (applied as document zoom)
+  navCorner: 'top' | 'bottom-right' | 'bottom-left'; // phone nav-toggle placement
 }
 
 export interface ServerInfo {

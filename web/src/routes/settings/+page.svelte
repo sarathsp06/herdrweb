@@ -17,6 +17,11 @@
     { label: 'L', scale: 1.15 },
     { label: 'XL', scale: 1.3 }
   ];
+  const navCorners: { id: 'bottom-right' | 'bottom-left' | 'top'; label: string; glyph: string }[] = [
+    { id: 'bottom-right', label: 'Bottom R', glyph: '◗' },
+    { id: 'bottom-left', label: 'Bottom L', glyph: '◖' },
+    { id: 'top', label: 'Top bar', glyph: '☰' }
+  ];
   async function persist() {
     // In live mode, write the [web] table to config.toml (bridge reloads Herdr).
     try {
@@ -78,6 +83,19 @@
     {/each}
   </div>
   <div class="cap mono">scales the whole UI · writes font_scale in config.toml</div>
+</section>
+
+<section>
+  <div class="section-label">Phone nav button</div>
+  <div class="sizes">
+    {#each navCorners as nc}
+      <button class="size" class:sel={($config.navCorner ?? 'bottom-right') === nc.id} onclick={() => setConfig({ navCorner: nc.id })}>
+        <span class="aa">{nc.glyph}</span>
+        <span class="mono szlabel">{nc.label}</span>
+      </button>
+    {/each}
+  </div>
+  <div class="cap mono">where the ☰ toggle sits on phones (one-handed reach)</div>
 </section>
 
 <section>

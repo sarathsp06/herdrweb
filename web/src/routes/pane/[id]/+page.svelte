@@ -1,5 +1,6 @@
 <script lang="ts">
   import { tick } from 'svelte';
+  import { get } from 'svelte/store';
   import { page } from '$app/stores';
   import { session } from '$lib/session/live';
   import { findPaneIn } from '$lib/session/derive';
@@ -19,16 +20,34 @@
     lastPane.set(paneId);
   });
 
-  // Raw scrollback via pane.read (Herdr returns {read:{text}}), refreshed as the
-  // snapshot changes so the terminal tails live.
+  // Raw scrollback via pane.read (Herdr returns {read:{text}}). There is no push
+  // event for plain terminal output, so we poll on a fixed cadence keyed ONLY on
+  // paneId — never on the session store — so unrelated snapshot churn (other
+  // panes, status ticks) cannot re-fetch or re-render this view. `raw` is only
+  // reassigned when the text actually changed, so the terminal never refreshes
+  // unconditionally.
+  function sameLines(a: string[], b: string[]): boolean {
+    if (a.length !== b.length) return false;
+    for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+    return true;
+  }
   $effect(() => {
-    if (!ref) return;
-    s.request({ method: 'pane.read', params: { pane_id: paneId, source: 'recent_unwrapped', lines: 200 } })
-      .then((r) => {
+    const id = paneId;
+    let alive = true;
+    const readOnce = async () => {
+      let next: string[];
+      try {
+        const r = await s.request({ method: 'pane.read', params: { pane_id: id, source: 'recent_unwrapped', lines: 200 } });
         const text = r.read?.text ?? '';
-        raw = text ? text.split('\n') : ref!.pane.tail;
-      })
-      .catch(() => (raw = ref!.pane.tail));
+        next = text ? text.split('\n') : (findPaneIn(get(spaces), id)?.pane.tail ?? []);
+      } catch {
+        next = findPaneIn(get(spaces), id)?.pane.tail ?? [];
+      }
+      if (alive && !sameLines(next, raw)) raw = next;
+    };
+    void readOnce();
+    const iv = setInterval(readOnce, 1000);
+    return () => { alive = false; clearInterval(iv); };
   });
 
   // Follow new output only when the user is already at the bottom, so scrolling
@@ -67,7 +86,7 @@
 </span>{/each}</pre>
     </div>
 
-    <Composer paneId={ref.pane.id} {blocked} />
+    <Composer paneId={ref.pane.id} {blocked} agent={ref.pane.agent} />
   </section>
 {:else}
   <div class="missing mono">pane {paneId} not found</div>

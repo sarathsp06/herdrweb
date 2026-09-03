@@ -15,7 +15,7 @@ export function showToast(msg: string): void {
 }
 
 const CONFIG_KEY = 'herdrweb.config';
-const DEFAULT_CONFIG: Config = { theme: 'herdr-dark', notify: true, follow: true, ansi: true, devCaptions: false, fontScale: 1 };
+const DEFAULT_CONFIG: Config = { theme: 'herdr-dark', notify: true, follow: true, ansi: true, devCaptions: false, fontScale: 1, navCorner: 'bottom-right' };
 
 function loadConfig(): Config {
   if (!browser) return { ...DEFAULT_CONFIG };
