@@ -1,5 +1,4 @@
-import type { Pane, Rollup, Snapshot, SessionEvent, Space, Status, Tab } from '$lib/protocol';
-import { STATUS_ORDER } from '$lib/protocol';
+import type { Pane, Snapshot, SessionEvent, Space, Tab } from '$lib/protocol';
 
 export interface AgentRef {
   pane: Pane;
@@ -85,34 +84,6 @@ export class SessionModel {
     return undefined;
   }
 
-  /** Every agent pane across all spaces, sorted blocked-first. */
-  agents(): AgentRef[] {
-    const out: AgentRef[] = [];
-    for (const space of this.spaces)
-      for (const tab of space.tabs)
-        for (const pane of tab.panes) if (pane.agent) out.push({ pane, space, tab });
-    return out.sort((a, b) => STATUS_ORDER[a.pane.status] - STATUS_ORDER[b.pane.status]);
-  }
-
-  rollup(spaceId: string): Rollup {
-    const space = this.space(spaceId);
-    if (!space) return 'none';
-    const agentPanes = space.tabs.flatMap((t) => t.panes).filter((p) => p.agent);
-    if (agentPanes.length === 0) return 'none';
-    if (agentPanes.some((p) => p.status === 'blocked')) return 'blocked';
-    if (agentPanes.some((p) => p.status === 'working')) return 'working';
-    return 'idle';
-  }
-
-  tabHasBlocked(tab: Tab): boolean {
-    return tab.panes.some((p) => p.agent && p.status === 'blocked');
-  }
-
-  counts(spaceId: string): { tabs: number; panes: number } {
-    const space = this.space(spaceId);
-    if (!space) return { tabs: 0, panes: 0 };
-    return { tabs: space.tabs.length, panes: space.tabs.reduce((n, t) => n + t.panes.length, 0) };
-  }
 }
 
 function cloneSpace(s: Space): Space {
@@ -120,8 +91,4 @@ function cloneSpace(s: Space): Space {
     ...s,
     tabs: s.tabs.map((t) => ({ ...t, panes: t.panes.map((p) => ({ ...p, tail: [...p.tail] })) }))
   };
-}
-
-export function statusWord(status: Status): string {
-  return status;
 }
