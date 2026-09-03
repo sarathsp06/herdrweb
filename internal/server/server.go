@@ -1,0 +1,318 @@
+// Package server wires the Herdr socket client to browser WebSocket clients and
+// serves the embedded UI. The bridge owns exactly one Herdr connection, keeps a
+// normalized snapshot cache, re-derives it on any Herdr event, and broadcasts
+// the fresh snapshot to every connected browser. Browser calls are id-correlated
+// and passed through to the Herdr socket.
+package server
+
+import (
+	"context"
+	"encoding/json"
+	"log"
+	"net/http"
+	"sync"
+	"time"
+
+	"github.com/gorilla/websocket"
+	"github.com/sarathsp06/herdrweb/internal/config"
+	"github.com/sarathsp06/herdrweb/internal/herdr"
+	"github.com/sarathsp06/herdrweb/internal/protocol"
+	"github.com/sarathsp06/herdrweb/internal/webui"
+)
+
+// ConnState is the bridge<->Herdr connection lifecycle.
+type ConnState string
+
+const (
+	Connecting   ConnState = "connecting"
+	Open         ConnState = "open"
+	Reconnecting ConnState = "reconnecting"
+	Closed       ConnState = "closed"
+)
+
+// Hub coordinates the Herdr connection and browser clients.
+type Hub struct {
+	client  *herdr.Client
+	cfgPath string
+	version string
+
+	mu       sync.RWMutex
+	snapshot []byte // latest normalized snapshot JSON
+	state    ConnState
+	browsers map[*browser]struct{}
+
+	dirty chan struct{}
+}
+
+type browser struct {
+	conn *websocket.Conn
+	send chan []byte
+	once sync.Once
+}
+
+// NewHub builds a hub. version is reported to the UI.
+func NewHub(client *herdr.Client, cfgPath, version string) *Hub {
+	return &Hub{
+		client:   client,
+		cfgPath:  cfgPath,
+		version:  version,
+		state:    Connecting,
+		browsers: map[*browser]struct{}{},
+		dirty:    make(chan struct{}, 1),
+	}
+}
+
+// Run maintains the Herdr connection until ctx is cancelled: bootstrap snapshot,
+// subscribe, coalesce events into refreshes, reconnect with backoff.
+func (h *Hub) Run(ctx context.Context) {
+	go h.debouncer(ctx)
+	go h.poller(ctx)
+	backoff := 500 * time.Millisecond
+	for ctx.Err() == nil {
+		h.setState(Connecting)
+		if err := h.refresh(ctx); err != nil {
+			h.setState(Reconnecting)
+			if !sleep(ctx, backoff) {
+				return
+			}
+			backoff = nextBackoff(backoff)
+			continue
+		}
+		h.setState(Open)
+		backoff = 500 * time.Millisecond
+		// Subscribe blocks until the connection drops or ctx ends.
+		err := h.client.Subscribe(ctx, nil, func(herdr.Event) { h.markDirty() })
+		if ctx.Err() != nil {
+			return
+		}
+		log.Printf("herdr subscription ended: %v; reconnecting", err)
+		h.setState(Reconnecting)
+		if !sleep(ctx, backoff) {
+			return
+		}
+		backoff = nextBackoff(backoff)
+	}
+}
+
+func (h *Hub) debouncer(ctx context.Context) {
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-h.dirty:
+			timer := time.NewTimer(120 * time.Millisecond)
+			select {
+			case <-ctx.Done():
+				timer.Stop()
+				return
+			case <-timer.C:
+			}
+			_ = h.refresh(ctx)
+		}
+	}
+}
+
+// poller marks the snapshot dirty on a fixed cadence so pane-scoped changes that
+// emit no global event (notably agent-status transitions) still surface live.
+func (h *Hub) poller(ctx context.Context) {
+	t := time.NewTicker(1500 * time.Millisecond)
+	defer t.Stop()
+	for {
+		select {
+		case <-ctx.Done():
+			return
+		case <-t.C:
+			h.markDirty()
+		}
+	}
+}
+
+func (h *Hub) markDirty() {
+	select {
+	case h.dirty <- struct{}{}:
+	default:
+	}
+}
+
+func (h *Hub) refresh(ctx context.Context) error {
+	rctx, cancel := context.WithTimeout(ctx, 8*time.Second)
+	defer cancel()
+	var hs protocol.HerdrSnapshot
+	if err := h.client.Snapshot(rctx, &hs); err != nil {
+		return err
+	}
+	snap := protocol.Normalize(&hs)
+	data, err := json.Marshal(snap)
+	if err != nil {
+		return err
+	}
+	h.mu.Lock()
+	h.snapshot = data
+	h.mu.Unlock()
+	h.broadcast(data)
+	return nil
+}
+
+func (h *Hub) setState(s ConnState) {
+	h.mu.Lock()
+	changed := h.state != s
+	h.state = s
+	h.mu.Unlock()
+	if changed {
+		log.Printf("herdr connection: %s", s)
+	}
+}
+
+func (h *Hub) broadcast(data []byte) {
+	h.mu.RLock()
+	defer h.mu.RUnlock()
+	for b := range h.browsers {
+		select {
+		case b.send <- data:
+		default: // slow client; drop
+		}
+	}
+}
+
+func (h *Hub) addBrowser(b *browser) {
+	h.mu.Lock()
+	h.browsers[b] = struct{}{}
+	snap := h.snapshot
+	h.mu.Unlock()
+	if snap != nil {
+		b.send <- snap
+	}
+}
+
+func (h *Hub) removeBrowser(b *browser) {
+	h.mu.Lock()
+	delete(h.browsers, b)
+	h.mu.Unlock()
+	b.once.Do(func() { close(b.send) })
+}
+
+var upgrader = websocket.Upgrader{CheckOrigin: func(*http.Request) bool { return true }}
+
+type wsRequest struct {
+	ID     string          `json:"id"`
+	Method string          `json:"method"`
+	Params json.RawMessage `json:"params"`
+}
+
+func (h *Hub) handleWS(w http.ResponseWriter, r *http.Request) {
+	conn, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		return
+	}
+	b := &browser{conn: conn, send: make(chan []byte, 16)}
+	h.addBrowser(b)
+	defer h.removeBrowser(b)
+
+	go func() {
+		for msg := range b.send {
+			if err := conn.WriteMessage(websocket.TextMessage, msg); err != nil {
+				return
+			}
+		}
+	}()
+
+	for {
+		_, data, err := conn.ReadMessage()
+		if err != nil {
+			return
+		}
+		var req wsRequest
+		if json.Unmarshal(data, &req) != nil || req.Method == "" {
+			continue
+		}
+		go h.handleCall(r.Context(), b, req)
+	}
+}
+
+func (h *Hub) handleCall(ctx context.Context, b *browser, req wsRequest) {
+	cctx, cancel := context.WithTimeout(ctx, 60*time.Second)
+	defer cancel()
+	var params any
+	if len(req.Params) > 0 {
+		_ = json.Unmarshal(req.Params, &params)
+	}
+	res, err := h.client.Call(cctx, req.Method, params)
+	var out []byte
+	if err != nil {
+		out, _ = json.Marshal(map[string]any{"id": req.ID, "error": err.Error()})
+	} else {
+		out, _ = json.Marshal(map[string]any{"id": req.ID, "result": json.RawMessage(res)})
+	}
+	select {
+	case b.send <- out:
+	default:
+	}
+}
+
+func (h *Hub) handleConfig(w http.ResponseWriter, r *http.Request) {
+	switch r.Method {
+	case http.MethodGet:
+		s, _ := config.Load(h.cfgPath)
+		writeJSON(w, s)
+	case http.MethodPut, http.MethodPost:
+		var s config.Settings
+		if json.NewDecoder(r.Body).Decode(&s) != nil {
+			http.Error(w, "bad json", http.StatusBadRequest)
+			return
+		}
+		if err := config.Save(h.cfgPath, s); err != nil {
+			http.Error(w, err.Error(), http.StatusInternalServerError)
+			return
+		}
+		// Persisted -> ask Herdr to reload.
+		_, _ = h.client.Call(r.Context(), "server.reload_config", map[string]any{})
+		writeJSON(w, map[string]any{"ok": true})
+	default:
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+	}
+}
+
+func (h *Hub) handleHealth(w http.ResponseWriter, r *http.Request) {
+	h.mu.RLock()
+	state := h.state
+	h.mu.RUnlock()
+	writeJSON(w, map[string]any{"ok": true, "herdr": string(state), "version": h.version, "socket": h.client.SocketPath})
+}
+
+// Handler returns the full HTTP handler (UI + /ws + /api).
+func (h *Hub) Handler() (http.Handler, error) {
+	ui, err := webui.Handler()
+	if err != nil {
+		return nil, err
+	}
+	mux := http.NewServeMux()
+	mux.HandleFunc("/ws", h.handleWS)
+	mux.HandleFunc("/api/config", h.handleConfig)
+	mux.HandleFunc("/api/health", h.handleHealth)
+	mux.Handle("/", ui)
+	return mux, nil
+}
+
+func writeJSON(w http.ResponseWriter, v any) {
+	w.Header().Set("Content-Type", "application/json")
+	_ = json.NewEncoder(w).Encode(v)
+}
+
+func sleep(ctx context.Context, d time.Duration) bool {
+	t := time.NewTimer(d)
+	defer t.Stop()
+	select {
+	case <-ctx.Done():
+		return false
+	case <-t.C:
+		return true
+	}
+}
+
+func nextBackoff(d time.Duration) time.Duration {
+	d *= 2
+	if d > 10*time.Second {
+		return 10 * time.Second
+	}
+	return d
+}

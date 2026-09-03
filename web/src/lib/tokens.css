@@ -1,0 +1,86 @@
+:root {
+  /* surfaces */
+  --app-bg: #0a0a0a;
+  --page-bg: #08080a;
+  --sidebar-bg: #0c0c0e;
+  --raised: #141416;
+  --card: #121214;
+  --code-surface: #0d0d0f;
+  --card-hover: #1b1b1f;
+  --toast-bg: #1e1e22;
+
+  /* text */
+  --text-1: #fafafa;
+  --text-on-light: #18181b;
+  --text-2: #e4e4e7;
+  --text-2b: #d4d4d8;
+  --text-3: #a3a3a3;
+  --text-3b: #8a8a92;
+  --text-4: #737378;
+  --text-disabled: #5c5c63;
+  --gutter: #4a4a52;
+  --gutter-2: #52525b;
+
+  /* lines & control */
+  --hairline: rgba(255, 255, 255, 0.07);
+  --control: rgba(255, 255, 255, 0.12);
+  --control-input: rgba(255, 255, 255, 0.14);
+  --control-selected: rgba(255, 255, 255, 0.16);
+  --control-selected-2: rgba(255, 255, 255, 0.28);
+  --surface-tint: rgba(255, 255, 255, 0.05);
+  --surface-tint-2: rgba(255, 255, 255, 0.08);
+
+  /* status */
+  --working: oklch(0.769 0.188 70.08);
+  --blocked: oklch(0.645 0.246 16.439);
+  --blocked-text: oklch(0.72 0.19 16.4);
+  --blocked-badge-text: oklch(0.75 0.16 16.4);
+  --done: oklch(0.696 0.17 162.48);
+  --idle: #737378;
+  --unknown: #52525b;
+  --worktree-text: oklch(0.75 0.14 250);
+  --worktree-bg: oklch(0.6 0.15 250 / 16%);
+
+  --blocked-grad: linear-gradient(180deg, oklch(0.645 0.246 16.439 / 10%), rgba(255, 255, 255, 0.02));
+  --blocked-border: oklch(0.645 0.246 16.439 / 30%);
+
+  /* syntax */
+  --syn-keyword: oklch(0.78 0.14 300);
+  --syn-string: oklch(0.82 0.13 92);
+  --syn-number: oklch(0.78 0.13 250);
+  --syn-func: oklch(0.8 0.11 195);
+  --syn-comp: oklch(0.8 0.12 165);
+  --syn-comment: #5c5c63;
+  --syn-punct: #8a8a92;
+  --syn-default: #d4d4d8;
+
+  /* diff */
+  --diff-add-bg: oklch(0.696 0.17 162.48 / 9%);
+  --diff-del-bg: oklch(0.645 0.246 16.439 / 9%);
+
+  /* fonts */
+  --font-ui: 'Geist', system-ui, -apple-system, sans-serif;
+  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, monospace;
+
+  /* radius */
+  --r-badge: 5px;
+  --r-chip: 7px;
+  --r-btn: 10px;
+  --r-card: 12px;
+  --r-bubble: 16px;
+  --r-composer: 18px;
+}
+
+/* Alternate themes tweak accents; dark only per spec. */
+[data-theme='ash'] {
+  --app-bg: #0d0d0f;
+  --sidebar-bg: #101013;
+  --working: oklch(0.8 0.06 90);
+}
+[data-theme='gruvbox'] {
+  --app-bg: #1d2021;
+  --sidebar-bg: #222526;
+  --card: #282828;
+  --working: oklch(0.8 0.13 80);
+  --done: oklch(0.72 0.13 140);
+}
