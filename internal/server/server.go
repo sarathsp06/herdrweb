@@ -217,6 +217,11 @@ type wsRequest struct {
 	Params json.RawMessage `json:"params"`
 }
 
+// maxInflightPerConn bounds concurrent in-flight browser RPC handlers on a
+// single WebSocket connection; excess frames wait (per-connection backpressure)
+// instead of spawning unbounded goroutines.
+const maxInflightPerConn = 8
+
 func (h *Hub) handleWS(w http.ResponseWriter, r *http.Request) {
 	conn, err := upgrader.Upgrade(w, r, nil)
 	if err != nil {
@@ -234,6 +239,7 @@ func (h *Hub) handleWS(w http.ResponseWriter, r *http.Request) {
 		}
 	}()
 
+	sem := make(chan struct{}, maxInflightPerConn)
 	for {
 		_, data, err := conn.ReadMessage()
 		if err != nil {
@@ -243,8 +249,18 @@ func (h *Hub) handleWS(w http.ResponseWriter, r *http.Request) {
 		if json.Unmarshal(data, &req) != nil || req.Method == "" {
 			continue
 		}
-		go h.handleCall(r.Context(), b, req)
+		h.dispatch(sem, func() { h.handleCall(r.Context(), b, req) })
 	}
+}
+
+// dispatch runs fn in a goroutine, bounded by sem: it blocks the caller (the
+// per-connection read loop) until a slot is free, then releases on completion.
+func (h *Hub) dispatch(sem chan struct{}, fn func()) {
+	sem <- struct{}{}
+	go func() {
+		defer func() { <-sem }()
+		fn()
+	}()
 }
 
 func (h *Hub) handleCall(ctx context.Context, b *browser, req wsRequest) {
