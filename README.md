@@ -74,6 +74,23 @@ any URL to explore the mocked dataset without a live server. To use it from your
 Every mutating action routes through a confirmation **bottom sheet** first —
 nothing mutates on a single tap — and confirming fires a toast.
 
+## Mobile
+
+The UI is an installable PWA — on a phone, **Add to Home Screen** to launch it
+standalone. Push alerts (an agent needs you, even with the app closed) require a
+**secure context**, so the bridge has to be reached over HTTPS.
+
+The easy option is [Tailscale](https://tailscale.com): put both devices on the
+tailnet, then front the loopback bridge with a cert —
+
+```bash
+tailscale serve --bg --https=443 127.0.0.1:7331
+```
+
+Open `https://<machine>.<tailnet>.ts.net` on the phone, install it, and enable
+**Settings → Push when blocked** (iOS needs the app installed first). Any other
+HTTPS front — a reverse proxy, your own cert — works just as well.
+
 ## Configuration
 
 UI preferences live under a `[web]` table in the Herdr config
@@ -93,23 +110,6 @@ dev_captions = false   # show socket-call captions (developer setting)
 
 The bridge binds to `127.0.0.1:7331` by default (loopback only, no auth —
 single operator on localhost). Override with `-addr`, `-socket`, and `-config`.
-
-## Mobile
-
-The UI is an installable PWA — on a phone, **Add to Home Screen** to launch it
-standalone. Push alerts (an agent needs you, even with the app closed) require a
-**secure context**, so the bridge has to be reached over HTTPS.
-
-The easy option is [Tailscale](https://tailscale.com): put both devices on the
-tailnet, then front the loopback bridge with a cert —
-
-```bash
-tailscale serve --bg --https=443 127.0.0.1:7331
-```
-
-Open `https://<machine>.<tailnet>.ts.net` on the phone, install it, and enable
-**Settings → Push when blocked** (iOS needs the app installed first). Any other
-HTTPS front — a reverse proxy, your own cert — works just as well.
 
 # Contributing
 
