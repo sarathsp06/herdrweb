@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/gorilla/websocket"
+	"github.com/sarathsp06/herdrweb/internal/attention"
 	"github.com/sarathsp06/herdrweb/internal/config"
 	"github.com/sarathsp06/herdrweb/internal/herdr"
 	"github.com/sarathsp06/herdrweb/internal/protocol"
@@ -43,10 +44,7 @@ type Hub struct {
 	state    ConnState
 	browsers map[*browser]struct{}
 
-	// prevStatus tracks each pane's last-seen status to fire a push only on the
-	// rising edge into blocked. nil until the first snapshot establishes a
-	// baseline (so a restart never replays notifications).
-	prevStatus map[string]protocol.Status
+	attn attention.Detector // owns the rising-edge baseline + its own lock
 
 	dirty chan struct{}
 }
@@ -186,49 +184,26 @@ func (h *Hub) notifyAttention(ctx context.Context, snap protocol.Snapshot) {
 	if h.push == nil {
 		return
 	}
-	cur := make(map[string]protocol.Status)
-	type hit struct {
-		id, label string
-		status    protocol.Status
-	}
-	var newly []hit
-	h.mu.Lock()
-	for _, sp := range snap.Spaces {
-		for _, tb := range sp.Tabs {
-			for _, p := range tb.Panes {
-				cur[p.ID] = p.Status
-				if !p.Agent || (p.Status != protocol.Blocked && p.Status != protocol.Done) {
-					continue
-				}
-				// Rising edge into this attention state (blocked->done also fires).
-				if h.prevStatus != nil && h.prevStatus[p.ID] != p.Status {
-					newly = append(newly, hit{id: p.ID, label: p.Label, status: p.Status})
-				}
-			}
-		}
-	}
-	first := h.prevStatus == nil
-	h.prevStatus = cur
-	h.mu.Unlock()
-	if first || len(newly) == 0 {
+	hits := h.attn.Detect(snap)
+	if len(hits) == 0 {
 		return
 	}
 	if s, err := config.Load(h.cfgPath); err == nil && !s.Notify {
 		return
 	}
-	for _, n := range newly {
-		label := n.label
+	for _, hit := range hits {
+		label := hit.Label
 		if label == "" {
 			label = "An agent"
 		}
 		title, body := "Agent blocked", label+" needs you."
-		if n.status == protocol.Done {
+		if hit.Status == protocol.Done {
 			title, body = "Agent done", label+" finished."
 		}
 		h.push.Notify(ctx, push.Notification{
 			Title: title,
 			Body:  body,
-			URL:   "/pane/" + n.id,
+			URL:   "/pane/" + hit.PaneID,
 		})
 	}
 }
