@@ -52,6 +52,21 @@ Then run the bridge (loopback only by default):
 herdr-bridge        # serves http://127.0.0.1:7331
 ```
 
+Or run as a background daemon with logging:
+
+```bash
+herdr-bridge -daemon -log-file ~/.config/herdr/herdr-bridge.log -pid-file ~/.config/herdr/herdr-bridge.pid
+```
+
+Or install and manage it as a system daemon (systemd on Linux, launchd on macOS):
+
+```bash
+herdr-bridge -service install    # installs user systemd unit or launchd plist
+herdr-bridge -service start      # starts the background service
+herdr-bridge -service status     # checks service status
+herdr-bridge -service stop       # stops the background service
+```
+
 Open <http://127.0.0.1:7331>. The bridge connects to your running Herdr server
 and streams live spaces, tabs, panes, and agent status. To use it from your
 **phone**, see [Mobile](#mobile).
@@ -134,7 +149,15 @@ nav_corner = "bottom-right"  # phone nav button: bottom-right | bottom-left | to
 dev_captions = false   # show socket-call captions (developer setting)
 ```
 
-Flags: `-addr` (listen address), `-socket` (Herdr socket path), `-config`.
+Flags:
+- `-addr` (listen address, default `127.0.0.1:7331`)
+- `-socket` (Herdr socket path, default `~/.config/herdr/herdr.sock`)
+- `-config` (path to config.toml)
+- `-log-file` (path to redirect output logs)
+- `-pid-file` (path to write PID file)
+- `-daemon` / `-d` (run as background daemon)
+- `-service` (manage system service: `install`, `uninstall`, `start`, `stop`, `status`)
+- `-version` (print version and exit)
 
 > [!WARNING]
 > The bridge has **no authentication** and binds `127.0.0.1:7331` (loopback)
