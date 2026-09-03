@@ -33,12 +33,22 @@ Desktop layout (≥ 880px) — the sidebar *is* the inbox:
 
 ## Quick start
 
-### Install a release (recommended)
+### Install (one line)
 
-Every `v*` tag publishes a prebuilt, self-contained binary for `linux` and
-`darwin` on `amd64`/`arm64`. Grab the one for your OS/arch from the
-[releases page](https://github.com/sarathsp06/herdrweb/releases) — the binary
-embeds the UI, so there is nothing else to install:
+```bash
+curl -fsSL https://raw.githubusercontent.com/sarathsp06/herdrweb/main/install.sh | sh
+```
+
+Detects your OS/arch, downloads the latest release, verifies its `checksums.txt`
+entry, and installs the self-contained `herdr-bridge` binary (UI embedded) to
+`/usr/local/bin` or `~/.local/bin`. Override with `HERDR_VERSION=v0.1.0` or
+`BINDIR=~/bin`. Prefer to serve the script from your own domain? It's the same
+file — e.g. `curl -fsSL https://herdr.dev/install.sh | sh`.
+
+### Manual download
+
+Grab a prebuilt binary for your OS/arch (`linux`/`darwin` × `amd64`/`arm64`)
+from the [releases page](https://github.com/sarathsp06/herdrweb/releases):
 
 ```bash
 VER=0.1.0                    # latest tag on the releases page
@@ -46,8 +56,6 @@ OS=darwin ARCH=arm64         # or OS=linux; ARCH=amd64
 curl -fsSL "https://github.com/sarathsp06/herdrweb/releases/download/v${VER}/herdrweb_${VER}_${OS}_${ARCH}.tar.gz" | tar -xz
 ./herdr-bridge               # serves http://127.0.0.1:7331
 ```
-
-Verify the download against the release's `checksums.txt` if you like.
 
 ### Build from source
 
