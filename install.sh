@@ -46,7 +46,7 @@ ver="${HERDR_VERSION:-}"
 if [ -z "$ver" ]; then
   info "resolving latest release"
   ver=$(fetch "https://api.github.com/repos/$REPO/releases/latest" \
-    | grep '"tag_name"' | head -1 | sed -E 's/.*"tag_name"[^"]*"([^"]+)".*/\1/') || true
+    | grep '"tag_name"' | head -1 | cut -d'"' -f4) || true
   [ -n "$ver" ] || err "could not resolve latest release — set HERDR_VERSION=vX.Y.Z"
 fi
 case "$ver" in v*) tag="$ver" ;; *) tag="v$ver" ;; esac
