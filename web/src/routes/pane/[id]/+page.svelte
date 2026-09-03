@@ -44,9 +44,25 @@
       .catch(() => (raw = ref!.pane.tail));
   });
 
-  // Auto-scroll to bottom after paint on pane / mode / transcript change.
+  // Follow new output only when the user is already at the bottom, so scrolling
+  // up to read history is not yanked back down by live refreshes.
+  let pinned = $state(true);
+  function onScroll() {
+    const el = scroller;
+    if (!el) return;
+    pinned = el.scrollHeight - el.scrollTop - el.clientHeight < 40;
+  }
+  // Reset to bottom-follow when switching pane or mode.
   $effect(() => {
-    void paneId; void $mode; void transcript.length; void raw.length;
+    void paneId;
+    void $mode;
+    pinned = true;
+  });
+  // Auto-scroll after paint on content change, but only while pinned.
+  $effect(() => {
+    void transcript.length;
+    void raw.length;
+    if (!pinned) return;
     tick().then(() => { if (scroller) scroller.scrollTop = scroller.scrollHeight; });
   });
 
@@ -72,7 +88,7 @@
       </div>
     </header>
 
-    <div class="scroll" bind:this={scroller}>
+    <div class="scroll" bind:this={scroller} onscroll={onScroll}>
       {#if $mode === 'raw'}
         {#if $config.devCaptions}<div class="cap mono">pane.read · source=recent_unwrapped · lines=200</div>{/if}
         <pre class="raw mono">{#each raw as line}<span class={rawClass(line)}>{line}
