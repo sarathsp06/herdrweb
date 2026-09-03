@@ -45,9 +45,25 @@ type Hub struct {
 }
 
 type browser struct {
-	conn *websocket.Conn
-	send chan []byte
-	once sync.Once
+	conn   *websocket.Conn
+	send   chan []byte
+	mu     sync.Mutex
+	closed bool
+}
+
+// trySend delivers to the browser's write pump without blocking, and is safe
+// against a concurrent close (the read loop may remove the browser while an
+// in-flight handleCall goroutine is still replying).
+func (b *browser) trySend(data []byte) {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	if b.closed {
+		return
+	}
+	select {
+	case b.send <- data:
+	default: // slow client; drop
+	}
 }
 
 // NewHub builds a hub. version is reported to the UI.
@@ -167,10 +183,7 @@ func (h *Hub) broadcast(data []byte) {
 	h.mu.RLock()
 	defer h.mu.RUnlock()
 	for b := range h.browsers {
-		select {
-		case b.send <- data:
-		default: // slow client; drop
-		}
+		b.trySend(data)
 	}
 }
 
@@ -180,7 +193,7 @@ func (h *Hub) addBrowser(b *browser) {
 	snap := h.snapshot
 	h.mu.Unlock()
 	if snap != nil {
-		b.send <- snap
+		b.trySend(snap)
 	}
 }
 
@@ -188,7 +201,12 @@ func (h *Hub) removeBrowser(b *browser) {
 	h.mu.Lock()
 	delete(h.browsers, b)
 	h.mu.Unlock()
-	b.once.Do(func() { close(b.send) })
+	b.mu.Lock()
+	if !b.closed {
+		b.closed = true
+		close(b.send)
+	}
+	b.mu.Unlock()
 }
 
 var upgrader = websocket.Upgrader{CheckOrigin: func(*http.Request) bool { return true }}
@@ -243,10 +261,7 @@ func (h *Hub) handleCall(ctx context.Context, b *browser, req wsRequest) {
 	} else {
 		out, _ = json.Marshal(map[string]any{"id": req.ID, "result": json.RawMessage(res)})
 	}
-	select {
-	case b.send <- out:
-	default:
-	}
+	b.trySend(out)
 }
 
 func (h *Hub) handleConfig(w http.ResponseWriter, r *http.Request) {
