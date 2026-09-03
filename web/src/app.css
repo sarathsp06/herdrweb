@@ -12,7 +12,7 @@
 
 * { box-sizing: border-box; }
 
-html, body { margin: 0; height: 100%; }
+html, body { margin: 0; height: 100%; overflow: hidden; }
 
 body {
   background: var(--page-bg);
@@ -24,7 +24,7 @@ body {
   overscroll-behavior: none;
 }
 
-#app { min-height: 100%; background: var(--app-bg); }
+#app { height: 100%; background: var(--app-bg); }
 
 button { font-family: inherit; color: inherit; cursor: pointer; }
 

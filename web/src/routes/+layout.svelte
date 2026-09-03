@@ -79,8 +79,8 @@
 <BottomSheet />
 
 <style>
-  .shell { height: 100vh; display: flex; overflow: hidden; }
-  .mainwrap { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100vh; }
+  .shell { height: 100dvh; display: flex; overflow: hidden; }
+  .mainwrap { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100%; min-height: 0; }
   .content { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; }
   .shell.desktop .content { padding: 0 max(28px, calc(50% - 560px)); }
   .shell.desktop .content.full { padding: 0; }

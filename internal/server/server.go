@@ -175,30 +175,34 @@ func (h *Hub) refresh(ctx context.Context) error {
 	h.snapshot = data
 	h.mu.Unlock()
 	h.broadcast(data)
-	h.notifyBlocked(ctx, snap)
+	h.notifyAttention(ctx, snap)
 	return nil
 }
 
-// notifyBlocked pushes a Web Push notification for every agent pane that just
-// transitioned into the blocked state. The first snapshot only seeds the
-// baseline so restarts never replay stale blocks.
-func (h *Hub) notifyBlocked(ctx context.Context, snap protocol.Snapshot) {
+// notifyAttention pushes a Web Push notification for every agent pane that just
+// transitioned into an attention state (blocked or done). The first snapshot
+// only seeds the baseline so restarts never replay stale states.
+func (h *Hub) notifyAttention(ctx context.Context, snap protocol.Snapshot) {
 	if h.push == nil {
 		return
 	}
 	cur := make(map[string]protocol.Status)
-	type hit struct{ id, label string }
+	type hit struct {
+		id, label string
+		status    protocol.Status
+	}
 	var newly []hit
 	h.mu.Lock()
 	for _, sp := range snap.Spaces {
 		for _, tb := range sp.Tabs {
 			for _, p := range tb.Panes {
 				cur[p.ID] = p.Status
-				if !p.Agent || p.Status != protocol.Blocked {
+				if !p.Agent || (p.Status != protocol.Blocked && p.Status != protocol.Done) {
 					continue
 				}
-				if h.prevStatus != nil && h.prevStatus[p.ID] != protocol.Blocked {
-					newly = append(newly, hit{id: p.ID, label: p.Label})
+				// Rising edge into this attention state (blocked->done also fires).
+				if h.prevStatus != nil && h.prevStatus[p.ID] != p.Status {
+					newly = append(newly, hit{id: p.ID, label: p.Label, status: p.Status})
 				}
 			}
 		}
@@ -217,9 +221,13 @@ func (h *Hub) notifyBlocked(ctx context.Context, snap protocol.Snapshot) {
 		if label == "" {
 			label = "An agent"
 		}
+		title, body := "Agent blocked", label+" needs you."
+		if n.status == protocol.Done {
+			title, body = "Agent done", label+" finished."
+		}
 		h.push.Notify(ctx, push.Notification{
-			Title: "Agent blocked",
-			Body:  label + " needs you.",
+			Title: title,
+			Body:  body,
 			URL:   "/pane/" + n.id,
 		})
 	}
