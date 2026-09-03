@@ -5,6 +5,7 @@
   import { session } from '$lib/session/live';
   import { findPaneIn } from '$lib/session/derive';
   import { lastPane, config } from '$lib/ui/state';
+  import { BREAKPOINT } from '$lib/layout/responsive';
   import Composer from '$lib/chat/Composer.svelte';
 
   const s = session();
@@ -14,10 +15,43 @@
   const blocked = $derived(ref?.pane.status === 'blocked');
 
   let scroller: HTMLElement | undefined = $state();
+  let pre: HTMLElement | undefined = $state();
   let raw: string[] = $state([]);
 
   $effect(() => {
     lastPane.set(paneId);
+  });
+
+  // Fit ASCII/box output to the viewport on phones so a diagram keeps its
+  // columns on every screen size instead of soft-wrapping into garbage.
+  // Monospace advance scales linearly with font-size, so measuring the widest
+  // line at base size gives an exact fit in one pass; clamp to a readable floor
+  // and let anything still wider scroll horizontally. Desktop keeps full columns.
+  function fitRaw(): void {
+    const el = pre;
+    if (!el) return;
+    el.style.fontSize = '';
+    if (window.innerWidth >= BREAKPOINT) return;
+    const avail = el.clientWidth;
+    const content = el.scrollWidth; // reading layout flushes the reset above
+    if (avail > 0 && content > avail) {
+      el.style.fontSize = Math.max(10, Math.floor(14 * (avail / content))) + 'px';
+    }
+  }
+  // Re-fit on content change (after paint) and on container resize (rotation,
+  // split, a differently-sized phone). Observe the scroller, not the <pre> —
+  // the pre's height tracks font-size and would feed back into a loop.
+  $effect(() => {
+    void raw;
+    void paneId;
+    void tick().then(fitRaw);
+  });
+  $effect(() => {
+    const box = scroller;
+    if (!box) return;
+    const ro = new ResizeObserver(() => fitRaw());
+    ro.observe(box);
+    return () => ro.disconnect();
   });
 
   // Raw scrollback via pane.read (Herdr returns {read:{text}}). There is no push
@@ -82,7 +116,7 @@
   <section class="chat">
     <div class="scroll" bind:this={scroller} onscroll={onScroll}>
       {#if $config.devCaptions}<div class="cap mono">pane.read · source=recent_unwrapped · lines=200</div>{/if}
-      <pre class="raw mono">{#each raw as line}<span class={rawClass(line)}>{line}
+      <pre class="raw mono" bind:this={pre}>{#each raw as line}<span class={rawClass(line)}>{line}
 </span>{/each}</pre>
     </div>
 
@@ -101,10 +135,4 @@
   .raw { margin: 0; font-size: 14px; line-height: 1.6; color: var(--text-1); white-space: pre; overflow-x: auto; font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'calt' 0, 'tnum' 1; }
   .raw .add { color: var(--done); } .raw .del { color: var(--blocked-badge-text); } .raw .ok { color: var(--working); }
   .missing { padding: 40px; color: var(--text-4); }
-  /* Narrow viewports (phones, small windows) can't show a desktop-width
-     terminal; soft-wrap so lines fit instead of scrolling sideways. Wider
-     screens keep true columns with horizontal scroll. */
-  @media (max-width: 879px) {
-    .raw { white-space: pre-wrap; overflow-wrap: anywhere; overflow-x: hidden; }
-  }
 </style>
