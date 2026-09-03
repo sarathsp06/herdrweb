@@ -8,11 +8,13 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"path/filepath"
 	"syscall"
 	"time"
 
 	"github.com/sarathsp06/herdrweb/internal/config"
 	"github.com/sarathsp06/herdrweb/internal/herdr"
+	"github.com/sarathsp06/herdrweb/internal/push"
 	"github.com/sarathsp06/herdrweb/internal/server"
 )
 
@@ -33,7 +35,11 @@ func main() {
 	}
 
 	client := herdr.New(*socket)
-	hub := server.NewHub(client, *cfgPath, version)
+	pm, err := push.New(filepath.Dir(*cfgPath))
+	if err != nil {
+		log.Printf("web push disabled: %v", err)
+	}
+	hub := server.NewHub(client, *cfgPath, version, pm)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

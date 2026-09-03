@@ -5,9 +5,16 @@ package webui
 import (
 	"embed"
 	"io/fs"
+	"mime"
 	"net/http"
 	"strings"
 )
+
+func init() {
+	// Go's default MIME table lacks .webmanifest; without this the PWA manifest
+	// is served as text/plain, which strict browsers may reject.
+	_ = mime.AddExtensionType(".webmanifest", "application/manifest+json")
+}
 
 //go:embed all:dist
 var embedded embed.FS

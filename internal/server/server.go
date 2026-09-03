@@ -17,6 +17,7 @@ import (
 	"github.com/sarathsp06/herdrweb/internal/config"
 	"github.com/sarathsp06/herdrweb/internal/herdr"
 	"github.com/sarathsp06/herdrweb/internal/protocol"
+	"github.com/sarathsp06/herdrweb/internal/push"
 	"github.com/sarathsp06/herdrweb/internal/webui"
 )
 
@@ -35,11 +36,17 @@ type Hub struct {
 	client  *herdr.Client
 	cfgPath string
 	version string
+	push    *push.Manager
 
 	mu       sync.RWMutex
 	snapshot []byte // latest normalized snapshot JSON
 	state    ConnState
 	browsers map[*browser]struct{}
+
+	// prevStatus tracks each pane's last-seen status to fire a push only on the
+	// rising edge into blocked. nil until the first snapshot establishes a
+	// baseline (so a restart never replays notifications).
+	prevStatus map[string]protocol.Status
 
 	dirty chan struct{}
 }
@@ -66,12 +73,14 @@ func (b *browser) trySend(data []byte) {
 	}
 }
 
-// NewHub builds a hub. version is reported to the UI.
-func NewHub(client *herdr.Client, cfgPath, version string) *Hub {
+// NewHub builds a hub. version is reported to the UI; pm may be nil to disable
+// push notifications.
+func NewHub(client *herdr.Client, cfgPath, version string, pm *push.Manager) *Hub {
 	return &Hub{
 		client:   client,
 		cfgPath:  cfgPath,
 		version:  version,
+		push:     pm,
 		state:    Connecting,
 		browsers: map[*browser]struct{}{},
 		dirty:    make(chan struct{}, 1),
@@ -166,7 +175,54 @@ func (h *Hub) refresh(ctx context.Context) error {
 	h.snapshot = data
 	h.mu.Unlock()
 	h.broadcast(data)
+	h.notifyBlocked(ctx, snap)
 	return nil
+}
+
+// notifyBlocked pushes a Web Push notification for every agent pane that just
+// transitioned into the blocked state. The first snapshot only seeds the
+// baseline so restarts never replay stale blocks.
+func (h *Hub) notifyBlocked(ctx context.Context, snap protocol.Snapshot) {
+	if h.push == nil {
+		return
+	}
+	cur := make(map[string]protocol.Status)
+	type hit struct{ id, label string }
+	var newly []hit
+	h.mu.Lock()
+	for _, sp := range snap.Spaces {
+		for _, tb := range sp.Tabs {
+			for _, p := range tb.Panes {
+				cur[p.ID] = p.Status
+				if !p.Agent || p.Status != protocol.Blocked {
+					continue
+				}
+				if h.prevStatus != nil && h.prevStatus[p.ID] != protocol.Blocked {
+					newly = append(newly, hit{id: p.ID, label: p.Label})
+				}
+			}
+		}
+	}
+	first := h.prevStatus == nil
+	h.prevStatus = cur
+	h.mu.Unlock()
+	if first || len(newly) == 0 {
+		return
+	}
+	if s, err := config.Load(h.cfgPath); err == nil && !s.Notify {
+		return
+	}
+	for _, n := range newly {
+		label := n.label
+		if label == "" {
+			label = "An agent"
+		}
+		h.push.Notify(ctx, push.Notification{
+			Title: "Agent blocked",
+			Body:  label + " needs you.",
+			URL:   "/pane/" + n.id,
+		})
+	}
 }
 
 func (h *Hub) setState(s ConnState) {
@@ -310,6 +366,34 @@ func (h *Hub) handleHealth(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]any{"ok": true, "herdr": string(state), "version": h.version, "socket": h.client.SocketPath})
 }
 
+// handlePushKey returns the VAPID public key the browser subscribes with.
+func (h *Hub) handlePushKey(w http.ResponseWriter, r *http.Request) {
+	key := ""
+	if h.push != nil {
+		key = h.push.PublicKey()
+	}
+	writeJSON(w, map[string]any{"key": key})
+}
+
+// handlePushSubscribe records a browser push subscription posted by the UI.
+func (h *Hub) handlePushSubscribe(w http.ResponseWriter, r *http.Request) {
+	if h.push == nil {
+		http.Error(w, "push disabled", http.StatusServiceUnavailable)
+		return
+	}
+	if r.Method != http.MethodPost && r.Method != http.MethodPut {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	var sub push.Subscription
+	if json.NewDecoder(r.Body).Decode(&sub) != nil || sub.Endpoint == "" {
+		http.Error(w, "bad subscription", http.StatusBadRequest)
+		return
+	}
+	h.push.Add(sub)
+	writeJSON(w, map[string]any{"ok": true})
+}
+
 // Handler returns the full HTTP handler (UI + /ws + /api).
 func (h *Hub) Handler() (http.Handler, error) {
 	ui, err := webui.Handler()
@@ -319,7 +403,8 @@ func (h *Hub) Handler() (http.Handler, error) {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/ws", h.handleWS)
 	mux.HandleFunc("/api/config", h.handleConfig)
-	mux.HandleFunc("/api/health", h.handleHealth)
+	mux.HandleFunc("/api/push/key", h.handlePushKey)
+	mux.HandleFunc("/api/push/subscribe", h.handlePushSubscribe)
 	mux.Handle("/", ui)
 	return mux, nil
 }

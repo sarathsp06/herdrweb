@@ -11,7 +11,7 @@ import (
 // number of concurrent in-flight handlers at maxInflightPerConn, applying
 // backpressure to the firing loop instead of spawning unbounded goroutines.
 func TestDispatchBoundsConcurrency(t *testing.T) {
-	h := NewHub(nil, "", "test")
+	h := NewHub(nil, "", "test", nil)
 	const limit = maxInflightPerConn
 	const total = limit * 3
 

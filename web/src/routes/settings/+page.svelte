@@ -1,6 +1,7 @@
 <script lang="ts">
   import { session } from '$lib/session/live';
   import { config, showToast } from '$lib/ui/state';
+  import { enablePush } from '$lib/push/register';
   import Toggle from '$lib/ui/Toggle.svelte';
   const s = session();
   type ThemeId = 'herdr-dark' | 'ash' | 'gruvbox' | 'solarized-light';
@@ -26,6 +27,23 @@
   }
   async function reload() { await persist(); await s.request({ method: 'server.reload_config', params: {} }).catch(() => {}); showToast('config reloaded'); }
   function setConfig(patch: Partial<typeof $config>) { config.update((c) => ({ ...c, ...patch })); persist(); }
+  async function toggleNotify(v: boolean) {
+    setConfig({ notify: v });
+    if (!v) return;
+    const r = await enablePush();
+    if (r.ok) {
+      showToast('push enabled');
+      return;
+    }
+    const why: Record<typeof r.reason, string> = {
+      unsupported: 'push unsupported on this browser',
+      insecure: 'push needs HTTPS (tailscale serve --https)',
+      denied: 'notifications blocked in browser',
+      nokey: 'bridge has no push key',
+      error: 'push setup failed'
+    };
+    showToast(why[r.reason]);
+  }
   function pickTheme(id: ThemeId) {
     config.update((c) => ({ ...c, theme: id }));
     document.documentElement.dataset.theme = id;
@@ -65,7 +83,7 @@
 <section>
   <div class="section-label">Behavior</div>
   <div class="rows">
-    <div class="row"><div><div class="n">Push when blocked</div><div class="d">Notify when an agent needs you.</div></div><Toggle checked={$config.notify} onchange={(v) => setConfig({ notify: v })} /></div>
+    <div class="row"><div><div class="n">Push when blocked</div><div class="d">Notify when an agent needs you.</div></div><Toggle checked={$config.notify} onchange={toggleNotify} /></div>
     <div class="row"><div><div class="n">Follow focused pane</div><div class="d">Open the pane Herdr focuses.</div></div><Toggle checked={$config.follow} onchange={(v) => setConfig({ follow: v })} /></div>
     <div class="row"><div><div class="n">Keep ANSI colors in raw</div><div class="d">Render terminal colors in raw mode.</div></div><Toggle checked={$config.ansi} onchange={(v) => setConfig({ ansi: v })} /></div>
     <div class="row"><div><div class="n">Developer captions</div><div class="d">Show socket-call captions in the UI.</div></div><Toggle checked={$config.devCaptions} onchange={(v) => setConfig({ devCaptions: v })} /></div>

@@ -92,6 +92,31 @@ dev_captions = false   # show socket-call captions (developer setting)
 The bridge binds to `127.0.0.1:7331` by default (loopback only, no auth —
 single operator on localhost). Override with `-addr`, `-socket`, and `-config`.
 
+## Mobile (install as an app + push when blocked)
+
+The UI is an installable PWA. On a phone, open the bridge and use the browser's
+**Add to Home Screen**; it launches standalone (own icon, no browser chrome).
+
+The typical setup is the Go bridge on your workstation reached from the phone
+over **Tailscale**. Two requirements for background push:
+
+1. **A secure context.** Service workers and Web Push require HTTPS (or
+   `localhost`). Serve the bridge over your tailnet with a real cert:
+
+   ```bash
+   tailscale serve --bg --https=443 127.0.0.1:7331
+   ```
+
+   Then open `https://<machine>.<tailnet>.ts.net` on the phone and install it.
+2. **Enable notifications.** In **Settings → Push when blocked**, toggle it on
+   and accept the permission prompt. On iOS the app must be home-screen-installed
+   first (iOS ≥ 16.4).
+
+When an agent pane transitions to `blocked`, the bridge sends a Web Push
+(VAPID) to every enrolled browser; tapping it opens that pane's chat — even with
+the app closed. VAPID keys and subscriptions are stored next to the config
+(`webpush.json`, `push-subs.json`); dead subscriptions are pruned automatically.
+
 ## Layout
 
 ```
