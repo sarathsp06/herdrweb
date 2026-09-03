@@ -15,3 +15,6 @@ web/playwright-report/
 # misc
 *.log
 .DS_Store
+
+# git worktrees (rx pipeline)
+/.worktrees/
