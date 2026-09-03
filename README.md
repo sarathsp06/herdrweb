@@ -31,34 +31,24 @@ Desktop layout (≥ 880px) — the sidebar *is* the inbox:
 
 > Captured against a live bridge (`make run`) with `make screenshots`.
 
-## Quick start
+# Using Herdr Web
 
-### Install
+## Install
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/sarathsp06/herdrweb/main/install.sh | sh
 ```
 
-### Build from source
+Then run the bridge (loopback only by default):
 
 ```bash
-make build      # builds the SvelteKit UI, embeds it, compiles the binary -> bin/herdr-bridge
-make run        # build + run the bridge on http://127.0.0.1:7331
+herdr-bridge        # serves http://127.0.0.1:7331
 ```
 
 Open <http://127.0.0.1:7331>. The bridge connects to your running Herdr server
 and streams live spaces, tabs, panes, and agent status. Append `?fixtures=1` to
-any URL to explore the mocked dataset without a live server. To reach it from
-your **phone**, see [Mobile](#mobile).
-
-### Development
-
-```bash
-make dev        # SvelteKit dev server (Vite) with HMR, proxying /ws + /api to the bridge on :7331
-```
-
-Run the bridge (`make run`) in one pane and `make dev` in another; Vite proxies
-the socket traffic so the UI has live data during development.
+any URL to explore the mocked dataset without a live server. To use it from your
+**phone**, see [Mobile](#mobile).
 
 ## Screens
 
@@ -121,7 +111,25 @@ Open `https://<machine>.<tailnet>.ts.net` on the phone, install it, and enable
 **Settings → Push when blocked** (iOS needs the app installed first). Any other
 HTTPS front — a reverse proxy, your own cert — works just as well.
 
-## Layout
+# Contributing
+
+## Build & run from source
+
+```bash
+make build      # builds the SvelteKit UI, embeds it, compiles the binary -> bin/herdr-bridge
+make run        # build + run the bridge on http://127.0.0.1:7331
+```
+
+## Development
+
+```bash
+make dev        # SvelteKit dev server (Vite) with HMR, proxying /ws + /api to the bridge on :7331
+```
+
+Run the bridge (`make run`) in one pane and `make dev` in another; Vite proxies
+the socket traffic so the UI has live data during development.
+
+## Project layout
 
 ```
 cmd/herdr-bridge/       # main: serves UI + /ws + /api, proxies the Herdr socket
