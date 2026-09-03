@@ -96,7 +96,9 @@
   .chat { display: flex; flex-direction: column; height: 100%; }
   .scroll { flex: 1; overflow-y: auto; padding: 14px; }
   .cap { font-size: 10.5px; color: var(--text-4); margin-bottom: 8px; }
-  .raw { margin: 0; font-size: 14px; line-height: 1.6; color: var(--text-1); white-space: pre; overflow-x: auto; }
+  /* Terminal scrollback must render exact code points — kill Fira Code's
+     contextual ligatures (calt) so ASCII art (-> == != |=> box rules) stays literal. */
+  .raw { margin: 0; font-size: 14px; line-height: 1.6; color: var(--text-1); white-space: pre; overflow-x: auto; font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'calt' 0, 'tnum' 1; }
   .raw .add { color: var(--done); } .raw .del { color: var(--blocked-badge-text); } .raw .ok { color: var(--working); }
   .missing { padding: 40px; color: var(--text-4); }
   /* Narrow viewports (phones, small windows) can't show a desktop-width
