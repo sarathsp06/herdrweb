@@ -8,6 +8,12 @@
     { id: 'ash', swatches: ['#0d0d0f', '#e4e4e7', '#c9b458'] },
     { id: 'gruvbox', swatches: ['#1d2021', '#ebdbb2', '#b8bb26'] }
   ];
+  const sizes: { label: string; scale: number }[] = [
+    { label: 'S', scale: 0.9 },
+    { label: 'M', scale: 1 },
+    { label: 'L', scale: 1.15 },
+    { label: 'XL', scale: 1.3 }
+  ];
   async function persist() {
     // In live mode, write the [web] table to config.toml (bridge reloads Herdr).
     try {
@@ -42,6 +48,19 @@
 </section>
 
 <section>
+  <div class="section-label">Text size</div>
+  <div class="sizes">
+    {#each sizes as sz}
+      <button class="size" class:sel={($config.fontScale ?? 1) === sz.scale} onclick={() => setConfig({ fontScale: sz.scale })}>
+        <span class="aa" style="font-size: {13 + (sz.scale - 1) * 14}px">Aa</span>
+        <span class="mono szlabel">{sz.label}</span>
+      </button>
+    {/each}
+  </div>
+  <div class="cap mono">scales the whole UI · writes font_scale in config.toml</div>
+</section>
+
+<section>
   <div class="section-label">Behavior</div>
   <div class="rows">
     <div class="row"><div><div class="n">Push when blocked</div><div class="d">Notify when an agent needs you.</div></div><Toggle checked={$config.notify} onchange={(v) => setConfig({ notify: v })} /></div>
@@ -72,6 +91,11 @@
   .swatches { display: flex; gap: 4px; }
   .swatches span { width: 14px; height: 14px; border-radius: 4px; border: 1px solid var(--hairline); }
   .name { font-size: 12px; color: var(--text-2); }
+  .sizes { display: flex; gap: 10px; }
+  .size { flex: 1; background: var(--card); border: 1px solid var(--hairline); border-radius: var(--r-card); padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--text-2); }
+  .size.sel { border-color: var(--control-selected-2); background: var(--surface-tint); }
+  .aa { line-height: 1; font-weight: 600; }
+  .szlabel { font-size: 11px; color: var(--text-4); }
   .cap { font-size: 10.5px; color: var(--text-4); margin-top: 8px; }
   .rows { display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--hairline); border-radius: var(--r-card); }
   .row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-top: 1px solid var(--hairline); }

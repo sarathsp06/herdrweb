@@ -45,7 +45,7 @@ export interface Snapshot {
 
 // ---- Live event union the session store patches from ----
 export type SessionEvent =
-  | { type: 'snapshot'; snapshot: Snapshot }
+  | ({ type: 'snapshot' } & Snapshot)
   | { type: 'workspace.updated'; space: Space }
   | { type: 'workspace.closed'; spaceId: string }
   | { type: 'tab.updated'; spaceId: string; tab: Tab }
@@ -65,9 +65,9 @@ export interface PromptWait {
 }
 
 export type Call =
-  | { method: 'pane.read'; params: { target: string; source: 'recent-unwrapped'; lines: number } }
+  | { method: 'pane.read'; params: { pane_id: string; source: 'recent_unwrapped'; lines: number } }
   | { method: 'agent.prompt'; params: { target: string; text: string; wait: PromptWait } }
-  | { method: 'agent.send_keys'; params: { target: string; keys: string } }
+  | { method: 'agent.send_keys'; params: { target: string; keys: string[] } }
   | { method: 'workspace.create'; params: { cwd: string; label: string; focus: boolean } }
   | { method: 'workspace.rename'; params: { workspace_id: string; label: string } }
   | { method: 'workspace.close'; params: { workspace_id: string } }
@@ -79,7 +79,7 @@ export type Call =
   | { method: 'pane.close'; params: { pane_id: string } }
   | { method: 'server.reload_config'; params: Record<string, never> };
 
-export type CallResult = { ok: boolean; lines?: string[]; [k: string]: unknown };
+export type CallResult = { ok?: boolean; lines?: string[]; read?: { text?: string }; [k: string]: unknown };
 
 // ---- Chat transcript message kinds ----
 export interface CodeLine { tokens: { text: string; cls?: string }[] }
@@ -101,6 +101,7 @@ export interface Config {
   follow: boolean; // follow focused pane
   ansi: boolean; // keep ANSI colors in raw
   devCaptions: boolean; // show socket-call captions (developer setting, off by default)
+  fontScale: number; // webapp text-size multiplier (applied as document zoom)
 }
 
 export interface ServerInfo {

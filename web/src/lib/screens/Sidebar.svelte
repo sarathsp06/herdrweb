@@ -1,19 +1,26 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import type { ConnState, Space } from '$lib/protocol';
-  import { agentsOf, rollupOf, monogram } from '$lib/session/derive';
+  import { agentsOf, rollupOf, monogram, primaryPaneOf } from '$lib/session/derive';
   import { agentsGrouped, lastPane } from '$lib/ui/state';
   import StatusGlyph from '$lib/ui/StatusGlyph.svelte';
   import StatusDot from '$lib/ui/StatusDot.svelte';
 
-  let { spaces, connection, embedded = false }:
-    { spaces: Space[]; connection: ConnState; embedded?: boolean } = $props();
+  let { spaces, connection, embedded = false, onselect, onclose }:
+    { spaces: Space[]; connection: ConnState; embedded?: boolean; onselect?: () => void; onclose?: () => void } = $props();
 
   const agents = $derived(agentsOf(spaces));
 
   function openAgent(paneId: string) {
     lastPane.set(paneId);
     goto(`/pane/${encodeURIComponent(paneId)}`);
+    onselect?.();
+  }
+  function openSpace(spaceId: string) {
+    const paneId = primaryPaneOf(spaces, spaceId);
+    if (paneId) { openAgent(paneId); return; }
+    goto(`/spaces/${encodeURIComponent(spaceId)}`);
+    onselect?.();
   }
   const connColor: Record<ConnState, string> = {
     open: 'var(--done)', connecting: 'var(--working)', reconnecting: 'var(--working)', closed: 'var(--blocked)'
@@ -24,13 +31,16 @@
   <header class="brand">
     <span class="mark mono">herdr</span>
     <span class="conn" style="--c: {connColor[connection]}" title={connection}></span>
+    {#if onclose}
+      <button class="navclose" aria-label="hide navigation" title="hide navigation" onclick={() => onclose()}>⟨</button>
+    {/if}
   </header>
   <div class="session mono">default session · {spaces.length} spaces · {connection}</div>
 
   <div class="group">
     <div class="ghead"><span class="section-label">spaces</span></div>
     {#each spaces as sp (sp.id)}
-      <button class="srow" onclick={() => goto(`/spaces/${encodeURIComponent(sp.id)}`)}>
+      <button class="srow" onclick={() => openSpace(sp.id)}>
         <StatusGlyph status={rollupOf(spaces, sp.id)} />
         <span class="mono label">{sp.label}</span>
         <span class="mono branch">{sp.branch}</span>
@@ -62,6 +72,8 @@
   .brand { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
   .mark { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; }
   .conn { width: 8px; height: 8px; border-radius: 50%; background: var(--c); animation: hpulse 2.6s ease-in-out infinite; }
+  .navclose { margin-left: auto; width: 30px; height: 30px; border-radius: var(--r-chip); border: 1px solid var(--control); background: var(--card); color: var(--text-2); font-size: 15px; line-height: 1; }
+  .navclose:hover { background: var(--surface-tint); }
   .session { font-size: 11px; color: var(--text-4); margin-bottom: 16px; }
   .group { margin-bottom: 18px; }
   .ghead { display: flex; align-items: center; justify-content: space-between; padding: 0 6px 8px; }

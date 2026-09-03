@@ -20,6 +20,18 @@ export function findPaneIn(spaces: Space[], paneId: string): AgentRef | undefine
   return undefined;
 }
 
+/** The pane to open when a whole space is selected: the most attention-worthy
+ *  agent pane (blocked > working > done > idle), else the space's first pane. */
+export function primaryPaneOf(spaces: Space[], spaceId: string): string | undefined {
+  const space = spaces.find((s) => s.id === spaceId);
+  if (!space) return undefined;
+  const panes = space.tabs.flatMap((t) => t.panes);
+  const agents = panes
+    .filter((p) => p.agent)
+    .sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status]);
+  return (agents[0] ?? panes[0])?.id;
+}
+
 export function rollupOf(spaces: Space[], spaceId: string): Rollup {
   const space = spaces.find((s) => s.id === spaceId);
   if (!space) return 'none';

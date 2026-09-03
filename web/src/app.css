@@ -5,6 +5,9 @@
 @import '@fontsource/geist-mono/400.css';
 @import '@fontsource/geist-mono/500.css';
 @import '@fontsource/geist-mono/600.css';
+@import '@fontsource/fira-code/400.css';
+@import '@fontsource/fira-code/500.css';
+@import '@fontsource/fira-code/600.css';
 @import './lib/tokens.css';
 
 * { box-sizing: border-box; }
@@ -15,8 +18,8 @@ body {
   background: var(--page-bg);
   color: var(--text-1);
   font-family: var(--font-ui);
-  font-size: 14px;
-  line-height: 1.45;
+  font-size: 15px;
+  line-height: 1.5;
   -webkit-font-smoothing: antialiased;
   overscroll-behavior: none;
 }
@@ -25,7 +28,7 @@ body {
 
 button { font-family: inherit; color: inherit; cursor: pointer; }
 
-.mono { font-family: var(--font-mono); font-feature-settings: 'tnum' 1; }
+.mono { font-family: var(--font-mono); font-feature-settings: 'tnum' 1, 'calt' 1; font-variant-ligatures: contextual; }
 .prose { text-wrap: pretty; }
 
 /* hide scrollbars but keep scrolling */

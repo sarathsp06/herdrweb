@@ -155,7 +155,7 @@ export class FixtureTransport implements Transport {
 
   subscribe(handler: Handler): () => void {
     this.handlers.add(handler);
-    handler({ type: 'snapshot', snapshot: FIXTURE_SNAPSHOT });
+    handler({ type: 'snapshot', ...FIXTURE_SNAPSHOT });
     return () => this.handlers.delete(handler);
   }
 
@@ -174,8 +174,8 @@ export class FixtureTransport implements Transport {
       const found = FIXTURE_SNAPSHOT.spaces
         .flatMap((s) => s.tabs)
         .flatMap((t) => t.panes)
-        .find((p) => p.id === call.params.target);
-      return { ok: true, lines: found?.tail ?? [] };
+        .find((p) => p.id === call.params.pane_id);
+      return { ok: true, read: { text: (found?.tail ?? []).join('\n') } };
     }
     return { ok: true };
   }

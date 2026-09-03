@@ -16,7 +16,7 @@ export function showToast(msg: string): void {
 }
 
 const CONFIG_KEY = 'herdrweb.config';
-const DEFAULT_CONFIG: Config = { theme: 'herdr-dark', notify: true, follow: true, ansi: true, devCaptions: false };
+const DEFAULT_CONFIG: Config = { theme: 'herdr-dark', notify: true, follow: true, ansi: true, devCaptions: false, fontScale: 1 };
 
 function loadConfig(): Config {
   if (!browser) return { ...DEFAULT_CONFIG };
@@ -66,3 +66,7 @@ export const agentsGrouped = writable<boolean>(true);
 
 // Last-selected pane, so desktop `/` resolves to its chat.
 export const lastPane = writable<string | null>(null);
+
+// Sidebar/nav visibility. Desktop: pushes content when open. Mobile: slide-in
+// drawer overlay. Layout sets the initial value per breakpoint on mount.
+export const navOpen = writable<boolean>(true);

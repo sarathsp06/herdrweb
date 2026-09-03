@@ -1,10 +1,9 @@
 <script lang="ts">
   import { tick } from 'svelte';
-  import { goto } from '$app/navigation';
   import { page } from '$app/stores';
   import { session } from '$lib/session/live';
   import { findPaneIn } from '$lib/session/derive';
-  import { mode, lastPane, config } from '$lib/ui/state';
+  import { mode, lastPane, config, navOpen } from '$lib/ui/state';
   import { getTranscript } from '$lib/chat/transcripts';
   import StatusPill from '$lib/ui/StatusPill.svelte';
   import Composer from '$lib/chat/Composer.svelte';
@@ -27,17 +26,21 @@
   let scroller: HTMLElement | undefined = $state();
   let raw: string[] = $state([]);
 
-  // Non-agent panes open directly in raw mode.
+  // Non-agent panes, and live agent panes with no transcript feed, open in raw
+  // mode (raw scrollback is the only content until a live transcript exists).
   $effect(() => {
     lastPane.set(paneId);
-    if (ref && !ref.pane.agent) mode.set('raw');
+    if (ref && (!ref.pane.agent || transcript.length === 0)) mode.set('raw');
   });
 
-  // Raw scrollback via pane.read.
+  // Raw scrollback via pane.read (Herdr returns {read:{text}}).
   $effect(() => {
     if ($mode !== 'raw' || !ref) return;
-    s.request({ method: 'pane.read', params: { target: paneId, source: 'recent-unwrapped', lines: 80 } })
-      .then((r) => (raw = (r.lines as string[]) ?? ref!.pane.tail))
+    s.request({ method: 'pane.read', params: { pane_id: paneId, source: 'recent_unwrapped', lines: 200 } })
+      .then((r) => {
+        const text = r.read?.text ?? '';
+        raw = text ? text.split('\n') : ref!.pane.tail;
+      })
       .catch(() => (raw = ref!.pane.tail));
   });
 
@@ -58,7 +61,7 @@
 {#if ref}
   <section class="chat">
     <header class="bar">
-      <button class="back" onclick={() => goto('/')} aria-label="back">‹</button>
+      <button class="back" onclick={() => navOpen.update((v) => !v)} aria-label="toggle navigation">☰</button>
       <div class="title">
         <div class="line1"><span class="name">{ref.pane.label}</span> <StatusPill status={ref.pane.status} /></div>
         <div class="line2 mono">{ref.space.label} · {ref.pane.id}</div>
@@ -71,7 +74,7 @@
 
     <div class="scroll" bind:this={scroller}>
       {#if $mode === 'raw'}
-        {#if $config.devCaptions}<div class="cap mono">pane.read · source=recent-unwrapped · lines=80</div>{/if}
+        {#if $config.devCaptions}<div class="cap mono">pane.read · source=recent_unwrapped · lines=200</div>{/if}
         <pre class="raw mono">{#each raw as line}<span class={rawClass(line)}>{line}
 </span>{/each}</pre>
       {:else}
@@ -110,7 +113,7 @@
   .scroll { flex: 1; overflow-y: auto; padding: 14px; }
   .transcript { display: flex; flex-direction: column; gap: 14px; max-width: 860px; margin: 0 auto; }
   .cap { font-size: 10.5px; color: var(--text-4); margin-bottom: 8px; }
-  .raw { margin: 0; font-size: 10.5px; line-height: 1.6; color: var(--text-3); white-space: pre; overflow-x: auto; }
+  .raw { margin: 0; font-size: 14px; line-height: 1.6; color: var(--text-1); white-space: pre; overflow-x: auto; }
   .raw .add { color: var(--done); } .raw .del { color: var(--blocked-badge-text); } .raw .ok { color: var(--working); }
   .missing { padding: 40px; color: var(--text-4); }
   @media (min-width: 880px) { .chat { height: 100vh; } }

@@ -11,16 +11,17 @@ import (
 
 // Settings are the UI-owned preferences.
 type Settings struct {
-	Theme       string `toml:"theme" json:"theme"`
-	Notify      bool   `toml:"notify" json:"notify"`
-	Follow      bool   `toml:"follow" json:"follow"`
-	Ansi        bool   `toml:"ansi" json:"ansi"`
-	DevCaptions bool   `toml:"dev_captions" json:"devCaptions"`
+	Theme       string  `toml:"theme" json:"theme"`
+	Notify      bool    `toml:"notify" json:"notify"`
+	Follow      bool    `toml:"follow" json:"follow"`
+	Ansi        bool    `toml:"ansi" json:"ansi"`
+	DevCaptions bool    `toml:"dev_captions" json:"devCaptions"`
+	FontScale   float64 `toml:"font_scale" json:"fontScale"`
 }
 
 // Default settings.
 func Default() Settings {
-	return Settings{Theme: "herdr-dark", Notify: true, Follow: true, Ansi: true, DevCaptions: false}
+	return Settings{Theme: "herdr-dark", Notify: true, Follow: true, Ansi: true, DevCaptions: false, FontScale: 1}
 }
 
 type file struct {

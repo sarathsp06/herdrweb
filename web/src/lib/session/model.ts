@@ -21,7 +21,7 @@ export class SessionModel {
   apply(ev: SessionEvent): void {
     switch (ev.type) {
       case 'snapshot':
-        this.applySnapshot(ev.snapshot);
+        this.applySnapshot(ev);
         break;
       case 'workspace.updated':
         this.upsertSpace(cloneSpace(ev.space));

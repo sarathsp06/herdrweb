@@ -2,7 +2,7 @@
   import { goto } from '$app/navigation';
   import { session } from '$lib/session/live';
   import { width, BREAKPOINT } from '$lib/layout/responsive';
-  import { rollupOf, countsOf, monogram } from '$lib/session/derive';
+  import { rollupOf, countsOf, monogram, primaryPaneOf } from '$lib/session/derive';
   import { openSheet, showToast } from '$lib/ui/state';
   import StatusDot from '$lib/ui/StatusDot.svelte';
   import Card from '$lib/ui/Card.svelte';
@@ -15,6 +15,12 @@
   $effect(() => {
     if (desktop && $spaces[0]) goto(`/spaces/${encodeURIComponent($spaces[0].id)}`, { replaceState: true });
   });
+
+  function openChat(spaceId: string) {
+    const paneId = primaryPaneOf($spaces, spaceId);
+    if (paneId) goto(`/pane/${encodeURIComponent(paneId)}`);
+    else goto(`/spaces/${encodeURIComponent(spaceId)}`);
+  }
 
   function newSpace() {
     openSheet({
@@ -45,7 +51,7 @@
     {@const c = countsOf($spaces, sp.id)}
     {@const r = rollupOf($spaces, sp.id)}
     <div class="wrap">
-      <button class="body" onclick={() => goto(`/spaces/${encodeURIComponent(sp.id)}`)}>
+      <button class="body" onclick={() => openChat(sp.id)}>
         <span class="mono mono-square">{monogram(sp.label)}</span>
         <span class="col">
           <span class="mono label">{sp.label} {#if sp.worktree}<span class="wt mono">worktree</span>{/if}</span>

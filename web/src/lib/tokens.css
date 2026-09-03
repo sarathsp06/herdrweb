@@ -14,12 +14,12 @@
   --text-on-light: #18181b;
   --text-2: #e4e4e7;
   --text-2b: #d4d4d8;
-  --text-3: #a3a3a3;
-  --text-3b: #8a8a92;
-  --text-4: #737378;
-  --text-disabled: #5c5c63;
-  --gutter: #4a4a52;
-  --gutter-2: #52525b;
+  --text-3: #b8b8be;
+  --text-3b: #a6a6ae;
+  --text-4: #94949c;
+  --text-disabled: #7e7e87;
+  --gutter: #6a6a72;
+  --gutter-2: #73737b;
 
   /* lines & control */
   --hairline: rgba(255, 255, 255, 0.07);
@@ -60,7 +60,7 @@
 
   /* fonts */
   --font-ui: 'Geist', system-ui, -apple-system, sans-serif;
-  --font-mono: 'Geist Mono', ui-monospace, SFMono-Regular, monospace;
+  --font-mono: 'Fira Code', 'Geist Mono', ui-monospace, SFMono-Regular, monospace;
 
   /* radius */
   --r-badge: 5px;

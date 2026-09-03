@@ -5,7 +5,7 @@
   let { paneId, question, terminal, age }: { paneId: string; question: string; terminal: string; age: string } = $props();
   const s = session();
   async function answer(key: SendKey) {
-    await s.request({ method: 'agent.send_keys', params: { target: paneId, keys: key } }).catch(() => {});
+    await s.request({ method: 'agent.send_keys', params: { target: paneId, keys: [key] } }).catch(() => {});
     showToast(`sent ${key} → ${paneId}`);
   }
 </script>

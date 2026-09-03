@@ -78,7 +78,7 @@ describe('SessionModel live patching', () => {
     const m = fresh();
     m.apply({ type: 'workspace.closed', spaceId: 'w1' });
     const snap: Snapshot = FIXTURE_SNAPSHOT;
-    m.apply({ type: 'snapshot', snapshot: snap });
+    m.apply({ type: 'snapshot', ...snap });
     expect(m.spaces.map((s) => s.id)).toEqual(['w1', 'w2', 'w3', 'w4']);
   });
 
@@ -101,11 +101,11 @@ describe('helpers', () => {
     const t = new FixtureTransport();
     let got: string[] = [];
     t.subscribe((ev) => {
-      if (ev.type === 'snapshot') got = ev.snapshot.spaces.map((s) => s.id);
+      if (ev.type === 'snapshot') got = ev.spaces.map((s) => s.id);
     });
     expect(got).toEqual(['w1', 'w2', 'w3', 'w4']);
-    const r = await t.request({ method: 'pane.read', params: { target: 'w1:p1', source: 'recent-unwrapped', lines: 80 } });
+    const r = await t.request({ method: 'pane.read', params: { pane_id: 'w1:p1', source: 'recent_unwrapped', lines: 80 } });
     expect(r.ok).toBe(true);
-    expect(r.lines?.length).toBeGreaterThan(0);
+    expect(typeof r.read?.text).toBe('string');
   });
 });
