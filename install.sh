@@ -101,6 +101,13 @@ cat <<EOF
 Run the bridge (loopback only by default):
   $BIN
 
+Run as a daemon in background:
+  $BIN -daemon -log-file ~/.config/herdr/herdr-bridge.log
+
+Install as a system daemon (systemd on Linux / launchd on macOS):
+  $BIN -service install
+  $BIN -service start
+
 Reach it from your phone over Tailscale (HTTPS = installable PWA + push):
   tailscale serve --bg --https=443 127.0.0.1:7331
   # then open https://<machine>.<tailnet>.ts.net on the phone
