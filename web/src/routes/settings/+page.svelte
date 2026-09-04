@@ -1,8 +1,10 @@
 <script lang="ts">
+  import { onMount } from 'svelte';
   import { session } from '$lib/session/live';
   import { config, showToast } from '$lib/ui/state';
   import { enablePush } from '$lib/push/register';
   import Toggle from '$lib/ui/Toggle.svelte';
+
   const s = session();
   type ThemeId = 'herdr-dark' | 'ash' | 'gruvbox' | 'solarized-light';
   const themes: { id: ThemeId; swatches: string[] }[] = [
@@ -50,11 +52,32 @@
     showToast(why[r.reason]);
   }
   function pickTheme(id: ThemeId) {
-    config.update((c) => ({ ...c, theme: id }));
-    document.documentElement.dataset.theme = id;
-    reload();
+    setConfig({ theme: id });
   }
-  const server = { bridge: 'go · :7331', socket: '~/.config/herdr/herdr.sock', version: '0.8.2', protocol: 'ok', uptime: '3h 12m' };
+
+  let server = $state<Record<string, string>>({
+    bridge: 'go · :7331',
+    socket: '~/.config/herdr/herdr.sock',
+    version: 'dev',
+    protocol: 'ok'
+  });
+
+  onMount(() => {
+    fetch('/api/health')
+      .then((res) => (res.ok ? res.json() : null))
+      .then((data) => {
+        if (data) {
+          server = {
+            bridge: 'go · :7331',
+            socket: data.socket || '~/.config/herdr/herdr.sock',
+            version: data.version || 'dev',
+            herdr: data.herdr || 'unknown',
+            protocol: data.ok ? 'ok' : 'degraded'
+          };
+        }
+      })
+      .catch(() => {});
+  });
 </script>
 
 <header class="hd"><h1 class="screen-title">Settings</h1></header>

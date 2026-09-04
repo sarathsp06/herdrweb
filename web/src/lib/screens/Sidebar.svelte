@@ -4,7 +4,6 @@
   import { agentsOf, rollupOf, monogram, primaryPaneOf } from '$lib/session/derive';
   import { agentsGrouped, lastPane } from '$lib/ui/state';
   import StatusGlyph from '$lib/ui/StatusGlyph.svelte';
-  import StatusDot from '$lib/ui/StatusDot.svelte';
 
   let { spaces, connection, embedded = false, onselect, onclose }:
     { spaces: Space[]; connection: ConnState; embedded?: boolean; onselect?: () => void; onclose?: () => void } = $props();
