@@ -477,8 +477,6 @@
           <ul>
             <li>A <b>full terminal</b> — vim, htop, interactive TUIs</li>
             <li>A <b>chat or transcript</b> view — live panes are raw terminal only</li>
-            <li><b>Multiple users</b> or accounts — it&#39;s one operator, one machine</li>
-            <li><b>Authentication</b> — it binds loopback by design</li>
             <li>File <b>uploads</b>, multi-host SSH, or a WASM terminal</li>
           </ul>
         </div>
@@ -551,8 +549,8 @@ herdr-bridge -service status</pre>
       </div>
 
       <p class="callout danger">
-        <b>No authentication.</b> The bridge binds <code style="font-family:var(--mono)">127.0.0.1:7331</code>
-        (loopback) by design — one operator, one machine. Only expose it over a private network such as a
+        <b>Loopback by design.</b> The bridge binds <code style="font-family:var(--mono)">127.0.0.1:7331</code>
+        only. Expose it over a private network such as a
         <a href="https://tailscale.com">tailnet</a>; never bind <code style="font-family:var(--mono)">0.0.0.0</code>.
       </p>
 
