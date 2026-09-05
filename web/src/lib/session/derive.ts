@@ -32,6 +32,29 @@ export function primaryPaneOf(spaces: Space[], spaceId: string): string | undefi
   return (agents[0] ?? panes[0])?.id;
 }
 
+/** Primary pane of a single tab: most attention-worthy agent pane, else first pane. */
+export function primaryPaneOfTab(tab: Tab): string | undefined {
+  const agents = tab.panes
+    .filter((p) => p.agent)
+    .sort((a, b) => STATUS_ORDER[a.status] - STATUS_ORDER[b.status]);
+  return (agents[0] ?? tab.panes[0])?.id;
+}
+
+/** Pane to open when a space is selected: the remembered tab's primary pane when
+ *  that tab still exists, else the space-wide primary pane. */
+export function chatPaneForSpace(
+  spaces: Space[],
+  spaceId: string,
+  lastTabId?: string | null
+): string | undefined {
+  if (lastTabId) {
+    const tab = spaces.find((s) => s.id === spaceId)?.tabs.find((t) => t.id === lastTabId);
+    const paneId = tab && primaryPaneOfTab(tab);
+    if (paneId) return paneId;
+  }
+  return primaryPaneOf(spaces, spaceId);
+}
+
 export function rollupOf(spaces: Space[], spaceId: string): Rollup {
   const space = spaces.find((s) => s.id === spaceId);
   if (!space) return 'none';

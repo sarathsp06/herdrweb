@@ -53,9 +53,14 @@
   $effect(() => {
     document.documentElement.dataset.theme = $config.theme;
   });
-  // Webapp-level text size: scale the whole UI via document zoom.
+  // Webapp-level text size: scale the whole UI via document zoom. `zoom` also
+  // scales viewport-unit heights (100dvh/100vh), so full-height shells must
+  // divide by --font-scale to stay pinned to the real viewport (else the pane
+  // composer is pushed below the clipped bottom edge).
   $effect(() => {
-    document.documentElement.style.setProperty('zoom', String($config.fontScale ?? 1));
+    const scale = $config.fontScale ?? 1;
+    document.documentElement.style.setProperty('zoom', String(scale));
+    document.documentElement.style.setProperty('--font-scale', String(scale));
   });
 </script>
 
@@ -91,7 +96,7 @@
 <BottomSheet />
 
 <style>
-  .shell { height: 100dvh; display: flex; overflow: hidden; }
+  .shell { height: calc(100dvh / var(--font-scale, 1)); display: flex; overflow: hidden; }
   .mainwrap { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100%; min-height: 0; }
   .content { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; }
   .shell.desktop .content { padding: 0 max(28px, calc(50% - 560px)); }

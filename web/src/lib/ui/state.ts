@@ -66,6 +66,32 @@ export const agentsGrouped = writable<boolean>(true);
 // Last-selected pane, so desktop `/` resolves to its chat.
 export const lastPane = writable<string | null>(null);
 
+// Last-selected tab per space, so re-opening a space returns to that tab's chat.
+const LAST_TAB_KEY = 'herdrweb.lastTab';
+function loadLastTab(): Record<string, string> {
+  if (!browser) return {};
+  try {
+    const raw = localStorage.getItem(LAST_TAB_KEY);
+    if (raw) return JSON.parse(raw) as Record<string, string>;
+  } catch {
+    // ignore corrupt storage
+  }
+  return {};
+}
+export const lastTabBySpace = writable<Record<string, string>>(loadLastTab());
+if (browser) {
+  lastTabBySpace.subscribe((m) => {
+    try {
+      localStorage.setItem(LAST_TAB_KEY, JSON.stringify(m));
+    } catch {
+      // storage unavailable; in-memory only
+    }
+  });
+}
+export function rememberTab(spaceId: string, tabId: string): void {
+  lastTabBySpace.update((m) => (m[spaceId] === tabId ? m : { ...m, [spaceId]: tabId }));
+}
+
 // Sidebar/nav visibility. Desktop: pushes content when open. Mobile: slide-in
 // drawer overlay. Layout sets the initial value per breakpoint on mount.
 export const navOpen = writable<boolean>(true);

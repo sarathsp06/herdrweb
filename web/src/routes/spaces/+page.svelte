@@ -2,8 +2,9 @@
   import { goto } from '$app/navigation';
   import { session } from '$lib/session/live';
   import { width, BREAKPOINT } from '$lib/layout/responsive';
-  import { rollupOf, countsOf, monogram, primaryPaneOf } from '$lib/session/derive';
-  import { openSheet, showToast } from '$lib/ui/state';
+  import { rollupOf, countsOf, monogram, chatPaneForSpace } from '$lib/session/derive';
+  import { get } from 'svelte/store';
+  import { openSheet, showToast, lastTabBySpace } from '$lib/ui/state';
   import StatusDot from '$lib/ui/StatusDot.svelte';
   import ButtonRow from '$lib/ui/ButtonRow.svelte';
 
@@ -16,7 +17,7 @@
   });
 
   function openChat(spaceId: string) {
-    const paneId = primaryPaneOf($spaces, spaceId);
+    const paneId = chatPaneForSpace($spaces, spaceId, get(lastTabBySpace)[spaceId]);
     if (paneId) goto(`/pane/${encodeURIComponent(paneId)}`);
     else goto(`/spaces/${encodeURIComponent(spaceId)}`);
   }

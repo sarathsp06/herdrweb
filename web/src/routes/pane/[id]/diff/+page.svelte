@@ -69,7 +69,7 @@
 </section>
 
 <style>
-  .diffview { display: flex; flex-direction: column; height: 100vh; }
+  .diffview { display: flex; flex-direction: column; height: calc(100vh / var(--font-scale, 1)); }
   .bar { display: flex; align-items: center; gap: 10px; padding: 10px 14px; border-bottom: 1px solid var(--hairline); }
   .back { width: 32px; height: 32px; border: none; background: none; color: var(--text-2); font-size: 22px; }
   .path { font-size: 12px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex: 1; }

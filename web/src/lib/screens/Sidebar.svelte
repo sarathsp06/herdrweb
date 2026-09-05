@@ -1,8 +1,9 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import type { ConnState, Space } from '$lib/protocol';
-  import { agentsOf, rollupOf, monogram, primaryPaneOf } from '$lib/session/derive';
-  import { agentsGrouped, lastPane } from '$lib/ui/state';
+  import { agentsOf, rollupOf, monogram, chatPaneForSpace } from '$lib/session/derive';
+  import { get } from 'svelte/store';
+  import { agentsGrouped, lastPane, lastTabBySpace } from '$lib/ui/state';
   import StatusGlyph from '$lib/ui/StatusGlyph.svelte';
 
   let { spaces, connection, embedded = false, onselect, onclose }:
@@ -16,7 +17,7 @@
     onselect?.();
   }
   function openSpace(spaceId: string) {
-    const paneId = primaryPaneOf(spaces, spaceId);
+    const paneId = chatPaneForSpace(spaces, spaceId, get(lastTabBySpace)[spaceId]);
     if (paneId) { openAgent(paneId); return; }
     goto(`/spaces/${encodeURIComponent(spaceId)}`);
     onselect?.();
@@ -83,7 +84,7 @@
 </aside>
 
 <style>
-  .sidebar { width: 328px; flex: none; background: var(--sidebar-bg); border-right: 1px solid var(--hairline); height: 100vh; overflow-y: auto; padding: 16px 12px 24px; }
+  .sidebar { width: 328px; flex: none; background: var(--sidebar-bg); border-right: 1px solid var(--hairline); height: calc(100vh / var(--font-scale, 1)); overflow-y: auto; padding: 16px 12px 24px; }
   .sidebar.embedded { width: 100%; height: auto; border-right: none; padding: 14px 14px 96px; background: transparent; }
   .brand { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
   .mark { font-size: 15px; font-weight: 700; letter-spacing: -0.02em; }
