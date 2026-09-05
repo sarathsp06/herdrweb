@@ -38,11 +38,25 @@ browser (SvelteKit)  ⇄  Go bridge (herdr-bridge)  ⇄  Herdr socket
 - **One binary, zero deps** — the UI is embedded; drop `herdr-bridge` on a machine and run it.
 - **Live & multiplexed** — one Herdr connection fanned to every browser over a thin WebSocket pass-through.
 
-## Why not [`herdr-web`](https://github.com/kcosr/herdr-web)?
+## Why not SSH, or [`herdr-web`](https://github.com/kcosr/herdr-web)?
 
-There's another, excellent browser client — [`kcosr/herdr-web`](https://github.com/kcosr/herdr-web) — but it's a true *terminal client* (Ghostty/WASM). I wanted a phone-first **agent inbox**: notify me when an agent blocks, let me reply, occasionally run a command. For a real terminal I'd just use an SSH client (what I did first) — but my fat fingers don't play nice with a terminal UI on an Android phone.
+**This app is good for:** the 95% of agent-babysitting that's actually just text — reading
+scrollback, answering "yes/no", nudging it with a prompt. It's not a toy or a demo: one Go
+binary, one persistent connection to the Herdr socket, real RPCs (`pane.read`, `agent.prompt`,
+`agent.send_keys`) straight over a WebSocket — no screen-scraping, no terminal emulator pretending
+to be a web page. Stable enough that it's my only interface to Herdr, daily, from my phone.
 
-**Use `herdr-web` instead** if you want an interactive terminal in the browser — full-screen TUIs (vim, htop), multi-host, uploads.
+**SSH ([JuiceSSH](https://juicessh.com/), you know who you are)** is what I used first, because
+it's what you're supposed to use. Real terminal, works everywhere, very grown-up. Except my
+thumbs are built for tapping "like" buttons, not `Ctrl` chords, and a phone keyboard turns `tmux`
+into a tiny rage simulator. Great tool. Terrible pair with sausage fingers.
+
+**[`kcosr/herdr-web`](https://github.com/kcosr/herdr-web)** covers the other 5%: an actual
+full-blown terminal in your browser (Ghostty, WASM) — vim, htop, multi-host, uploads, the works.
+Genuinely impressive, and the right tool if you need a real TUI. This app isn't trying to be that.
+
+So: need a real terminal? SSH or `herdr-web`. Just need to know your agent is stuck and tap a
+button about it, reliably, from your phone? That's this.
 
 # Using Herdr Web
 
