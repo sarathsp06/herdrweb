@@ -36,11 +36,11 @@ func TestSavePreservesOtherTables(t *testing.T) {
 	if err := os.WriteFile(p, []byte("[keys]\nprefix = \"ctrl+b\"\n"), 0o644); err != nil {
 		t.Fatal(err)
 	}
-	if err := Save(p, Settings{Theme: "ash"}); err != nil {
+	if err := Save(p, Settings{Theme: "paper"}); err != nil {
 		t.Fatal(err)
 	}
 	data, _ := os.ReadFile(p)
-	if !contains(string(data), "prefix") || !contains(string(data), "ash") {
+	if !contains(string(data), "prefix") || !contains(string(data), "paper") {
 		t.Fatalf("lost data on save: %s", data)
 	}
 }

@@ -71,12 +71,7 @@
   --r-composer: 18px;
 }
 
-/* Alternate themes tweak accents; dark only per spec. */
-[data-theme='ash'] {
-  --app-bg: #0d0d0f;
-  --sidebar-bg: #101013;
-  --working: oklch(0.8 0.06 90);
-}
+/* Alternate dark theme tweaks accents on the default palette. */
 [data-theme='gruvbox'] {
   --app-bg: #1d2021;
   --sidebar-bg: #222526;
@@ -143,4 +138,63 @@
 
   --diff-add-bg: rgba(133, 153, 0, 0.14);
   --diff-del-bg: rgba(220, 50, 47, 0.12);
+}
+
+/* Paper — a pure-white light theme for reading code (GitHub/Reddit-light feel).
+   Overrides the full palette so dark-assuming components invert correctly. */
+[data-theme='paper'] {
+  color-scheme: light;
+
+  --app-bg: #ffffff;
+  --page-bg: #ffffff;
+  --sidebar-bg: #ffffff;
+  --raised: #ffffff;
+  --card: #f6f7f8;
+  --code-surface: #f6f8fa;
+  --card-hover: #eceef0;
+  --toast-bg: #24292f;
+
+  --text-1: #0b0c0d;
+  --text-on-light: #ffffff;
+  --text-2: #1a1a1b;
+  --text-2b: #3a3a3c;
+  --text-3: #57606a;
+  --text-3b: #6e7781;
+  --text-4: #878a8c;
+  --text-disabled: #afb2b4;
+  --gutter: #b0b3b5;
+  --gutter-2: #9a9da0;
+
+  --hairline: rgba(0, 0, 0, 0.09);
+  --control: rgba(0, 0, 0, 0.14);
+  --control-input: rgba(0, 0, 0, 0.18);
+  --control-selected: rgba(0, 0, 0, 0.20);
+  --control-selected-2: rgba(0, 0, 0, 0.34);
+  --surface-tint: rgba(0, 0, 0, 0.04);
+  --surface-tint-2: rgba(0, 0, 0, 0.07);
+
+  --working: #bb6b00;
+  --blocked: #d93a49;
+  --blocked-text: #c1121f;
+  --blocked-badge-text: #b00d1e;
+  --done: #2e7d32;
+  --idle: #878a8c;
+  --unknown: #afb2b4;
+  --worktree-text: #0079d3;
+  --worktree-bg: rgba(0, 121, 211, 0.12);
+
+  --blocked-grad: linear-gradient(180deg, rgba(217, 58, 73, 0.10), rgba(0, 0, 0, 0.02));
+  --blocked-border: rgba(217, 58, 73, 0.30);
+
+  --syn-keyword: #cf222e;
+  --syn-string: #0a3069;
+  --syn-number: #0550ae;
+  --syn-func: #8250df;
+  --syn-comp: #116329;
+  --syn-comment: #6e7781;
+  --syn-punct: #24292f;
+  --syn-default: #1f2328;
+
+  --diff-add-bg: rgba(46, 125, 50, 0.13);
+  --diff-del-bg: rgba(217, 58, 73, 0.11);
 }

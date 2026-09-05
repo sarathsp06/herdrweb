@@ -6,10 +6,10 @@
   import Toggle from '$lib/ui/Toggle.svelte';
 
   const s = session();
-  type ThemeId = 'herdr-dark' | 'ash' | 'gruvbox' | 'solarized-light';
+  type ThemeId = 'herdr-dark' | 'paper' | 'gruvbox' | 'solarized-light';
   const themes: { id: ThemeId; swatches: string[] }[] = [
     { id: 'herdr-dark', swatches: ['#0a0a0a', '#fafafa', '#f0a500'] },
-    { id: 'ash', swatches: ['#0d0d0f', '#e4e4e7', '#c9b458'] },
+    { id: 'paper', swatches: ['#ffffff', '#1a1a1b', '#0079d3'] },
     { id: 'gruvbox', swatches: ['#1d2021', '#ebdbb2', '#b8bb26'] },
     { id: 'solarized-light', swatches: ['#fdf6e3', '#586e75', '#b58900'] }
   ];

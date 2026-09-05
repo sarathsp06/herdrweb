@@ -84,7 +84,7 @@ export type Call =
 export type CallResult = { ok?: boolean; lines?: string[]; read?: { text?: string }; [k: string]: unknown };
 
 export interface Config {
-  theme: 'herdr-dark' | 'ash' | 'gruvbox' | 'solarized-light';
+  theme: 'herdr-dark' | 'paper' | 'gruvbox' | 'solarized-light';
   notify: boolean; // push when blocked
   follow: boolean; // follow focused pane
   ansi: boolean; // keep ANSI colors in raw
