@@ -33,7 +33,7 @@ browser (SvelteKit)  ⇄  Go bridge (herdr-bridge)  ⇄  Herdr socket
 ## Features
 
 - **Agent inbox first** — every agent across your spaces, blocked ones on top; status shown by glyph, colour, and word.
-- **Raw terminal panes** — exact scrollback via `pane.read`, auto-fit to any phone width, with a key row and a composer.
+- **Raw terminal panes** — exact scrollback via `pane.read`, auto-fit to any phone width, with a key row and a composer; agent panes take image attach + clipboard-image paste.
 - **Installable PWA + push** — add to home screen and get a Web Push when an agent blocks or finishes, even with the app closed.
 - **One binary, zero deps** — the UI is embedded; drop `herdr-bridge` on a machine and run it.
 - **Live & multiplexed** — one Herdr connection fanned to every browser over a thin WebSocket pass-through.
@@ -57,6 +57,12 @@ Genuinely impressive, and the right tool if you need a real TUI. This app isn't 
 
 So: need a real terminal? SSH or `herdr-web`. Just need to know your agent is stuck and tap a
 button about it, reliably, from your phone? That's this.
+
+**Reach for something else when you need:**
+
+- A full terminal — vim, htop, interactive TUIs
+- A chat or transcript view — live panes are raw terminal only
+- Arbitrary file transfers, multi-host SSH, or a WASM terminal
 
 # Using Herdr Web
 
@@ -121,7 +127,12 @@ Desktop layout (≥ 880px) — the sidebar *is* the inbox:
   `pane.read`, auto-fit to the viewport width (a box diagram keeps its columns
   on any phone) and follow-on-new-output. The composer routes by pane kind —
   agent panes use `agent.prompt` + `agent.send_keys`, plain terminals use
-  `pane.send_text` + `pane.send_keys` — above a key row (↑ ↓ ← → ⏎ esc ⌃C).
+  `pane.send_text` + `pane.send_keys` — above a key row
+  (↑ ↓ ← → ⇥ ⇧⇥ ⏎ esc ⌃C ⌃D). On agent panes, typing `/` opens a
+  slash-command palette (↑/↓ to select, Tab/Enter to fill the draft, Esc to
+  dismiss), and an image can be attached (button) or pasted from the clipboard
+  — the bridge writes it host-side and drops the file path into the draft.
+  Everything only edits the draft; sending stays a deliberate act.
 - **Diff viewer** (`/pane/:id/diff`) — unified diff highlighted with Shiki, a
   per-file chip strip, a soft-wrap toggle, and add/remove row tints.
 - **Spaces** (`/spaces`) + **space detail** (`/spaces/:id`) — space cards with

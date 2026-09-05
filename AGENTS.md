@@ -24,7 +24,7 @@ Herdr Web: one Go binary (`herdr-bridge`) that embeds a SvelteKit SPA and bridge
 - **Snapshot wire shape is flat**: `{"type":"snapshot","spaces":[…],"focus":{…}}` — no nested `snapshot` wrapper. Fixtures and `SessionModel.apply` must match, or the UI renders "0 spaces".
 - **The browser↔bridge WebSocket is a thin pass-through**: the frontend calls Herdr socket methods directly, so params must match Herdr exactly:
   - `pane.read` → `{ pane_id, source: 'recent_unwrapped', lines }`; the reply is `result.read.text` (a string), not `lines`.
-  - `agent.send_keys` → `keys` is a **string array** (e.g. `['esc']`), tokens `up/down/left/right/enter/esc/ctrl+c`.
+  - `agent.send_keys` → `keys` is a **string array** (e.g. `['esc']`), tokens `up/down/left/right/tab/shift+tab/enter/esc/ctrl+c/ctrl+d` (Herdr accepts any key-combo string: printable keys, `enter`/`esc`, `ctrl+`/`alt+`/`shift+` chords, `f1`…).
   - `agent.prompt` → `wait.until` is an array; don't block the UI on its (long) resolution.
 - **Live agent panes are raw terminal only** — there is no chat/transcript view or chat/raw toggle. Don't reintroduce a transcript parser.
 
