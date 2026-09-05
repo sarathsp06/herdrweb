@@ -28,12 +28,13 @@
     @font-face { font-family: 'Fira Code'; font-style: normal; font-weight: 700; font-display: swap; src: url('assets/fonts/fira-code-latin-700-normal.woff2') format('woff2'); }
 
     :root {
-      --ink: #0b0c0e;
+      --ink: #0a0b0d;
       --ink-2: #0e0f12;
-      --panel: #16181c;
-      --panel-2: #101216;
-      --line: rgba(255,255,255,0.09);
-      --line-soft: rgba(255,255,255,0.055);
+      --panel: #1b1e24;
+      --panel-2: #15181d;
+      --line: rgba(255,255,255,0.16);
+      --line-soft: rgba(255,255,255,0.10);
+      --elev: 0 1px 0 rgba(255,255,255,0.05) inset, 0 10px 30px -20px rgba(0,0,0,0.85);
       --paper: #f6f7f8;
       --paper-2: #d7dade;
       --muted: #9098a1;
@@ -118,8 +119,10 @@
     .hero p.pitch { color: var(--muted); font-size: clamp(16.5px, 1.7vw, 19px); max-width: 44ch; margin: 22px 0 30px; }
     .hero p.pitch strong { color: var(--paper-2); font-weight: 560; }
     .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
-    .installline { margin-top: 26px; max-width: 480px; }
-    .installline .hint { font-family: var(--mono); font-size: 11.5px; color: var(--faint); margin: 9px 2px 0; }
+    .installline { margin-top: 26px; max-width: 520px; }
+    .installline .hint { font-family: var(--mono); font-size: 11.5px; color: var(--faint); margin: 10px 2px 0; }
+    .installline .hint a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line); }
+    .installline .hint a:hover { color: var(--paper); text-decoration-color: var(--paper); }
     @media (max-width: 900px) { .hero .wrap { grid-template-columns: minmax(0, 1fr); } .hero::before { width: 480px; height: 480px; } }
 
     /* ---- the characteristic artifact: a live agent inbox, in CSS ---- */
@@ -162,7 +165,7 @@
 
     /* ================= capabilities: bento (deliberate hierarchy) ================= */
     .bento { margin-top: 40px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; }
-    .cell { min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 24px; }
+    .cell { min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 24px; box-shadow: var(--elev); }
     .cell h3 { font-size: 17px; }
     .cell p { color: var(--muted); font-size: 14.5px; margin: 9px 0 0; }
     .cell code { color: var(--paper-2); font-size: 0.86em; background: rgba(255,255,255,0.05); padding: 1px 5px; border-radius: 5px; }
@@ -182,7 +185,7 @@
     .wide-shot img { display: block; width: 100%; height: auto; }
     .wide-shot .cap { padding: 13px 18px; border-top: 1px solid var(--line-soft); font-family: var(--mono); font-size: 12px; color: var(--muted); }
     .phones { margin-top: 16px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
-    .phone { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+    .phone { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; box-shadow: var(--elev); }
     .phone img { display: block; width: 100%; height: auto; border-bottom: 1px solid var(--line-soft); }
     .phone .cap { padding: 10px 13px; font-family: var(--mono); font-size: 11px; color: var(--muted-2); }
     @media (max-width: 860px) { .phones { grid-template-columns: repeat(3, 1fr); } }
@@ -191,7 +194,7 @@
     /* ================= fit / not-fit ================= */
     .split { margin-top: 38px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
     @media (max-width: 780px) { .split { grid-template-columns: minmax(0, 1fr); } }
-    .panel { min-width: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--panel); }
+    .panel { min-width: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--panel); box-shadow: var(--elev); }
     .panel .head { display: flex; align-items: center; gap: 10px; padding: 15px 20px; border-bottom: 1px solid var(--line-soft); font-family: var(--mono); font-size: 13px; font-weight: 600; }
     .panel .head i { width: 9px; height: 9px; border-radius: 2px; }
     .panel.fit .head { color: var(--done); } .panel.fit .head i { background: var(--done); }
@@ -204,7 +207,7 @@
     .panel.fit li::before { content: "+"; color: var(--done); }
     .panel.nofit li::before { content: "\2013"; color: var(--blocked); }
 
-    .compare { margin-top: 24px; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+    .compare { margin-top: 24px; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; box-shadow: var(--elev); }
     .compare .scroll { overflow-x: auto; }
     table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 560px; }
     th, td { text-align: left; padding: 14px 18px; border-bottom: 1px solid var(--line-soft); }
@@ -224,7 +227,7 @@
     /* ================= install ================= */
     .steps { margin-top: 38px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
     @media (max-width: 780px) { .steps { grid-template-columns: minmax(0, 1fr); } }
-    .step { min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px; }
+    .step { min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px; box-shadow: var(--elev); }
     .step h3 { font-size: 15px; display: flex; align-items: center; gap: 11px; margin-bottom: 14px; }
     .step .n { flex-shrink: 0; display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--line); font: 600 13px var(--mono); color: var(--paper); }
     pre.code { min-width: 0; background: var(--panel-2); border: 1px solid var(--line-soft); border-radius: 11px; padding: 15px 17px; overflow-x: auto; font-family: var(--mono); font-size: 13px; line-height: 1.7; color: var(--paper-2); margin: 0; }
@@ -238,9 +241,20 @@
     /* ================= layout / contributors ================= */
     .files { margin-top: 34px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
     @media (max-width: 780px) { .files { grid-template-columns: minmax(0, 1fr); } }
-    .file { min-width: 0; background: var(--panel); border: 1px solid var(--line-soft); border-radius: 12px; padding: 17px 19px; }
+    .file { min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 17px 19px; box-shadow: var(--elev); }
     .file b { font-family: var(--mono); color: var(--paper); font-size: 13.5px; font-weight: 600; }
     .file p { margin: 7px 0 0; color: var(--muted-2); font-size: 13px; }
+
+    /* ================= closing CTA — install is the climax (herdr philosophy) ================= */
+    .finale { border-top: 1px solid var(--line); background:
+        radial-gradient(120% 140% at 50% 0%, rgba(255,255,255,0.035), transparent 60%); }
+    .finale .wrap { max-width: 720px; display: flex; flex-direction: column; align-items: center; text-align: center; }
+    .finale h2 { font-size: clamp(28px, 4.2vw, 42px); }
+    .finale > .wrap > p { color: var(--muted); font-size: 17px; max-width: 54ch; margin: 16px 0 0; }
+    .finale .cmd { margin-top: 30px; width: 100%; max-width: 640px; }
+    .finale .note { font-family: var(--mono); font-size: 12px; color: var(--faint); margin-top: 16px; }
+    .finale .note a { color: var(--muted); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--line); }
+    .finale .note a:hover { color: var(--paper); text-decoration-color: var(--paper); }
 
     /* ================= footer ================= */
     footer { border-top: 1px solid var(--line-soft); padding: 48px 0 72px; }
@@ -297,7 +311,7 @@
             <code id="cmd-hero">curl -fsSL https://raw.githubusercontent.com/sarathsp06/herdrweb/main/install.sh | sh</code>
             <button class="copy" data-copy="cmd-hero">Copy</button>
           </div>
-          <p class="hint">one binary, linux &amp; macOS, no runtime deps</p>
+          <p class="hint">one binary, linux &amp; macOS, no runtime deps &#8212; <a href="https://github.com/sarathsp06/herdrweb#install">all install methods &#8594;</a></p>
         </div>
       </div>
 
@@ -576,6 +590,21 @@ herdr-bridge -service status</pre>
         <div class="file"><b>internal/webui</b><p>The <code style="font-family:var(--mono)">go:embed</code> of the built SvelteKit assets.</p></div>
         <div class="file"><b>web/</b><p>SvelteKit + TypeScript front end; protocol types mirror the Go structs.</p></div>
       </div>
+    </div>
+  </section>
+
+  <!-- ===================== CLOSING CTA ===================== -->
+  <section class="finale">
+    <div class="wrap">
+      <p class="kicker">give your fleet an inbox</p>
+      <h2>One command, and nothing else changes.</h2>
+      <p>Your agent CLIs keep running exactly as they do now &#8212; Herdr Web just puts every one of them in a single inbox you can read from any device.</p>
+      <div class="cmd">
+        <span class="p">$</span>
+        <code id="cmd-finale">curl -fsSL https://raw.githubusercontent.com/sarathsp06/herdrweb/main/install.sh | sh</code>
+        <button class="copy" data-copy="cmd-finale">Copy</button>
+      </div>
+      <p class="note">linux &amp; macOS &#8212; <a href="https://github.com/sarathsp06/herdrweb#install">all install methods &#8594;</a> &#183; <a href="https://github.com/sarathsp06/herdrweb/releases">prebuilt releases &#8594;</a></p>
     </div>
   </section>
 
