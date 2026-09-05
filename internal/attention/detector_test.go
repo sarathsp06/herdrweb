@@ -52,20 +52,36 @@ func TestNoFireWhenStatusUnchanged(t *testing.T) {
 	}
 }
 
-func TestNonAgentAndNonAttentionExcluded(t *testing.T) {
+func TestWorkingToIdleFiresAsFinished(t *testing.T) {
+	var d Detector
+	d.Detect(snap(agentPane("w1:p1", "omp", protocol.Working))) // baseline
+	// Session-detected agents (omp, pi) never reach Done; they finish by going
+	// working->idle, and that edge must surface as an attention Hit.
+	hits := d.Detect(snap(agentPane("w1:p1", "omp", protocol.Idle)))
+	if want := []Hit{{PaneID: "w1:p1", Label: "omp", Status: protocol.Idle}}; !reflect.DeepEqual(hits, want) {
+		t.Fatalf("working->idle should fire (finished), got %v want %v", hits, want)
+	}
+	// idle -> working (the next turn starts) must not fire.
+	if hits := d.Detect(snap(agentPane("w1:p1", "omp", protocol.Working))); hits != nil {
+		t.Fatalf("idle->working must not fire, got %v", hits)
+	}
+}
+
+func TestNonAgentAndNonFinishIdleExcluded(t *testing.T) {
 	var d Detector
 	d.Detect(snap(
 		protocol.Pane{ID: "term", Status: protocol.Working, Agent: false},
-		agentPane("w1:p1", "claude", protocol.Working),
+		agentPane("w1:p1", "claude", protocol.Blocked),
 	))
-	// A non-agent pane entering "blocked" and an agent pane entering idle/working
-	// must not fire; only agent panes entering Blocked/Done do.
+	// A non-agent pane entering "blocked" must not fire; and an agent going
+	// blocked->idle (the operator answered) is not a finished turn, so it is quiet
+	// — only working->idle counts as finishing.
 	hits := d.Detect(snap(
 		protocol.Pane{ID: "term", Status: protocol.Blocked, Agent: false},
 		agentPane("w1:p1", "claude", protocol.Idle),
 	))
 	if hits != nil {
-		t.Fatalf("non-agent/non-attention transitions must not fire, got %v", hits)
+		t.Fatalf("non-agent blocked and blocked->idle must not fire, got %v", hits)
 	}
 }
 
@@ -74,7 +90,7 @@ func TestBaselineTracksAllPanesNotJustAttention(t *testing.T) {
 	// Baseline records the agent pane as Working even though it is not an
 	// attention state; the later rising edge must diff against that stored value.
 	d.Detect(snap(agentPane("w1:p1", "claude", protocol.Working)))
-	d.Detect(snap(agentPane("w1:p1", "claude", protocol.Idle))) // still tracked, no fire
+	d.Detect(snap(agentPane("w1:p1", "claude", protocol.Idle))) // working->idle fires (finished); ignored here
 	hits := d.Detect(snap(agentPane("w1:p1", "claude", protocol.Blocked)))
 	if len(hits) != 1 || hits[0].Status != protocol.Blocked {
 		t.Fatalf("idle->blocked should fire once, got %v", hits)

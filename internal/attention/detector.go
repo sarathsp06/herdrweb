@@ -1,8 +1,9 @@
-// Package attention detects the rising edge into an attention state (an agent
-// pane entering Blocked or Done) across successive session snapshots. It is a
-// pure in-memory leaf: it imports only protocol, does no I/O, and authors no
-// user-facing copy — the caller decides what to do with a Hit (Web Push today,
-// a terminal bell or metric tomorrow).
+// Package attention detects the rising edge into an attention state across
+// successive session snapshots: an agent pane entering Blocked or Done, or a
+// working agent going Idle (finishing a turn). It is a pure in-memory leaf: it
+// imports only protocol, does no I/O, and authors no user-facing copy — the
+// caller decides what to do with a Hit (Web Push today, a terminal bell or
+// metric tomorrow).
 package attention
 
 import (
@@ -15,7 +16,7 @@ import (
 type Hit struct {
 	PaneID string
 	Label  string
-	Status protocol.Status // always protocol.Blocked or protocol.Done
+	Status protocol.Status // Blocked, Done, or Idle (a finished turn)
 }
 
 // Detector tracks each pane's last-observed status to find rising edges into
@@ -28,12 +29,13 @@ type Detector struct {
 }
 
 // Detect walks snap deterministically (spaces -> tabs -> panes) and returns, in
-// walk order, every agent pane whose status just rose into Blocked or Done
-// since the previous call. A transition fires when the pane's prior status
-// differs from its current attention status, so Blocked->Done (and Done->Blocked)
-// fire again. The first call on a Detector always returns nil: it captures the
-// full status of every pane (agent or not) as the baseline without reporting
-// anything. Detect mutates only the Detector's own baseline; it performs no I/O.
+// walk order, every agent pane whose status just crossed an attention edge since
+// the previous call (see attentionEdge): entering Blocked or Done, or a working
+// pane going Idle. Because session-detected agents (omp, pi) never reach Done and
+// finish by going working->idle, that edge is what surfaces them. The first call
+// on a Detector always returns nil: it captures the full status of every pane
+// (agent or not) as the baseline without reporting anything. Detect mutates only
+// the Detector's own baseline; it performs no I/O.
 func (d *Detector) Detect(snap protocol.Snapshot) []Hit {
 	d.mu.Lock()
 	defer d.mu.Unlock()
@@ -45,10 +47,11 @@ func (d *Detector) Detect(snap protocol.Snapshot) []Hit {
 		for _, tb := range sp.Tabs {
 			for _, p := range tb.Panes {
 				cur[p.ID] = p.Status
-				if !p.Agent || (p.Status != protocol.Blocked && p.Status != protocol.Done) {
+				if first || !p.Agent {
 					continue
 				}
-				if !first && d.prev[p.ID] != p.Status {
+				prev := d.prev[p.ID]
+				if prev != p.Status && attentionEdge(prev, p.Status) {
 					hits = append(hits, Hit{PaneID: p.ID, Label: p.Label, Status: p.Status})
 				}
 			}
@@ -59,4 +62,20 @@ func (d *Detector) Detect(snap protocol.Snapshot) []Hit {
 		return nil
 	}
 	return hits
+}
+
+// attentionEdge reports whether a status transition the operator should hear
+// about just happened. The caller has already confirmed prev != cur. An agent
+// entering Blocked or Done always qualifies; an agent going Idle qualifies only
+// from Working — a finished turn — so idle panes reappearing (e.g. blocked->idle
+// after the operator answers, or a freshly tracked idle pane) stay quiet.
+func attentionEdge(prev, cur protocol.Status) bool {
+	switch cur {
+	case protocol.Blocked, protocol.Done:
+		return true
+	case protocol.Idle:
+		return prev == protocol.Working
+	default:
+		return false
+	}
 }

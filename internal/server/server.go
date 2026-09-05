@@ -178,8 +178,9 @@ func (h *Hub) refresh(ctx context.Context) error {
 }
 
 // notifyAttention pushes a Web Push notification for every agent pane that just
-// transitioned into an attention state (blocked or done). The first snapshot
-// only seeds the baseline so restarts never replay stale states.
+// crossed an attention edge (blocked, done, or a working agent finishing into
+// idle). The first snapshot only seeds the baseline so restarts never replay
+// stale states.
 func (h *Hub) notifyAttention(ctx context.Context, snap protocol.Snapshot) {
 	if h.push == nil {
 		return
@@ -197,7 +198,7 @@ func (h *Hub) notifyAttention(ctx context.Context, snap protocol.Snapshot) {
 			label = "An agent"
 		}
 		title, body := "Agent blocked", label+" needs you."
-		if hit.Status == protocol.Done {
+		if hit.Status == protocol.Done || hit.Status == protocol.Idle {
 			title, body = "Agent done", label+" finished."
 		}
 		h.push.Notify(ctx, push.Notification{

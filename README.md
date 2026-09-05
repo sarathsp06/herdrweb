@@ -180,7 +180,7 @@ UI preferences live under a `[web]` table in the Herdr config
 ```toml
 [web]
 theme = "herdr-dark"   # herdr-dark | ash | gruvbox | solarized-light
-notify = true          # push when an agent needs you (blocked/done)
+notify = true          # push when an agent needs you (blocked, or finished)
 follow = true          # follow the focused pane
 ansi = true            # keep ANSI colours in raw mode
 font_scale = 1.0       # UI text-size multiplier
