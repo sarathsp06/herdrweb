@@ -40,20 +40,23 @@ browser (SvelteKit)  ⇄  Go bridge (herdr-bridge)  ⇄  Herdr socket
 
 ## Why not SSH, or [`herdr-web`](https://github.com/kcosr/herdr-web)?
 
-**This app is good for:** lying on the couch, seeing an agent is stuck, tapping "Yes", and going
-back to not thinking about it. That's it. That's the app.
+**This app is good for:** the 95% of agent-babysitting that's actually just text — reading
+scrollback, answering "yes/no", nudging it with a prompt. It's not a toy or a demo: one Go
+binary, one persistent connection to the Herdr socket, real RPCs (`pane.read`, `agent.prompt`,
+`agent.send_keys`) straight over a WebSocket — no screen-scraping, no terminal emulator pretending
+to be a web page. Stable enough that it's my only interface to Herdr, daily, from my phone.
 
-**SSH ([JuiceSSH](https://juicessh.com/), you know who you are)** is what I used first, because it's
-what you're supposed to use. Real terminal, works everywhere, very grown-up. Except my thumbs are
-built for tapping "like" buttons, not `Ctrl` chords, and a phone keyboard turns `tmux` into a
-tiny rage simulator. Great tool. Terrible pair with sausage fingers.
+**SSH ([JuiceSSH](https://juicessh.com/), you know who you are)** is what I used first, because
+it's what you're supposed to use. Real terminal, works everywhere, very grown-up. Except my
+thumbs are built for tapping "like" buttons, not `Ctrl` chords, and a phone keyboard turns `tmux`
+into a tiny rage simulator. Great tool. Terrible pair with sausage fingers.
 
-**[`kcosr/herdr-web`](https://github.com/kcosr/herdr-web)** is the fancy version of the same
-problem — a real terminal (Ghostty!) running in your browser. vim, htop, the works. Genuinely
-impressive. Still a terminal. Still needs a keyboard and fingers that behave.
+**[`kcosr/herdr-web`](https://github.com/kcosr/herdr-web)** covers the other 5%: an actual
+full-blown terminal in your browser (Ghostty, WASM) — vim, htop, multi-host, uploads, the works.
+Genuinely impressive, and the right tool if you need a real TUI. This app isn't trying to be that.
 
-So: **SSH or `herdr-web`** if you actually want a terminal. **This thing** if you just want to know
-your agent is yelling for help and tap a button about it.
+So: need a real terminal? SSH or `herdr-web`. Just need to know your agent is stuck and tap a
+button about it, reliably, from your phone? That's this.
 
 # Using Herdr Web
 
