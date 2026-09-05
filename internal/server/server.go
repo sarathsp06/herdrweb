@@ -377,6 +377,27 @@ func (h *Hub) handlePushSubscribe(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]any{"ok": true})
 }
 
+// handlePushTest sends a test notification to every recorded subscription so the
+// operator can verify the subscribe -> deliver -> display chain without waiting
+// for an agent to block. The JSON result reports subscription and delivery
+// counts; the bridge log carries any per-service rejection reason.
+func (h *Hub) handlePushTest(w http.ResponseWriter, r *http.Request) {
+	if h.push == nil {
+		http.Error(w, "push disabled", http.StatusServiceUnavailable)
+		return
+	}
+	if r.Method != http.MethodPost {
+		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)
+		return
+	}
+	res := h.push.Notify(r.Context(), push.Notification{
+		Title: "Herdr test",
+		Body:  "Push is working — you'll be alerted when an agent needs you.",
+		URL:   "/",
+	})
+	writeJSON(w, map[string]any{"ok": true, "subs": res.Subs, "sent": res.Sent, "failed": res.Failed})
+}
+
 // Handler returns the full HTTP handler (UI + /ws + /api).
 func (h *Hub) Handler() (http.Handler, error) {
 	ui, err := webui.Handler()
@@ -389,6 +410,7 @@ func (h *Hub) Handler() (http.Handler, error) {
 	mux.HandleFunc("/api/health", h.handleHealth)
 	mux.HandleFunc("/api/push/key", h.handlePushKey)
 	mux.HandleFunc("/api/push/subscribe", h.handlePushSubscribe)
+	mux.HandleFunc("/api/push/test", h.handlePushTest)
 	mux.Handle("/", ui)
 	return mux, nil
 }

@@ -38,6 +38,12 @@ browser (SvelteKit)  ⇄  Go bridge (herdr-bridge)  ⇄  Herdr socket
 - **One binary, zero deps** — the UI is embedded; drop `herdr-bridge` on a machine and run it.
 - **Live & multiplexed** — one Herdr connection fanned to every browser over a thin WebSocket pass-through.
 
+## Why not [`herdr-web`](https://github.com/kcosr/herdr-web)?
+
+There's another, excellent browser client — [`kcosr/herdr-web`](https://github.com/kcosr/herdr-web) — but it's a true *terminal client* (Ghostty/WASM). I wanted a phone-first **agent inbox**: notify me when an agent blocks, let me reply, occasionally run a command. For a real terminal I'd just use an SSH client (what I did first) — but my fat fingers don't play nice with a terminal UI on an Android phone.
+
+**Use `herdr-web` instead** if you want an interactive terminal in the browser — full-screen TUIs (vim, htop), multi-host, uploads.
+
 # Using Herdr Web
 
 ## Install
@@ -131,6 +137,14 @@ tailscale serve --bg --https=443 127.0.0.1:7331
 Open `https://<machine>.<tailnet>.ts.net` on the phone, install it, and enable
 **Settings → Push when blocked** (iOS needs the app installed first). Any other
 HTTPS front — a reverse proxy, your own cert — works just as well.
+
+> [!IMPORTANT]
+> **No notifications?** Push enrolls **per device**, so enable it on the phone
+> itself — not just the desktop. Each device must open the app over **HTTPS**
+> (a plain `http://…:7331` is not a secure context and silently refuses to
+> subscribe). Use **Settings → Send test notification** to check: it reports how
+> many devices are subscribed and whether delivery succeeded, and the bridge log
+> prints any rejection reason from the push service.
 
 ## Configuration
 

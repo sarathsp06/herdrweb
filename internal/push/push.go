@@ -8,10 +8,13 @@
 package push
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
+	"io"
 	"log"
 	"net/http"
+	"net/url"
 	"os"
 	"path/filepath"
 	"sync"
@@ -112,18 +115,29 @@ func (m *Manager) Add(sub webpush.Subscription) {
 	}
 }
 
-// Notify fans n to every subscription, pruning those the push service reports
-// as gone (404/410). It is a no-op when there are no subscriptions.
-func (m *Manager) Notify(ctx context.Context, n Notification) {
+// Result summarizes one Notify fan-out so callers (and the test endpoint) can
+// report why a push did or did not reach a device.
+type Result struct {
+	Subs   int `json:"subs"`
+	Sent   int `json:"sent"`
+	Failed int `json:"failed"`
+}
+
+// Notify fans n to every subscription. It prunes subscriptions the push service
+// reports as gone (404/410) and logs every other non-2xx rejection (400/401/403/
+// 413, …) with the service's reason, so systematic delivery failures are visible
+// instead of silently swallowed. Returns per-call delivery counts.
+func (m *Manager) Notify(ctx context.Context, n Notification) Result {
 	m.mu.Lock()
 	subs := append([]webpush.Subscription(nil), m.subs...)
 	m.mu.Unlock()
+	res := Result{Subs: len(subs)}
 	if len(subs) == 0 {
-		return
+		return res
 	}
 	payload, err := json.Marshal(n)
 	if err != nil {
-		return
+		return res
 	}
 	var dead []string
 	for i := range subs {
@@ -135,17 +149,37 @@ func (m *Manager) Notify(ctx context.Context, n Notification) {
 			TTL:             60,
 		})
 		if err != nil {
-			log.Printf("push: send: %v", err)
+			res.Failed++
+			log.Printf("push: send to %s failed: %v", endpointHost(sub.Endpoint), err)
 			continue
 		}
-		if resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusGone {
+		switch {
+		case resp.StatusCode == http.StatusNotFound || resp.StatusCode == http.StatusGone:
 			dead = append(dead, sub.Endpoint)
+			res.Failed++
+			log.Printf("push: subscription gone (%d), pruning %s", resp.StatusCode, endpointHost(sub.Endpoint))
+		case resp.StatusCode >= 300:
+			res.Failed++
+			body, _ := io.ReadAll(io.LimitReader(resp.Body, 512))
+			log.Printf("push: rejected by service: %d %s: %s", resp.StatusCode, endpointHost(sub.Endpoint), bytes.TrimSpace(body))
+		default:
+			res.Sent++
 		}
 		resp.Body.Close()
 	}
 	if len(dead) > 0 {
 		m.prune(dead)
 	}
+	return res
+}
+
+// endpointHost returns just the host of a push endpoint for concise logging,
+// keeping the per-subscription secret token out of the logs.
+func endpointHost(endpoint string) string {
+	if u, err := url.Parse(endpoint); err == nil && u.Host != "" {
+		return u.Host
+	}
+	return "?"
 }
 
 func (m *Manager) prune(endpoints []string) {

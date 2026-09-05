@@ -65,3 +65,32 @@ export async function enablePush(): Promise<PushResult> {
     return { ok: false, reason: 'error', detail: e instanceof Error ? e.message : String(e) };
   }
 }
+
+/** Result of asking the bridge to fan a test notification to this operator's
+ *  recorded subscriptions. `subs` is how many devices are enrolled, `sent`/
+ *  `failed` how many the push service accepted/rejected this call. */
+export interface TestPushResult {
+  ok: boolean;
+  subs: number;
+  sent: number;
+  failed: number;
+}
+
+/** Ask the bridge to send a test push to every enrolled device. Lets the
+ *  operator verify the subscribe -> deliver -> display chain immediately, rather
+ *  than waiting for an agent to block. Rejection reasons land in the bridge log. */
+export async function sendTestPush(): Promise<TestPushResult> {
+  try {
+    const res = await fetch('/api/push/test', { method: 'POST' });
+    if (!res.ok) return { ok: false, subs: 0, sent: 0, failed: 0 };
+    const body = (await res.json()) as Partial<TestPushResult>;
+    return {
+      ok: true,
+      subs: body.subs ?? 0,
+      sent: body.sent ?? 0,
+      failed: body.failed ?? 0
+    };
+  } catch {
+    return { ok: false, subs: 0, sent: 0, failed: 0 };
+  }
+}
