@@ -38,11 +38,22 @@ browser (SvelteKit)  ⇄  Go bridge (herdr-bridge)  ⇄  Herdr socket
 - **One binary, zero deps** — the UI is embedded; drop `herdr-bridge` on a machine and run it.
 - **Live & multiplexed** — one Herdr connection fanned to every browser over a thin WebSocket pass-through.
 
-## Why not [`herdr-web`](https://github.com/kcosr/herdr-web)?
+## Why not SSH, or [`herdr-web`](https://github.com/kcosr/herdr-web)?
 
-There's another, excellent browser client — [`kcosr/herdr-web`](https://github.com/kcosr/herdr-web) — but it's a true *terminal client* (Ghostty/WASM). I wanted a phone-first **agent inbox**: notify me when an agent blocks, let me reply, occasionally run a command. For a real terminal I'd just use an SSH client (what I did first) — but my fat fingers don't play nice with a terminal UI on an Android phone.
+**This app is good for:** lying on the couch, seeing an agent is stuck, tapping "Yes", and going
+back to not thinking about it. That's it. That's the app.
 
-**Use `herdr-web` instead** if you want an interactive terminal in the browser — full-screen TUIs (vim, htop), multi-host, uploads.
+**SSH ([JuiceSSH](https://juicessh.com/), you know who you are)** is what I used first, because it's
+what you're supposed to use. Real terminal, works everywhere, very grown-up. Except my thumbs are
+built for tapping "like" buttons, not `Ctrl` chords, and a phone keyboard turns `tmux` into a
+tiny rage simulator. Great tool. Terrible pair with sausage fingers.
+
+**[`kcosr/herdr-web`](https://github.com/kcosr/herdr-web)** is the fancy version of the same
+problem — a real terminal (Ghostty!) running in your browser. vim, htop, the works. Genuinely
+impressive. Still a terminal. Still needs a keyboard and fingers that behave.
+
+So: **SSH or `herdr-web`** if you actually want a terminal. **This thing** if you just want to know
+your agent is yelling for help and tap a button about it.
 
 # Using Herdr Web
 
