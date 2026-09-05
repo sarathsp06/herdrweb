@@ -40,26 +40,32 @@
     else if (t.sent > 0) showToast(`test sent to ${t.sent} device${t.sent > 1 ? 's' : ''}`);
     else showToast('push service rejected it — check bridge logs');
   }
+  // Enrol this browser and surface why it failed. Idempotent (reuses an existing
+  // subscription), so both the toggle and the test button can call it.
+  async function ensureEnrolled(): Promise<boolean> {
+    const r = await enablePush();
+    if (r.ok) return true;
+    const why: Record<typeof r.reason, string> = {
+      unsupported: 'push unsupported on this browser',
+      insecure: 'push needs HTTPS (tailscale serve --https)',
+      denied: 'notifications blocked in browser',
+      nokey: 'bridge has no push key',
+      error: 'push setup failed'
+    };
+    showToast(why[r.reason]);
+    return false;
+  }
   async function toggleNotify(v: boolean) {
     setConfig({ notify: v });
     if (!v) return;
-    const r = await enablePush();
-    if (!r.ok) {
-      const why: Record<typeof r.reason, string> = {
-        unsupported: 'push unsupported on this browser',
-        insecure: 'push needs HTTPS (tailscale serve --https)',
-        denied: 'notifications blocked in browser',
-        nokey: 'bridge has no push key',
-        error: 'push setup failed'
-      };
-      showToast(why[r.reason]);
-      return;
-    }
-    // Enrolled — fire a test so success (or failure) is immediately visible.
-    testToast(await sendTestPush());
+    // Enrol, then fire a test so success (or failure) is immediately visible.
+    if (await ensureEnrolled()) testToast(await sendTestPush());
   }
   async function testPush() {
-    testToast(await sendTestPush());
+    // The button is shown whenever `notify` is on — including the default-on
+    // first load where this device was never actually subscribed. Enrol first
+    // (this click is the required user gesture) so the test has a device to reach.
+    if (await ensureEnrolled()) testToast(await sendTestPush());
   }
   function pickTheme(id: ThemeId) {
     setConfig({ theme: id });
