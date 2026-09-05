@@ -65,7 +65,7 @@ export interface PromptWait {
 }
 
 export type Call =
-  | { method: 'pane.read'; params: { pane_id: string; source: 'recent_unwrapped'; lines: number } }
+  | { method: 'pane.read'; params: { pane_id: string; source: 'recent_unwrapped'; lines: number; format?: 'ansi' | 'text' } }
   | { method: 'agent.prompt'; params: { target: string; text: string; wait: PromptWait } }
   | { method: 'agent.send_keys'; params: { target: string; keys: string[] } }
   | { method: 'workspace.create'; params: { cwd: string; label: string; focus: boolean } }

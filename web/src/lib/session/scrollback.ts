@@ -14,6 +14,8 @@ export interface ScrollbackDeps {
   fallback(): string[];
   /** Invoked only when the deduped line set actually changes. */
   onLines(lines: string[]): void;
+  /** Request ANSI-formatted output (SGR escapes preserved) instead of plain text. */
+  ansi?: boolean;
   /** Injectable timers (tests); default to the globals. */
   setInterval?(fn: () => void, ms: number): number;
   clearInterval?(handle: number): void;
@@ -36,7 +38,12 @@ export function startScrollback(paneId: string, deps: ScrollbackDeps, intervalMs
     try {
       const r = await deps.request({
         method: 'pane.read',
-        params: { pane_id: paneId, source: 'recent_unwrapped', lines: 200 }
+        params: {
+          pane_id: paneId,
+          source: 'recent_unwrapped',
+          lines: 200,
+          ...(deps.ansi ? { format: 'ansi' as const } : {})
+        }
       });
       const text = r.read?.text ?? '';
       next = text ? text.split('\n') : deps.fallback();

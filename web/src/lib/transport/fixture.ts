@@ -23,9 +23,10 @@ export const FIXTURE_SNAPSHOT: Snapshot = {
           label: 'agents',
           panes: [
             pane('w1:p1', 'claude', 'claude · editing PaneCell.svelte', 'working', true, [
-              'running vitest…',
-              'PASS  src/lib/session/model.test.ts (12)',
-              'watching for changes'
+              '\x1b[1mrunning vitest…\x1b[0m',
+              '\x1b[32mPASS\x1b[0m  src/lib/session/model.test.ts \x1b[90m(12)\x1b[0m',
+              '\x1b[31mFAIL\x1b[0m  src/lib/term/ansi.test.ts \x1b[90m(1 skipped)\x1b[0m',
+              '\x1b[33mwatching for changes\x1b[0m'
             ]),
             pane('w1:p2', 'codex', 'codex · approval requested', 'blocked', true, [
               '? Apply patch to src/routes/+layout.svelte? (y/n)',
