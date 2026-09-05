@@ -2,6 +2,7 @@
   import '../app.css';
   import { onMount } from 'svelte';
   import { page } from '$app/stores';
+  import { afterNavigate } from '$app/navigation';
   import { session } from '$lib/session/live';
   import { width, BREAKPOINT } from '$lib/layout/responsive';
   import { config, navOpen } from '$lib/ui/state';
@@ -11,6 +12,17 @@
   import BottomSheet from '$lib/ui/BottomSheet.svelte';
 
   let { children } = $props();
+  let contentEl: HTMLElement | undefined = $state();
+
+  // The outer window/body scroll is locked (dvh app shell), so SvelteKit's
+  // default scroll-reset-on-navigate never runs — `.content` below is the real
+  // scroll container for every route without its own inner scroller. Reset it
+  // ourselves on every completed client-side navigation regardless of source
+  // (link, programmatic goto, back/forward); a route with its own inner
+  // scrollback (e.g. the pane view) owns its own pinning and is unaffected.
+  afterNavigate(() => {
+    if (contentEl) contentEl.scrollTop = 0;
+  });
   const s = session();
   const spaces = s.spaces;
   const connection = s.connection;
@@ -61,7 +73,7 @@
 
   <div class="mainwrap">
     <Breadcrumbs showNav={!fab} />
-    <main class="content" class:desktop class:full={fullscreen}>
+    <main class="content" class:desktop class:full={fullscreen} bind:this={contentEl}>
       {@render children()}
     </main>
   </div>
