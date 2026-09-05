@@ -1,21 +1,21 @@
 import type { Highlighter } from 'shiki';
 
-// A Shiki theme mapped onto the README's syntax palette (hex approximations of
-// the documented oklch values), so highlighting is real (not hand-rolled) yet
-// matches the spec's colours. The surface is applied via CSS, not the theme.
+// The highlighter emits token colours as CSS variables (never baked hex), so
+// syntax adapts to whatever theme is active — dark, solarized-light, or paper.
+// Each --syn-* token is themed in tokens.css; the surface is applied via CSS.
 const herdrTheme = {
   name: 'herdr',
   type: 'dark',
-  colors: { 'editor.background': '#0d0d0f', 'editor.foreground': '#d4d4d8' },
+  colors: { 'editor.background': 'var(--code-surface)', 'editor.foreground': 'var(--syn-default)' },
   settings: [
-    { settings: { foreground: '#d4d4d8' } },
-    { scope: ['keyword', 'storage', 'storage.type', 'keyword.control', 'keyword.operator.new'], settings: { foreground: '#c191f0' } },
-    { scope: ['string', 'string.quoted', 'punctuation.definition.string'], settings: { foreground: '#dcc27a' } },
-    { scope: ['constant.numeric', 'constant.language'], settings: { foreground: '#7db6f0' } },
-    { scope: ['entity.name.function', 'support.function', 'meta.function-call'], settings: { foreground: '#5fc7c7' } },
-    { scope: ['entity.name.type', 'entity.name.class', 'support.class', 'entity.name.tag'], settings: { foreground: '#6fd0a8' } },
-    { scope: ['comment', 'punctuation.definition.comment'], settings: { foreground: '#5c5c63', fontStyle: 'italic' } },
-    { scope: ['punctuation', 'meta.brace'], settings: { foreground: '#8a8a92' } }
+    { settings: { foreground: 'var(--syn-default)' } },
+    { scope: ['keyword', 'storage', 'storage.type', 'keyword.control', 'keyword.operator.new'], settings: { foreground: 'var(--syn-keyword)' } },
+    { scope: ['string', 'string.quoted', 'punctuation.definition.string'], settings: { foreground: 'var(--syn-string)' } },
+    { scope: ['constant.numeric', 'constant.language'], settings: { foreground: 'var(--syn-number)' } },
+    { scope: ['entity.name.function', 'support.function', 'meta.function-call'], settings: { foreground: 'var(--syn-func)' } },
+    { scope: ['entity.name.type', 'entity.name.class', 'support.class', 'entity.name.tag'], settings: { foreground: 'var(--syn-comp)' } },
+    { scope: ['comment', 'punctuation.definition.comment'], settings: { foreground: 'var(--syn-comment)', fontStyle: 'italic' } },
+    { scope: ['punctuation', 'meta.brace'], settings: { foreground: 'var(--syn-punct)' } }
   ]
 } as const;
 
