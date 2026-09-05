@@ -1,0 +1,620 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Herdr Web — the inbox for your coding agents</title>
+  <meta name="description" content="A single-operator web client for Herdr, the terminal/agent multiplexer. One self-contained Go binary. Every coding agent across your spaces in one inbox — the ones that need you surface first, on any device." />
+  <link rel="icon" href="assets/icon-192.png" />
+  <link rel="apple-touch-icon" href="assets/apple-touch-icon.png" />
+
+  <meta property="og:type" content="website" />
+  <meta property="og:title" content="Herdr Web — the inbox for your coding agents" />
+  <meta property="og:description" content="Single-operator web client for Herdr. One Go binary. Every coding agent across your spaces in one inbox, on any device." />
+  <meta property="og:image" content="assets/desktop.png" />
+  <meta name="twitter:card" content="summary_large_image" />
+
+  <style>
+    /* ---------- brand fonts, self-hosted (no CDN) ----------
+       Geist = the human voice (prose, headlines).
+       Fira Code = the machine voice (terminal, inbox, commands, status). */
+    @font-face { font-family: 'Geist'; font-style: normal; font-weight: 400; font-display: swap; src: url('assets/fonts/geist-sans-latin-400-normal.woff2') format('woff2'); }
+    @font-face { font-family: 'Geist'; font-style: normal; font-weight: 500; font-display: swap; src: url('assets/fonts/geist-sans-latin-500-normal.woff2') format('woff2'); }
+    @font-face { font-family: 'Geist'; font-style: normal; font-weight: 600; font-display: swap; src: url('assets/fonts/geist-sans-latin-600-normal.woff2') format('woff2'); }
+    @font-face { font-family: 'Geist'; font-style: normal; font-weight: 700; font-display: swap; src: url('assets/fonts/geist-sans-latin-700-normal.woff2') format('woff2'); }
+    @font-face { font-family: 'Fira Code'; font-style: normal; font-weight: 400; font-display: swap; src: url('assets/fonts/fira-code-latin-400-normal.woff2') format('woff2'); }
+    @font-face { font-family: 'Fira Code'; font-style: normal; font-weight: 500; font-display: swap; src: url('assets/fonts/fira-code-latin-500-normal.woff2') format('woff2'); }
+    @font-face { font-family: 'Fira Code'; font-style: normal; font-weight: 600; font-display: swap; src: url('assets/fonts/fira-code-latin-600-normal.woff2') format('woff2'); }
+    @font-face { font-family: 'Fira Code'; font-style: normal; font-weight: 700; font-display: swap; src: url('assets/fonts/fira-code-latin-700-normal.woff2') format('woff2'); }
+
+    :root {
+      --ink: #0b0c0e;
+      --ink-2: #0e0f12;
+      --panel: #16181c;
+      --panel-2: #101216;
+      --line: rgba(255,255,255,0.09);
+      --line-soft: rgba(255,255,255,0.055);
+      --paper: #f6f7f8;
+      --paper-2: #d7dade;
+      --muted: #9098a1;
+      --muted-2: #767d86;
+      --faint: #5b626b;
+
+      /* Herdr's real status vocabulary — used only to carry meaning */
+      --blocked: oklch(0.66 0.20 18);
+      --working: oklch(0.80 0.16 78);
+      --done:    oklch(0.74 0.15 162);
+      --idle:    #6b727b;
+
+      --sans: 'Geist', ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+      --mono: 'Fira Code', ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace;
+    }
+
+    * { box-sizing: border-box; }
+    html { scroll-behavior: smooth; }
+    body {
+      margin: 0;
+      background: var(--ink);
+      color: var(--paper-2);
+      font-family: var(--sans);
+      font-size: 16px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      text-rendering: optimizeLegibility;
+    }
+    a { color: inherit; text-decoration: none; }
+    ::selection { background: oklch(0.66 0.20 18 / 0.35); color: #fff; }
+
+    .wrap { width: min(1120px, 100% - 44px); margin-inline: auto; }
+
+    h1, h2, h3 { color: var(--paper); font-weight: 620; line-height: 1.08; letter-spacing: -0.021em; margin: 0; }
+
+    /* section header: a status-dot that means "read me", plus a plain sentence-case kicker.
+       Deliberately NOT an all-caps tracked eyebrow. */
+    .kicker { font-family: var(--mono); font-size: 12.5px; color: var(--muted); display: inline-flex; align-items: center; gap: 8px; margin: 0 0 18px; }
+    .kicker::before { content: ""; width: 7px; height: 7px; border-radius: 2px; background: var(--working); box-shadow: 0 0 0 3px oklch(0.80 0.16 78 / 0.14); }
+    h2 { font-size: clamp(26px, 3.4vw, 36px); }
+    .sub { color: var(--muted); font-size: 17px; max-width: 62ch; margin: 14px 0 0; }
+
+    code, kbd, pre, .mono { font-family: var(--mono); }
+
+    section { padding-block: clamp(64px, 9vw, 108px); border-top: 1px solid var(--line-soft); }
+
+    /* ---------------- top bar ---------------- */
+    header.bar { position: sticky; top: 0; z-index: 30; background: color-mix(in srgb, var(--ink) 84%, transparent); backdrop-filter: blur(14px) saturate(1.3); border-bottom: 1px solid var(--line-soft); }
+    .bar .wrap { display: flex; align-items: center; gap: 18px; height: 62px; }
+    .brand { display: flex; align-items: center; gap: 11px; }
+    .brand img { width: 27px; height: 27px; border-radius: 7px; }
+    .brand b { font-family: var(--mono); font-weight: 600; color: var(--paper); font-size: 15px; letter-spacing: -0.01em; }
+    .bar nav { margin-left: auto; display: flex; align-items: center; gap: 28px; }
+    .bar nav a { color: var(--muted); font-size: 14px; transition: color .15s; }
+    .bar nav a:hover { color: var(--paper); }
+    @media (max-width: 760px) { .bar nav a.opt { display: none; } }
+
+    /* ---------------- buttons ---------------- */
+    .btn { display: inline-flex; align-items: center; gap: 9px; padding: 11px 19px; border-radius: 11px; font-size: 14.5px; font-weight: 560; border: 1px solid var(--line); color: var(--paper); background: rgba(255,255,255,0.03); transition: background .16s, border-color .16s, transform .16s; }
+    .btn:hover { background: rgba(255,255,255,0.07); border-color: rgba(255,255,255,0.22); }
+    .btn:active { transform: translateY(1px); }
+    .btn.solid { background: var(--paper); color: #0a0a0a; border-color: var(--paper); font-weight: 600; }
+    .btn.solid:hover { background: #fff; }
+    :focus-visible { outline: 2px solid var(--working); outline-offset: 2px; border-radius: 6px; }
+
+    /* ---------------- command line ---------------- */
+    .cmd { display: flex; align-items: center; gap: 12px; background: var(--panel-2); border: 1px solid var(--line); border-radius: 12px; padding: 13px 14px 13px 16px; font-family: var(--mono); font-size: 13.5px; color: var(--paper-2); }
+    .cmd .p { color: var(--done); user-select: none; font-weight: 600; }
+    .cmd code { flex: 1; min-width: 0; overflow-x: auto; white-space: nowrap; scrollbar-width: none; }
+    .cmd code::-webkit-scrollbar { display: none; }
+    .copy { cursor: pointer; flex-shrink: 0; border: 1px solid var(--line); background: rgba(255,255,255,0.04); color: var(--muted); border-radius: 8px; padding: 6px 11px; font: 500 12px var(--sans); transition: color .15s, background .15s, border-color .15s; }
+    .copy:hover { color: var(--paper); background: rgba(255,255,255,0.09); }
+    .copy.ok { color: var(--done); border-color: oklch(0.74 0.15 162 / 0.5); }
+
+    /* ================= HERO ================= */
+    .hero { padding-top: clamp(56px, 8vw, 96px); padding-bottom: clamp(48px, 7vw, 84px); position: relative; overflow: hidden; }
+    /* one restrained glow, tinted by the status palette, behind the inbox */
+    .hero::before { content: ""; position: absolute; inset: -30% -10% auto auto; width: 720px; height: 720px; background: radial-gradient(circle at 70% 30%, oklch(0.66 0.20 18 / 0.16), transparent 60%); filter: blur(20px); pointer-events: none; z-index: 0; }
+    .hero .wrap { position: relative; z-index: 1; display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 0.95fr); gap: clamp(28px, 5vw, 64px); align-items: center; }
+    .hero h1 { font-size: clamp(36px, 5.6vw, 62px); font-weight: 680; letter-spacing: -0.03em; }
+    .hero h1 .machine { font-family: var(--mono); font-weight: 600; letter-spacing: -0.04em; }
+    .hero p.pitch { color: var(--muted); font-size: clamp(16.5px, 1.7vw, 19px); max-width: 44ch; margin: 22px 0 30px; }
+    .hero p.pitch strong { color: var(--paper-2); font-weight: 560; }
+    .actions { display: flex; flex-wrap: wrap; gap: 12px; align-items: center; }
+    .installline { margin-top: 26px; max-width: 480px; }
+    .installline .hint { font-family: var(--mono); font-size: 11.5px; color: var(--faint); margin: 9px 2px 0; }
+    @media (max-width: 900px) { .hero .wrap { grid-template-columns: minmax(0, 1fr); } .hero::before { width: 480px; height: 480px; } }
+
+    /* ---- the characteristic artifact: a live agent inbox, in CSS ---- */
+    .inbox { background: linear-gradient(180deg, var(--panel), var(--panel-2)); border: 1px solid var(--line); border-radius: 16px; box-shadow: 0 40px 80px -40px rgba(0,0,0,0.8); overflow: hidden; }
+    .inbox-top { display: flex; align-items: center; gap: 8px; padding: 12px 15px; border-bottom: 1px solid var(--line-soft); font-family: var(--mono); font-size: 12px; color: var(--muted); }
+    .inbox-top .tl { display: flex; gap: 6px; margin-right: 6px; }
+    .inbox-top .tl i { width: 10px; height: 10px; border-radius: 50%; background: #2a2d33; }
+    .inbox-top .count { margin-left: auto; color: var(--faint); }
+    .row { display: grid; grid-template-columns: 20px minmax(0, 1fr) auto; align-items: center; gap: 12px; padding: 13px 16px; border-bottom: 1px solid var(--line-soft); font-family: var(--mono); }
+    .row:last-child { border-bottom: none; }
+    .row .g { font-size: 13px; text-align: center; line-height: 1; }
+    .row .name { display: block; color: var(--paper); font-size: 13.5px; font-weight: 500; }
+    .row .desc { display: block; color: var(--muted-2); font-size: 11.5px; margin-top: 3px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .row .tag { font-size: 10.5px; font-weight: 600; padding: 3px 8px; border-radius: 6px; letter-spacing: 0.01em; }
+    .s-blocked .g, .s-blocked .tag { color: var(--blocked); }
+    .s-blocked { background: linear-gradient(90deg, oklch(0.66 0.20 18 / 0.10), transparent 70%); }
+    .s-blocked .tag { background: oklch(0.66 0.20 18 / 0.14); }
+    .s-working .g, .s-working .tag { color: var(--working); }
+    .s-working .tag { background: oklch(0.80 0.16 78 / 0.14); }
+    .s-done .g, .s-done .tag { color: var(--done); }
+    .s-done .tag { background: oklch(0.74 0.15 162 / 0.14); }
+    .s-idle .g { color: var(--idle); } .s-idle .name { color: var(--paper-2); } .s-idle .tag { color: var(--idle); background: rgba(255,255,255,0.05); }
+    .spin { display: inline-block; animation: spin 1.4s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    @media (prefers-reduced-motion: reduce) { .spin { animation: none; } html { scroll-behavior: auto; } }
+
+    /* ================= status legend / mental model ================= */
+    .legend { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 26px; }
+    .chip { display: inline-flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12.5px; color: var(--muted); border: 1px solid var(--line-soft); background: var(--panel-2); padding: 7px 12px; border-radius: 9px; }
+    .chip i { width: 8px; height: 8px; border-radius: 2px; }
+    .chip.b i { background: var(--blocked); } .chip.w i { background: var(--working); } .chip.d i { background: var(--done); } .chip.i i { background: var(--idle); }
+
+    .flow { margin-top: 34px; display: grid; grid-template-columns: 1fr auto 1fr auto 1fr; gap: 0; align-items: stretch; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--panel-2); font-family: var(--mono); }
+    .flow .node { padding: 20px 22px; }
+    .flow .node b { display: block; color: var(--paper); font-size: 14px; font-weight: 600; }
+    .flow .node span { display: block; color: var(--muted-2); font-size: 11.5px; margin-top: 6px; line-height: 1.5; }
+    .flow .link { display: grid; place-items: center; padding: 0 4px; color: var(--faint); font-size: 18px; background: rgba(255,255,255,0.02); border-inline: 1px solid var(--line-soft); }
+    .flow .link em { font-style: normal; font-size: 9.5px; color: var(--faint); display: block; text-align: center; margin-top: 2px; }
+    @media (max-width: 720px) { .flow { grid-template-columns: 1fr; } .flow .link { padding: 8px; border-inline: none; border-block: 1px solid var(--line-soft); } }
+
+    /* ================= capabilities: bento (deliberate hierarchy) ================= */
+    .bento { margin-top: 40px; display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 14px; }
+    .cell { min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 24px; }
+    .cell h3 { font-size: 17px; }
+    .cell p { color: var(--muted); font-size: 14.5px; margin: 9px 0 0; }
+    .cell code { color: var(--paper-2); font-size: 0.86em; background: rgba(255,255,255,0.05); padding: 1px 5px; border-radius: 5px; }
+    .cell .lead { font-family: var(--mono); font-size: 12px; color: var(--muted-2); margin-bottom: 10px; }
+    .cell.hero-cell { grid-column: span 3; grid-row: span 2; display: flex; flex-direction: column; justify-content: space-between; background: linear-gradient(165deg, var(--panel), var(--panel-2)); }
+    .cell.hero-cell h3 { font-size: 21px; }
+    .cell.wide { grid-column: span 3; }
+    .cell.third { grid-column: span 2; }
+    .miniinbox { margin-top: 22px; display: grid; gap: 7px; }
+    .miniinbox div { display: flex; align-items: center; gap: 10px; font-family: var(--mono); font-size: 12px; color: var(--muted); }
+    .miniinbox i { width: 7px; height: 7px; border-radius: 2px; }
+    @media (max-width: 900px) { .bento { grid-template-columns: repeat(2, minmax(0, 1fr)); } .cell.hero-cell, .cell.wide, .cell.third { grid-column: span 2; grid-row: auto; } }
+    @media (max-width: 560px) { .bento { grid-template-columns: minmax(0, 1fr); } .cell.hero-cell, .cell.wide, .cell.third { grid-column: span 1; } }
+
+    /* ================= screens ================= */
+    .wide-shot { margin-top: 36px; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; background: var(--panel-2); box-shadow: 0 40px 90px -50px rgba(0,0,0,0.85); }
+    .wide-shot img { display: block; width: 100%; height: auto; }
+    .wide-shot .cap { padding: 13px 18px; border-top: 1px solid var(--line-soft); font-family: var(--mono); font-size: 12px; color: var(--muted); }
+    .phones { margin-top: 16px; display: grid; grid-template-columns: repeat(5, 1fr); gap: 14px; }
+    .phone { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+    .phone img { display: block; width: 100%; height: auto; border-bottom: 1px solid var(--line-soft); }
+    .phone .cap { padding: 10px 13px; font-family: var(--mono); font-size: 11px; color: var(--muted-2); }
+    @media (max-width: 860px) { .phones { grid-template-columns: repeat(3, 1fr); } }
+    @media (max-width: 520px) { .phones { grid-template-columns: repeat(2, 1fr); } }
+
+    /* ================= fit / not-fit ================= */
+    .split { margin-top: 38px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; }
+    @media (max-width: 780px) { .split { grid-template-columns: minmax(0, 1fr); } }
+    .panel { min-width: 0; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; background: var(--panel); }
+    .panel .head { display: flex; align-items: center; gap: 10px; padding: 15px 20px; border-bottom: 1px solid var(--line-soft); font-family: var(--mono); font-size: 13px; font-weight: 600; }
+    .panel .head i { width: 9px; height: 9px; border-radius: 2px; }
+    .panel.fit .head { color: var(--done); } .panel.fit .head i { background: var(--done); }
+    .panel.nofit .head { color: var(--blocked); } .panel.nofit .head i { background: var(--blocked); }
+    .panel ul { list-style: none; margin: 0; padding: 8px 20px 18px; }
+    .panel li { position: relative; padding: 11px 0 11px 30px; border-bottom: 1px solid var(--line-soft); color: var(--muted); font-size: 14.5px; }
+    .panel li:last-child { border-bottom: none; }
+    .panel li b { color: var(--paper); font-weight: 560; }
+    .panel li::before { position: absolute; left: 0; top: 11px; font-family: var(--mono); font-weight: 700; }
+    .panel.fit li::before { content: "+"; color: var(--done); }
+    .panel.nofit li::before { content: "\2013"; color: var(--blocked); }
+
+    .compare { margin-top: 24px; border: 1px solid var(--line); border-radius: 14px; overflow: hidden; }
+    .compare .scroll { overflow-x: auto; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 560px; }
+    th, td { text-align: left; padding: 14px 18px; border-bottom: 1px solid var(--line-soft); }
+    thead th { color: var(--paper); font-weight: 600; background: rgba(255,255,255,0.03); font-family: var(--mono); font-size: 12.5px; }
+    thead th.me { color: var(--done); }
+    tbody tr:last-child td { border-bottom: none; }
+    td:first-child { color: var(--paper-2); }
+    .yes { color: var(--done); font-family: var(--mono); font-weight: 600; }
+    .no { color: var(--faint); font-family: var(--mono); }
+    .partial { color: var(--working); font-family: var(--mono); font-size: 12.5px; }
+
+    .callout { margin-top: 22px; border: 1px solid var(--line); border-left: 3px solid var(--working); background: var(--panel-2); border-radius: 0 12px 12px 0; padding: 16px 20px; color: var(--muted); font-size: 14.5px; }
+    .callout b { color: var(--paper); }
+    .callout a { color: var(--paper-2); text-decoration: underline; text-underline-offset: 3px; text-decoration-color: var(--faint); }
+    .callout.danger { border-left-color: var(--blocked); }
+
+    /* ================= install ================= */
+    .steps { margin-top: 38px; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 18px; }
+    @media (max-width: 780px) { .steps { grid-template-columns: minmax(0, 1fr); } }
+    .step { min-width: 0; background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 22px; }
+    .step h3 { font-size: 15px; display: flex; align-items: center; gap: 11px; margin-bottom: 14px; }
+    .step .n { flex-shrink: 0; display: inline-grid; place-items: center; width: 26px; height: 26px; border-radius: 8px; background: rgba(255,255,255,0.05); border: 1px solid var(--line); font: 600 13px var(--mono); color: var(--paper); }
+    pre.code { min-width: 0; background: var(--panel-2); border: 1px solid var(--line-soft); border-radius: 11px; padding: 15px 17px; overflow-x: auto; font-family: var(--mono); font-size: 13px; line-height: 1.7; color: var(--paper-2); margin: 0; }
+    pre.code .c { color: var(--faint); }
+    pre.code .k { color: var(--done); }
+
+    .mobile-block { margin-top: 40px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 16px; }
+    .mobile-block h3 { font-size: 18px; }
+    .mobile-block p { color: var(--muted); max-width: 64ch; margin: 10px 0 16px; }
+
+    /* ================= layout / contributors ================= */
+    .files { margin-top: 34px; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; }
+    @media (max-width: 780px) { .files { grid-template-columns: minmax(0, 1fr); } }
+    .file { min-width: 0; background: var(--panel); border: 1px solid var(--line-soft); border-radius: 12px; padding: 17px 19px; }
+    .file b { font-family: var(--mono); color: var(--paper); font-size: 13.5px; font-weight: 600; }
+    .file p { margin: 7px 0 0; color: var(--muted-2); font-size: 13px; }
+
+    /* ================= footer ================= */
+    footer { border-top: 1px solid var(--line-soft); padding: 48px 0 72px; }
+    footer .wrap { display: grid; grid-template-columns: 1.2fr 1fr 1fr; gap: 32px; }
+    @media (max-width: 700px) { footer .wrap { grid-template-columns: 1fr; gap: 26px; } }
+    footer .who b { font-family: var(--mono); color: var(--paper); font-size: 15px; }
+    footer .who p { color: var(--muted-2); font-size: 13.5px; margin: 10px 0 0; max-width: 40ch; }
+    footer .col h4 { font-family: var(--mono); color: var(--muted); font-size: 12px; font-weight: 500; margin: 0 0 12px; }
+    footer .col a { display: block; color: var(--paper-2); font-size: 14px; padding: 5px 0; transition: color .15s; }
+    footer .col a:hover { color: #fff; }
+
+    kbd { font-family: var(--mono); background: rgba(255,255,255,0.05); border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; font-size: 12px; color: var(--paper-2); }
+  </style>
+</head>
+<body>
+  <a id="top"></a>
+
+  <!-- ===================== BAR ===================== -->
+  <header class="bar">
+    <div class="wrap">
+      <a class="brand" href="#top" aria-label="Herdr Web home">
+        <img src="assets/icon-192.png" alt="" />
+        <b>herdr&#8209;web</b>
+      </a>
+      <nav>
+        <a class="opt" href="#why">Why</a>
+        <a class="opt" href="#does">Does</a>
+        <a class="opt" href="#fit">Not a fit</a>
+        <a class="opt" href="#screens">Screens</a>
+        <a href="#install">Install</a>
+        <a href="https://github.com/sarathsp06/herdrweb">GitHub</a>
+      </nav>
+    </div>
+  </header>
+
+  <!-- ===================== HERO ===================== -->
+  <div class="hero">
+    <div class="wrap">
+      <div>
+        <h1>Every coding agent,<br />one <span class="machine">inbox</span>.</h1>
+        <p class="pitch">
+          Herdr Web is a single-operator web client for <strong>Herdr</strong>, the terminal/agent
+          multiplexer. It flips the model: <strong>agents, not terminals, are the primary objects.</strong>
+          The home screen lists every agent across your spaces and floats the ones that are blocked to
+          the top — so babysitting a fleet becomes reading a feed, from any device.
+        </p>
+        <div class="actions">
+          <a class="btn solid" href="#install">Install</a>
+          <a class="btn" href="https://github.com/sarathsp06/herdrweb">Read the source</a>
+        </div>
+        <div class="installline">
+          <div class="cmd">
+            <span class="p">$</span>
+            <code id="cmd-hero">curl -fsSL https://raw.githubusercontent.com/sarathsp06/herdrweb/main/install.sh | sh</code>
+            <button class="copy" data-copy="cmd-hero">Copy</button>
+          </div>
+          <p class="hint">one binary, linux &amp; macOS, no runtime deps</p>
+        </div>
+      </div>
+
+      <!-- the characteristic artifact -->
+      <div class="inbox" role="img" aria-label="An agent inbox: a blocked agent waiting for your reply on top, a working agent running tests, a finished agent, and an idle one.">
+        <div class="inbox-top">
+          <span class="tl"><i></i><i></i><i></i></span>
+          inbox
+          <span class="count">4 agents · 1 needs you</span>
+        </div>
+        <div class="row s-blocked">
+          <span class="g">&#9679;</span>
+          <span><span class="name">auth-refactor</span><span class="desc">Apply this migration? (y/n)</span></span>
+          <span class="tag">blocked</span>
+        </div>
+        <div class="row s-working">
+          <span class="g"><span class="spin">&#9680;</span></span>
+          <span><span class="name">docs-site</span><span class="desc">running vitest — 41 passed</span></span>
+          <span class="tag">working</span>
+        </div>
+        <div class="row s-done">
+          <span class="g">&#10003;</span>
+          <span><span class="name">api-types</span><span class="desc">wrote 3 files, tests green</span></span>
+          <span class="tag">done</span>
+        </div>
+        <div class="row s-idle">
+          <span class="g">&#8212;</span>
+          <span><span class="name">nightly-crawler</span><span class="desc">idle · last run 2h ago</span></span>
+          <span class="tag">idle</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ===================== WHY ===================== -->
+  <section id="why">
+    <div class="wrap">
+      <p class="kicker">the mental model</p>
+      <h2>Status you can read at a glance,<br />not a wall of terminals.</h2>
+      <p class="sub">
+        Herdr already knows which agent is stuck. Herdr Web surfaces that: every agent's state is carried
+        by glyph shape, colour, and a word — never colour alone — and blocked agents sort first. The colours
+        below mean exactly one thing wherever they appear on this page.
+      </p>
+      <div class="legend">
+        <span class="chip b"><i></i> blocked — waiting for you</span>
+        <span class="chip w"><i></i> working — running now</span>
+        <span class="chip d"><i></i> done — finished cleanly</span>
+        <span class="chip i"><i></i> idle — nothing to do</span>
+      </div>
+
+      <div class="flow">
+        <div class="node">
+          <b>browser</b>
+          <span>SvelteKit UI on any device. The inbox, raw panes, diffs, push.</span>
+        </div>
+        <div class="link">&#8644;<em>WebSocket</em></div>
+        <div class="node">
+          <b>herdr-bridge</b>
+          <span>One Go binary. Embeds the UI, owns one loopback origin, fans data out.</span>
+        </div>
+        <div class="link">&#8644;<em>unix socket</em></div>
+        <div class="node">
+          <b>Herdr</b>
+          <span>Your running multiplexer. Real RPCs, no screen-scraping.</span>
+        </div>
+      </div>
+      <p class="sub" style="margin-top:22px">
+        The bridge is a thin pass-through: the frontend calls Herdr socket methods directly
+        (<code style="font-family:var(--mono);color:var(--paper-2)">pane.read</code>,
+        <code style="font-family:var(--mono);color:var(--paper-2)">agent.prompt</code>,
+        <code style="font-family:var(--mono);color:var(--paper-2)">agent.send_keys</code>) — no terminal
+        emulator pretending to be a web page.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== WHAT IT DOES ===================== -->
+  <section id="does">
+    <div class="wrap">
+      <p class="kicker">what it does</p>
+      <h2>The 95% of agent-babysitting that&#39;s just text.</h2>
+      <p class="sub">Read scrollback, answer a yes/no, nudge with a prompt, review a diff, get told when something changes. Reliably, from a phone.</p>
+
+      <div class="bento">
+        <div class="cell hero-cell">
+          <div>
+            <h3>An inbox, not a terminal grid</h3>
+            <p>Every agent across every space in one list, blocked ones on top. Tap in for raw scrollback; it&#39;s one tap away but never the default. A grouped/flat toggle keeps big fleets legible.</p>
+          </div>
+          <div class="miniinbox" aria-hidden="true">
+            <div><i style="background:var(--blocked)"></i> auth-refactor — needs you</div>
+            <div><i style="background:var(--working)"></i> docs-site — running</div>
+            <div><i style="background:var(--done)"></i> api-types — done</div>
+          </div>
+        </div>
+        <div class="cell third">
+          <p class="lead">raw panes</p>
+          <h3>Exact scrollback</h3>
+          <p>Terminal output via <code>pane.read</code>, auto-fit to any phone width, follow-on-new-output, and a key row: <kbd>&#8593;</kbd> <kbd>&#8595;</kbd> <kbd>&#9166;</kbd> <kbd>esc</kbd> <kbd>&#8963;C</kbd>.</p>
+        </div>
+        <div class="cell third">
+          <p class="lead">composer</p>
+          <h3>Prompt &amp; steer</h3>
+          <p>Routes by pane kind — agent panes use <code>agent.prompt</code> + <code>send_keys</code>, plain terminals use <code>pane.send_text</code>.</p>
+        </div>
+        <div class="cell wide">
+          <p class="lead">review</p>
+          <h3>Unified diff viewer</h3>
+          <p>Syntax-highlighted diffs with a per-file chip strip, soft-wrap toggle, and add/remove row tints — approve a change from the couch.</p>
+        </div>
+        <div class="cell third">
+          <p class="lead">PWA + push</p>
+          <h3>Told when it matters</h3>
+          <p>Add to home screen; get a Web Push the moment an agent blocks or finishes, even with the app closed.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== SCREENS ===================== -->
+  <section id="screens">
+    <div class="wrap">
+      <p class="kicker">screens</p>
+      <h2>The whole thing, on any width.</h2>
+      <p class="sub">Captured against a live bridge. Append <code style="font-family:var(--mono);color:var(--paper-2)">?fixtures=1</code> to any URL to explore the mocked dataset with no live Herdr server.</p>
+
+      <div class="wide-shot">
+        <img src="assets/desktop.png" alt="Desktop layout: a sidebar inbox of spaces and agents beside an open terminal pane." loading="lazy" />
+        <div class="cap">desktop &#8805; 880px — the sidebar is the inbox</div>
+      </div>
+
+      <div class="phones">
+        <figure class="phone"><img src="assets/inbox.png" alt="Phone inbox listing agents and spaces with status glyphs." loading="lazy" /><figcaption class="cap">inbox</figcaption></figure>
+        <figure class="phone"><img src="assets/pane.png" alt="Raw terminal pane with a key row and composer." loading="lazy" /><figcaption class="cap">pane</figcaption></figure>
+        <figure class="phone"><img src="assets/spaces.png" alt="Spaces overview as cards with rollup status." loading="lazy" /><figcaption class="cap">spaces</figcaption></figure>
+        <figure class="phone"><img src="assets/space-detail.png" alt="Space detail with a tab strip and pane cards." loading="lazy" /><figcaption class="cap">space detail</figcaption></figure>
+        <figure class="phone"><img src="assets/settings.png" alt="Settings with theme picker and behaviour toggles." loading="lazy" /><figcaption class="cap">settings</figcaption></figure>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== NOT A FIT ===================== -->
+  <section id="fit">
+    <div class="wrap">
+      <p class="kicker">honest scope</p>
+      <h2>Where it fits, and where it doesn&#39;t.</h2>
+      <p class="sub">If you need a real TUI in a browser tab, this is the wrong tool — and that&#39;s fine. Knowing the boundary is the point.</p>
+
+      <div class="split">
+        <div class="panel fit">
+          <div class="head"><i></i> reach for it when you want to</div>
+          <ul>
+            <li>Read agent <b>scrollback</b> and see which agent is stuck</li>
+            <li>Answer <b>yes/no</b> and nudge with a one-line prompt</li>
+            <li><b>Review a diff</b> an agent just produced</li>
+            <li>Get a <b>push</b> the instant an agent blocks or finishes</li>
+            <li>Do all of it from a <b>phone</b>, reliably, every day</li>
+          </ul>
+        </div>
+        <div class="panel nofit">
+          <div class="head"><i></i> reach for something else when you need</div>
+          <ul>
+            <li>A <b>full terminal</b> — vim, htop, interactive TUIs</li>
+            <li>A <b>chat or transcript</b> view — live panes are raw terminal only</li>
+            <li><b>Multiple users</b> or accounts — it&#39;s one operator, one machine</li>
+            <li><b>Authentication</b> — it binds loopback by design</li>
+            <li>File <b>uploads</b>, multi-host SSH, or a WASM terminal</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="compare">
+        <div class="scroll">
+          <table>
+            <thead>
+              <tr>
+                <th>&nbsp;</th>
+                <th class="me">Herdr Web</th>
+                <th>SSH on a phone</th>
+                <th>kcosr/herdr-web</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>Agent-status inbox</td><td class="yes">yes</td><td class="no">no</td><td class="no">no</td></tr>
+              <tr><td>Push when blocked or done</td><td class="yes">yes</td><td class="no">no</td><td class="no">no</td></tr>
+              <tr><td>Phone-first, thumb-friendly</td><td class="yes">yes</td><td class="partial">painful</td><td class="yes">yes</td></tr>
+              <tr><td>Read scrollback, answer y/n</td><td class="yes">yes</td><td class="yes">yes</td><td class="yes">yes</td></tr>
+              <tr><td>Full TUI (vim, htop, multi-host)</td><td class="no">no</td><td class="yes">yes</td><td class="yes">yes</td></tr>
+              <tr><td>Single self-contained binary</td><td class="yes">yes</td><td class="no">n/a</td><td class="no">no</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <p class="callout">
+        <b>Need a real terminal?</b> Use SSH, or <a href="https://github.com/kcosr/herdr-web">kcosr/herdr-web</a>
+        — a full Ghostty/WASM terminal in the browser. Just need to know your agent is stuck and tap a button
+        about it? That&#39;s this.
+      </p>
+    </div>
+  </section>
+
+  <!-- ===================== INSTALL ===================== -->
+  <section id="install">
+    <div class="wrap">
+      <p class="kicker">get running</p>
+      <h2>One command in, running in a minute.</h2>
+      <p class="sub">Install the binary, then run it on loopback, as a background daemon, or as a managed system service.</p>
+
+      <div class="cmd" style="margin-top:26px;max-width:660px">
+        <span class="p">$</span>
+        <code id="cmd-install">curl -fsSL https://raw.githubusercontent.com/sarathsp06/herdrweb/main/install.sh | sh</code>
+        <button class="copy" data-copy="cmd-install">Copy</button>
+      </div>
+
+      <div class="steps">
+        <div class="step">
+          <h3><span class="n">1</span> Run it on loopback</h3>
+<pre class="code">herdr-bridge          <span class="c"># serves http://127.0.0.1:7331</span></pre>
+        </div>
+        <div class="step">
+          <h3><span class="n">2</span> Or as a background daemon</h3>
+<pre class="code">herdr-bridge -daemon \
+  -log-file ~/.config/herdr/herdr-bridge.log \
+  -pid-file ~/.config/herdr/herdr-bridge.pid</pre>
+        </div>
+        <div class="step">
+          <h3><span class="n">3</span> Or as a system service</h3>
+<pre class="code">herdr-bridge -service install   <span class="c"># systemd / launchd</span>
+herdr-bridge -service start
+herdr-bridge -service status</pre>
+        </div>
+        <div class="step">
+          <h3><span class="n">4</span> Open it</h3>
+<pre class="code"><span class="k">open</span> http://127.0.0.1:7331   <span class="c"># live spaces, panes, agents</span></pre>
+        </div>
+      </div>
+
+      <p class="callout danger">
+        <b>No authentication.</b> The bridge binds <code style="font-family:var(--mono)">127.0.0.1:7331</code>
+        (loopback) by design — one operator, one machine. Only expose it over a private network such as a
+        <a href="https://tailscale.com">tailnet</a>; never bind <code style="font-family:var(--mono)">0.0.0.0</code>.
+      </p>
+
+      <div class="mobile-block">
+        <div>
+          <h3>On your phone</h3>
+          <p>The UI is an installable PWA. Push needs a secure context, so front the loopback bridge with
+             HTTPS — the easy path is Tailscale. Then Add to Home Screen and enable push per device.</p>
+        </div>
+<pre class="code">tailscale serve --bg --https=443 127.0.0.1:7331
+<span class="c"># open https://&lt;machine&gt;.&lt;tailnet&gt;.ts.net, Add to Home Screen,</span>
+<span class="c"># then Settings &#8594; Push when blocked (enrol on the phone itself)</span></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== CONTRIBUTORS ===================== -->
+  <section id="build">
+    <div class="wrap">
+      <p class="kicker">from source</p>
+      <h2>A SvelteKit UI baked into a Go binary.</h2>
+      <p class="sub">The UI is <code style="font-family:var(--mono);color:var(--paper-2)">go:embed</code>ed, so
+        <code style="font-family:var(--mono);color:var(--paper-2)">make build</code> — not
+        <code style="font-family:var(--mono);color:var(--paper-2)">go build</code> — is what refreshes it.</p>
+<pre class="code" style="margin-top:30px;max-width:720px"><span class="k">make build</span>     <span class="c"># build the SPA, embed it, compile -> bin/herdr-bridge</span>
+<span class="k">make run</span>       <span class="c"># build + run on http://127.0.0.1:7331</span>
+<span class="k">make dev</span>       <span class="c"># Vite dev server (HMR), proxies /ws + /api to :7331</span>
+<span class="k">make check</span>     <span class="c"># go vet + svelte-check + Go and Vitest tests</span></pre>
+
+      <div class="files">
+        <div class="file"><b>cmd/herdr-bridge</b><p>Serves the UI, <code style="font-family:var(--mono)">/ws</code> and <code style="font-family:var(--mono)">/api</code>; proxies the Herdr socket.</p></div>
+        <div class="file"><b>internal/protocol</b><p>Canonical Go types and the Herdr snapshot → UI normalization.</p></div>
+        <div class="file"><b>internal/herdr</b><p>Socket client: framing, snapshot, event subscribe, reconnect.</p></div>
+        <div class="file"><b>internal/server</b><p>Hub: one Herdr connection, WebSocket fan-out, periodic re-snapshot.</p></div>
+        <div class="file"><b>internal/webui</b><p>The <code style="font-family:var(--mono)">go:embed</code> of the built SvelteKit assets.</p></div>
+        <div class="file"><b>web/</b><p>SvelteKit + TypeScript front end; protocol types mirror the Go structs.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===================== FOOTER ===================== -->
+  <footer>
+    <div class="wrap">
+      <div class="who">
+        <b>herdr-web</b>
+        <p>A single-operator web client for Herdr, the terminal/agent multiplexer. MIT licensed, built as one self-contained Go binary.</p>
+      </div>
+      <div class="col">
+        <h4>project</h4>
+        <a href="https://github.com/sarathsp06/herdrweb">Source on GitHub</a>
+        <a href="https://github.com/sarathsp06/herdrweb/releases">Releases</a>
+        <a href="https://github.com/sarathsp06/herdrweb/blob/main/README.md">README</a>
+      </div>
+      <div class="col">
+        <h4>related</h4>
+        <a href="https://herdr.dev">Herdr</a>
+        <a href="https://herdr.dev/docs/socket-api/">Socket API</a>
+        <a href="https://github.com/kcosr/herdr-web">kcosr/herdr-web</a>
+        <a href="#top">Back to top</a>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    document.querySelectorAll('.copy').forEach(function (btn) {
+      btn.addEventListener('click', function () {
+        var el = document.getElementById(btn.dataset.copy);
+        if (!el || !navigator.clipboard) return;
+        navigator.clipboard.writeText(el.textContent.trim()).then(function () {
+          var prev = btn.textContent;
+          btn.textContent = 'Copied';
+          btn.classList.add('ok');
+          setTimeout(function () { btn.textContent = prev; btn.classList.remove('ok'); }, 1400);
+        });
+      });
+    });
+  </script>
+</body>
+</html>
