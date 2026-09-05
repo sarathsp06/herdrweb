@@ -56,6 +56,22 @@ test.describe('routes reachable (phone)', () => {
     await page.goto('/spaces/w1' + q);
     await expect(page.getByText('AGENTS w1:t1')).toBeVisible();
   });
+
+  test('navigating resets the new route scroll container to top', async ({ page }) => {
+    await page.goto('/spaces' + q);
+    const content = page.locator('main.content');
+    // Force overflow so the offset actually sticks (the fixture list is short —
+    // this simulates a user who scrolled a longer real list).
+    await content.evaluate((el) => {
+      el.style.setProperty('padding-bottom', '2000px');
+      el.scrollTop = 200;
+    });
+    await expect(content).toHaveJSProperty('scrollTop', 200);
+    await page.getByRole('button', { name: 'toggle navigation' }).click();
+    await page.getByRole('button', { name: 'Agents' }).click();
+    await expect(page).toHaveURL(/\/$|\/pane\//);
+    await expect(content).toHaveJSProperty('scrollTop', 0);
+  });
 });
 
 test.describe('desktop layout (>=880px)', () => {
