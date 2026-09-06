@@ -237,6 +237,13 @@ docs/design/            # original design references (spec + HTML prototypes)
 The web `protocol` types (`web/src/lib/protocol`) mirror the Go structs in
 `internal/protocol`, which are canonical.
 
+## Architecture
+
+[![Architecture diagram](site/assets/architecture.png)](https://sarathsp06.github.io/herdrweb/diagrams/architecture.html)
+
+[Open the interactive diagram](https://sarathsp06.github.io/herdrweb/diagrams/architecture.html) —
+pan/zoom, trace a relationship, switch light/dark, and export to PNG/SVG.
+
 ## Testing
 
 ```bash
