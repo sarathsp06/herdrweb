@@ -12,8 +12,15 @@ export class SessionModel {
   spaces: Space[] = [];
   focus: { spaceId?: string; tabId?: string; paneId?: string } = {};
 
+  // Re-snapshot fires on every poll tick (~1.5s) regardless of whether
+  // anything actually changed, so this merges bottom-up against the previous
+  // tree: a space/tab/pane whose own fields are unchanged keeps its prior
+  // object reference. Views bound to an unaffected space/tab/pane (e.g. the
+  // pane currently open) then see no prop change and skip re-rendering —
+  // only the subtree that actually changed gets new identity.
   applySnapshot(snap: Snapshot): void {
-    this.spaces = snap.spaces.map(cloneSpace);
+    const prev = this.spaces;
+    this.spaces = snap.spaces.map((s) => mergeSpace(prev.find((p) => p.id === s.id), s));
     this.focus = { ...snap.focus };
   }
 
@@ -91,4 +98,57 @@ function cloneSpace(s: Space): Space {
     ...s,
     tabs: s.tabs.map((t) => ({ ...t, panes: t.panes.map((p) => ({ ...p, tail: [...p.tail] })) }))
   };
+}
+
+function sameTail(a: string[], b: string[]): boolean {
+  if (a.length !== b.length) return false;
+  for (let i = 0; i < a.length; i++) if (a[i] !== b[i]) return false;
+  return true;
+}
+
+function paneFieldsEqual(a: Pane, b: Pane): boolean {
+  return (
+    a.label === b.label &&
+    a.sub === b.sub &&
+    a.status === b.status &&
+    a.agent === b.agent &&
+    sameTail(a.tail, b.tail)
+  );
+}
+
+/** Reuse `old` when `next`'s content is identical; else clone `next` fresh
+ *  (never returning a reference into `next` itself — callers must not alias
+ *  the incoming snapshot). */
+function mergePane(old: Pane | undefined, next: Pane): Pane {
+  if (old && paneFieldsEqual(old, next)) return old;
+  return { ...next, tail: [...next.tail] };
+}
+
+function mergeTab(old: Tab | undefined, next: Tab): Tab {
+  const panes = next.panes.map((p) => mergePane(old?.panes.find((op) => op.id === p.id), p));
+  if (
+    old &&
+    old.label === next.label &&
+    old.panes.length === panes.length &&
+    old.panes.every((p, i) => p === panes[i])
+  ) {
+    return old;
+  }
+  return { ...next, panes };
+}
+
+function mergeSpace(old: Space | undefined, next: Space): Space {
+  const tabs = next.tabs.map((t) => mergeTab(old?.tabs.find((ot) => ot.id === t.id), t));
+  if (
+    old &&
+    old.label === next.label &&
+    old.cwd === next.cwd &&
+    old.branch === next.branch &&
+    old.worktree === next.worktree &&
+    old.tabs.length === tabs.length &&
+    old.tabs.every((t, i) => t === tabs[i])
+  ) {
+    return old;
+  }
+  return { ...next, tabs };
 }

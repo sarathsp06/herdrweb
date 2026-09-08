@@ -157,16 +157,46 @@ export function parseAnsiLines(lines: string[]): AnsiSegment[][] {
   return out;
 }
 
-/** Build an inline CSS style string for a segment, honouring inverse video. */
-export function segStyle(sgr: Sgr): string {
+/** Relative luminance (0=black, 1=white) of a resolved `#rrggbb` or `rgb(r,g,b)`
+ *  colour string, or null if the format isn't one ansi.ts produces (e.g. a
+ *  CSS variable). */
+function relLuma(color: string): number | null {
+  const hex = color.match(/^#([0-9a-f]{6})$/i);
+  const rgb = hex ? null : color.match(/^rgb\((\d+),(\d+),(\d+)\)$/);
+  if (!hex && !rgb) return null;
+  const [r, g, b] = hex
+    ? [parseInt(hex[1].slice(0, 2), 16), parseInt(hex[1].slice(2, 4), 16), parseInt(hex[1].slice(4, 6), 16)]
+    : [Number(rgb![1]), Number(rgb![2]), Number(rgb![3])];
+  return (0.2126 * r + 0.7152 * g + 0.0722 * b) / 255;
+}
+
+// Below this relative luminance a colour reads as "terminal default black/white".
+const NEAR_BLACK = 0.1;
+
+/** Build an inline CSS style string for a segment, honouring inverse video.
+ *  `lightTheme` neutralises a near-black background (and the near-white
+ *  foreground it's paired with): raw terminal output assumes a dark terminal
+ *  and routinely paints its own UI chrome (tool-call boxes, diff panels) on
+ *  an explicit near-black background, which reads as a jarring black
+ *  rectangle on a light theme. Genuine syntax/diff colours (not near the
+ *  black/white extremes) are always passed through untouched. */
+export function segStyle(sgr: Sgr, lightTheme = false): string {
   let fg = sgr.fg;
   let bg = sgr.bg;
   if (sgr.inverse) {
     // Swap; fall back to the pane's default fg/bg so inverse is always visible.
-    const nf = bg ?? 'var(--bg)';
+    const nf = bg ?? 'var(--app-bg)';
     const nb = fg ?? 'var(--text-1)';
     fg = nf;
     bg = nb;
+  }
+  if (lightTheme && bg) {
+    const l = relLuma(bg);
+    if (l !== null && l < NEAR_BLACK) {
+      bg = undefined;
+      const fl = fg ? relLuma(fg) : null;
+      if (fl !== null && fl > 1 - NEAR_BLACK) fg = undefined;
+    }
   }
   const parts: string[] = [];
   if (fg) parts.push(`color:${fg}`);

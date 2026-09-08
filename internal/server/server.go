@@ -6,6 +6,7 @@
 package server
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"log"
@@ -47,6 +48,16 @@ type Hub struct {
 	attn attention.Detector // owns the rising-edge baseline + its own lock
 
 	dirty chan struct{}
+
+	// refreshMu serializes refresh(): Run's (re)connect bootstrap and
+	// debouncer's event-triggered calls can fire concurrently. Without this,
+	// two overlapping Herdr Snapshot RPCs can complete out of order (a slow
+	// one finishing after a faster, later one) and the stale reply's
+	// applySnapshot would overwrite the cache with older data than what
+	// browsers were just shown - a momentary backward flash. Serializing
+	// forces each refresh's Snapshot RPC to start only after the previous
+	// one finished, so completion order always matches start order.
+	refreshMu sync.Mutex
 }
 
 type browser struct {
@@ -158,6 +169,8 @@ func (h *Hub) markDirty() {
 }
 
 func (h *Hub) refresh(ctx context.Context) error {
+	h.refreshMu.Lock()
+	defer h.refreshMu.Unlock()
 	rctx, cancel := context.WithTimeout(ctx, 8*time.Second)
 	defer cancel()
 	var hs protocol.HerdrSnapshot
@@ -169,12 +182,29 @@ func (h *Hub) refresh(ctx context.Context) error {
 	if err != nil {
 		return err
 	}
+	h.applySnapshot(ctx, snap, data)
+	return nil
+}
+
+// applySnapshot stores the newly fetched snapshot and, only when it differs
+// from the last one broadcast, pushes it to every browser and runs the
+// attention scan. The poller marks the snapshot dirty on a fixed cadence
+// regardless of whether Herdr's state actually moved; broadcasting an
+// identical payload every tick would force every connected browser to
+// re-derive its whole session tree (spaces/tabs/panes) for nothing, which is
+// visible as a periodic flicker in views bound to that tree. The attention
+// scan is a pure function of snap and would report the same nil, so it is
+// skipped alongside the broadcast.
+func (h *Hub) applySnapshot(ctx context.Context, snap protocol.Snapshot, data []byte) {
 	h.mu.Lock()
+	unchanged := bytes.Equal(h.snapshot, data)
 	h.snapshot = data
 	h.mu.Unlock()
+	if unchanged {
+		return
+	}
 	h.broadcast(data)
 	h.notifyAttention(ctx, snap)
-	return nil
 }
 
 // notifyAttention pushes a Web Push notification for every agent pane that just

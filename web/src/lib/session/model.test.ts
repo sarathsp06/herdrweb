@@ -87,6 +87,41 @@ describe('SessionModel live patching', () => {
     m.findPane('w1:p2')!.pane.status = 'done';
     expect(FIXTURE_SNAPSHOT.spaces[0].tabs[0].panes[1].status).toBe('blocked');
   });
+
+  it('re-snapshot preserves object identity for spaces/tabs/panes that did not change', () => {
+    const m = fresh();
+    const w1 = m.space('w1');
+    const w4 = m.space('w4');
+    const p2 = m.findPane('w1:p2')!.pane;
+    m.applySnapshot(FIXTURE_SNAPSHOT);
+    expect(m.space('w1')).toBe(w1);
+    expect(m.space('w4')).toBe(w4);
+    expect(m.findPane('w1:p2')!.pane).toBe(p2);
+  });
+
+  it('re-snapshot gives only the changed pane/tab/space new identity, leaving unrelated spaces untouched', () => {
+    const m = fresh();
+    const w1 = m.space('w1');
+    const w4 = m.space('w4');
+    const mutated: Snapshot = {
+      ...FIXTURE_SNAPSHOT,
+      spaces: FIXTURE_SNAPSHOT.spaces.map((s) =>
+        s.id !== 'w1'
+          ? s
+          : {
+              ...s,
+              tabs: s.tabs.map((t) => ({
+                ...t,
+                panes: t.panes.map((p) => (p.id === 'w1:p2' ? { ...p, status: 'idle' as const } : p))
+              }))
+            }
+      )
+    };
+    m.applySnapshot(mutated);
+    expect(m.findPane('w1:p2')?.pane.status).toBe('idle');
+    expect(m.space('w1')).not.toBe(w1); // the changed pane's ancestors get new identity
+    expect(m.space('w4')).toBe(w4); // an unrelated space keeps its prior reference
+  });
 });
 
 describe('helpers', () => {

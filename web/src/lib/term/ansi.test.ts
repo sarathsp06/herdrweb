@@ -71,11 +71,28 @@ describe('segStyle', () => {
   });
 
   it('swaps fg/bg for inverse with sensible defaults', () => {
-    expect(segStyle({ inverse: true })).toBe('color:var(--bg);background:var(--text-1)');
+    expect(segStyle({ inverse: true })).toBe('color:var(--app-bg);background:var(--text-1)');
     expect(segStyle({ fg: '#111', bg: '#eee', inverse: true })).toBe('color:#eee;background:#111');
   });
 
   it('is empty for the default style', () => {
     expect(segStyle({})).toBe('');
+  });
+
+  it('passes near-black backgrounds through unchanged on a dark theme', () => {
+    expect(segStyle({ fg: '#ffffff', bg: '#000000' })).toBe('color:#ffffff;background:#000000');
+  });
+
+  it('drops a near-black bg (and its near-white fg) on a light theme', () => {
+    expect(segStyle({ fg: '#ffffff', bg: '#000000' }, true)).toBe('');
+    expect(segStyle({ fg: '#ffffff', bg: 'rgb(8,8,8)' }, true)).toBe('');
+  });
+
+  it('keeps a near-black bg fg standalone (not swept) if paired with a mid-tone fg', () => {
+    expect(segStyle({ fg: '#cd0000', bg: '#000000' }, true)).toBe('color:#cd0000');
+  });
+
+  it('leaves genuine (non-near-black/white) syntax and diff colours untouched on a light theme', () => {
+    expect(segStyle({ fg: '#cd0000', bg: '#00cd00' }, true)).toBe('color:#cd0000;background:#00cd00');
   });
 });
