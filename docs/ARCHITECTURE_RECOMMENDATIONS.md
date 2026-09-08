@@ -11,7 +11,7 @@
 
 The primary workflow surfaces coding agents that require human attention (status `blocked`) first. High-level commands and approval keybindings (`y`, `a`, `n`, `esc`) are accessible directly from the interface, while raw terminal scrollback (`pane.read`) provides the ground truth.
 
-The architecture is a single self-contained Go binary (`herdr-bridge`) that embeds a compiled SvelteKit SPA, communicates via Unix domain socket with the Herdr daemon (`~/.config/herdr/herdr.sock`), and serves browser clients over HTTP/WebSocket on loopback (`127.0.0.1:7331`).
+The architecture is a single self-contained Go binary (`herdrweb`) that embeds a compiled SvelteKit SPA, communicates via Unix domain socket with the Herdr daemon (`~/.config/herdr/herdr.sock`), and serves browser clients over HTTP/WebSocket on loopback (`127.0.0.1:7331`).
 
 ```mermaid
 graph TD
@@ -23,7 +23,7 @@ graph TD
         SM <--> ST
     end
 
-    subgraph Bridge ["Go Bridge (herdr-bridge)"]
+    subgraph Bridge ["Go Bridge (herdrweb)"]
         Hub["server.Hub"]
         WebUI["webui (Embedded Assets)"]
         Proto["protocol (Normalizer)"]

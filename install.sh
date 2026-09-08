@@ -1,5 +1,5 @@
 #!/bin/sh
-# herdr-bridge installer — downloads a prebuilt release binary.
+# herdrweb installer — downloads a prebuilt release binary.
 #
 #   curl -fsSL https://raw.githubusercontent.com/sarathsp06/herdrweb/main/install.sh | sh
 #
@@ -10,7 +10,7 @@ set -eu
 
 REPO="sarathsp06/herdrweb"
 PROJECT="herdrweb"
-BIN="herdr-bridge"
+BIN="herdrweb"
 
 info() { printf '\033[36m==>\033[0m %s\n' "$*"; }
 warn() { printf '\033[33mwarn:\033[0m %s\n' "$*" >&2; }
@@ -88,6 +88,12 @@ fi
 tar -xzf "$tmp/$asset" -C "$tmp"
 [ -f "$tmp/$BIN" ] || err "archive did not contain $BIN"
 chmod +x "$tmp/$BIN"
+
+if [ -e "$bindir/$BIN" ]; then
+  oldver=$("$bindir/$BIN" -version 2>/dev/null || echo unknown)
+  info "removing existing $BIN $oldver at $bindir/$BIN"
+  rm -f "$bindir/$BIN"
+fi
 mv -f "$tmp/$BIN" "$bindir/$BIN"
 
 info "installed $BIN $num -> $bindir/$BIN"
@@ -102,7 +108,7 @@ Run the bridge (loopback only by default):
   $BIN
 
 Run as a daemon in background:
-  $BIN -daemon -log-file ~/.config/herdr/herdr-bridge.log
+  $BIN -daemon -log-file ~/.config/herdr/herdrweb.log
 
 Install as a system daemon (systemd on Linux / launchd on macOS):
   $BIN -service install

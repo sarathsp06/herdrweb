@@ -7,11 +7,11 @@ import (
 
 func TestGenerateSystemdUnit(t *testing.T) {
 	opts := ServiceOptions{
-		ExecPath: "/usr/local/bin/herdr-bridge",
+		ExecPath: "/usr/local/bin/herdrweb",
 		Addr:     "127.0.0.1:7331",
 		Socket:   "/home/user/.config/herdr/herdr.sock",
 		Config:   "/home/user/.config/herdr/config.toml",
-		LogPath:  "/home/user/.config/herdr/herdr-bridge.log",
+		LogPath:  "/home/user/.config/herdr/herdrweb.log",
 	}
 
 	unit, err := GenerateSystemdUnit(opts)
@@ -22,7 +22,7 @@ func TestGenerateSystemdUnit(t *testing.T) {
 	expectedParts := []string{
 		"[Unit]",
 		"Description=Herdr Web Bridge Daemon",
-		"ExecStart=/usr/local/bin/herdr-bridge -addr 127.0.0.1:7331 -socket /home/user/.config/herdr/herdr.sock -config /home/user/.config/herdr/config.toml -log-file /home/user/.config/herdr/herdr-bridge.log",
+		"ExecStart=/usr/local/bin/herdrweb -addr 127.0.0.1:7331 -socket /home/user/.config/herdr/herdr.sock -config /home/user/.config/herdr/config.toml -log-file /home/user/.config/herdr/herdrweb.log",
 		"Restart=on-failure",
 		"WantedBy=default.target",
 	}
@@ -36,9 +36,9 @@ func TestGenerateSystemdUnit(t *testing.T) {
 
 func TestGenerateLaunchdPlist(t *testing.T) {
 	opts := ServiceOptions{
-		ExecPath: "/usr/local/bin/herdr-bridge",
+		ExecPath: "/usr/local/bin/herdrweb",
 		Addr:     "127.0.0.1:7331",
-		LogPath:  "/tmp/herdr-bridge.log",
+		LogPath:  "/tmp/herdrweb.log",
 	}
 
 	plist, err := GenerateLaunchdPlist(opts)
@@ -48,12 +48,12 @@ func TestGenerateLaunchdPlist(t *testing.T) {
 
 	expectedParts := []string{
 		"<key>Label</key>",
-		"<string>com.herdrweb.herdr-bridge</string>",
-		"<string>/usr/local/bin/herdr-bridge</string>",
+		"<string>com.herdrweb.herdrweb</string>",
+		"<string>/usr/local/bin/herdrweb</string>",
 		"<string>-addr</string>",
 		"<string>127.0.0.1:7331</string>",
 		"<key>StandardOutPath</key>",
-		"<string>/tmp/herdr-bridge.log</string>",
+		"<string>/tmp/herdrweb.log</string>",
 	}
 
 	for _, part := range expectedParts {

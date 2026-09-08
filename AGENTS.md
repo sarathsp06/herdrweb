@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Herdr Web: one Go binary (`herdr-bridge`) that embeds a SvelteKit SPA and bridges the browser to the Herdr daemon's Unix socket. See `README.md` for the screen tour and `okf/` for a structured knowledge bundle.
+Herdr Web: one Go binary (`herdrweb`) that embeds a SvelteKit SPA and bridges the browser to the Herdr daemon's Unix socket. See `README.md` for the screen tour and `okf/` for a structured knowledge bundle.
 
 ## Build & run
 
@@ -30,7 +30,7 @@ Herdr Web: one Go binary (`herdr-bridge`) that embeds a SvelteKit SPA and bridge
 
 ## Conventions & gotchas
 
-- No auth; binds loopback by design. Expose over a tailnet with `./bin/herdr-bridge -addr $(tailscale ip -4):7331` (not `0.0.0.0`).
+- No auth; binds loopback by design. Expose over a tailnet with `./bin/herdrweb -addr $(tailscale ip -4):7331` (not `0.0.0.0`).
 - Fonts are self-hosted via `@fontsource` and embedded (no CDN). Colours are CSS variables in `web/src/lib/tokens.css`; themes override via `[data-theme]` (`herdr-dark`/`ash`/`gruvbox`/`solarized-light`).
 - `/.worktrees/` holds Rx-pipeline worktrees (gitignored); don't commit them.
 - Go tests use in-process fake Unix-socket servers (`internal/herdr/*_test.go`) — no real daemon needed.

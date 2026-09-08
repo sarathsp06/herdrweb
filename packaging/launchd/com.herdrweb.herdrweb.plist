@@ -3,10 +3,10 @@
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.herdrweb.herdr-bridge</string>
+    <string>com.herdrweb.herdrweb</string>
     <key>ProgramArguments</key>
     <array>
-        <string>/usr/local/bin/herdr-bridge</string>
+        <string>/usr/local/bin/herdrweb</string>
         <string>-addr</string>
         <string>127.0.0.1:7331</string>
     </array>
@@ -15,8 +15,8 @@
     <key>KeepAlive</key>
     <true/>
     <key>StandardOutPath</key>
-    <string>/tmp/herdr-bridge.log</string>
+    <string>/tmp/herdrweb.log</string>
     <key>StandardErrorPath</key>
-    <string>/tmp/herdr-bridge.log</string>
+    <string>/tmp/herdrweb.log</string>
 </dict>
 </plist>

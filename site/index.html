@@ -370,7 +370,7 @@
         </div>
         <div class="link">&#8644;<em>WebSocket</em></div>
         <div class="node">
-          <b>herdr-bridge</b>
+          <b>herdrweb</b>
           <span>One Go binary. Embeds the UI, owns one loopback origin, fans data out.</span>
         </div>
         <div class="link">&#8644;<em>unix socket</em></div>
@@ -505,19 +505,19 @@
       <div class="steps">
         <div class="step">
           <h3><span class="n">1</span> Run it on loopback</h3>
-<pre class="code">herdr-bridge          <span class="c"># serves http://127.0.0.1:7331</span></pre>
+<pre class="code">herdrweb          <span class="c"># serves http://127.0.0.1:7331</span></pre>
         </div>
         <div class="step">
           <h3><span class="n">2</span> Or as a background daemon</h3>
-<pre class="code">herdr-bridge -daemon \
-  -log-file ~/.config/herdr/herdr-bridge.log \
-  -pid-file ~/.config/herdr/herdr-bridge.pid</pre>
+<pre class="code">herdrweb -daemon \
+  -log-file ~/.config/herdr/herdrweb.log \
+  -pid-file ~/.config/herdr/herdrweb.pid</pre>
         </div>
         <div class="step">
           <h3><span class="n">3</span> Or as a system service</h3>
-<pre class="code">herdr-bridge -service install   <span class="c"># systemd / launchd</span>
-herdr-bridge -service start
-herdr-bridge -service status</pre>
+<pre class="code">herdrweb -service install   <span class="c"># systemd / launchd</span>
+herdrweb -service start
+herdrweb -service status</pre>
         </div>
         <div class="step">
           <h3><span class="n">4</span> Open it</h3>
@@ -552,7 +552,7 @@ herdr-bridge -service status</pre>
       <p class="sub">The UI is <code style="font-family:var(--mono);color:var(--paper-2)">go:embed</code>ed, so
         <code style="font-family:var(--mono);color:var(--paper-2)">make build</code> — not
         <code style="font-family:var(--mono);color:var(--paper-2)">go build</code> — is what refreshes it.</p>
-<pre class="code" style="margin-top:30px;max-width:720px"><span class="k">make build</span>     <span class="c"># build the SPA, embed it, compile -> bin/herdr-bridge</span>
+<pre class="code" style="margin-top:30px;max-width:720px"><span class="k">make build</span>     <span class="c"># build the SPA, embed it, compile -> bin/herdrweb</span>
 <span class="k">make run</span>       <span class="c"># build + run on http://127.0.0.1:7331</span>
 <span class="k">make dev</span>       <span class="c"># Vite dev server (HMR), proxies /ws + /api to :7331</span>
 <span class="k">make check</span>     <span class="c"># go vet + svelte-check + Go and Vitest tests</span></pre>

@@ -8,7 +8,7 @@ timestamp: 2026-09-03T00:00:00Z
 
 # System Overview
 
-Herdr Web is one self-contained Go binary, `herdr-bridge`, that fronts a running Herdr daemon for a single operator on localhost.
+Herdr Web is one self-contained Go binary, `herdrweb`, that fronts a running Herdr daemon for a single operator on localhost.
 
 ```mermaid
 graph TD
@@ -19,7 +19,7 @@ graph TD
     UI <--> SM
     SM <--> ST
   end
-  subgraph Bridge [herdr-bridge]
+  subgraph Bridge [herdrweb]
     Hub[server.Hub]
     WebUI[webui go:embed]
     Proto[protocol normalizer]

@@ -1,4 +1,4 @@
-# GoReleaser config for herdr-bridge (single binary, embedded web assets).
+# GoReleaser config for herdrweb (single binary, embedded web assets).
 version: 2
 
 project_name: herdrweb
@@ -11,9 +11,9 @@ before:
     - git checkout -- internal/webui/dist/.gitkeep
 
 builds:
-  - id: herdr-bridge
+  - id: herdrweb
     main: ./cmd/herdr-bridge
-    binary: herdr-bridge
+    binary: herdrweb
     env:
       - CGO_ENABLED=0
     flags:

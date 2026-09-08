@@ -1,6 +1,6 @@
 name: Release
 
-# Cut a release on tag push: GoReleaser cross-compiles the single herdr-bridge
+# Cut a release on tag push: GoReleaser cross-compiles the single herdrweb
 # binary (with the SvelteKit SPA embedded via the `make web` before-hook) for
 # linux/darwin × amd64/arm64 and uploads the archives + checksums to the tag's
 # GitHub Release.

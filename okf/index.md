@@ -6,10 +6,10 @@ okf_version: "0.1"
 
 A single-operator web client for [Herdr](https://herdr.dev), the terminal/agent multiplexer. The organizing idea: **agents, not terminals, are the primary objects** — the default screen is an inbox of every coding agent across your spaces, sorted so the ones that need you (`blocked`) surface first.
 
-It ships as **one self-contained Go binary** (`herdr-bridge`): a SvelteKit SPA embedded via `go:embed` into a Go bridge that owns connections to the Herdr Unix socket (`~/.config/herdr/herdr.sock`) and fans live session data to the browser over WebSocket on loopback (`127.0.0.1:7331`).
+It ships as **one self-contained Go binary** (`herdrweb`): a SvelteKit SPA embedded via `go:embed` into a Go bridge that owns connections to the Herdr Unix socket (`~/.config/herdr/herdr.sock`) and fans live session data to the browser over WebSocket on loopback (`127.0.0.1:7331`).
 
 ```
-browser (SvelteKit)  ⇄  Go bridge (herdr-bridge)  ⇄  Herdr socket
+browser (SvelteKit)  ⇄  Go bridge (herdrweb)  ⇄  Herdr socket
         WebSocket + embedded static assets, one loopback origin
 ```
 

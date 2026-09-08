@@ -5032,7 +5032,7 @@
         <!-- Boundaries (behind everything) -->
         <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="0" data-composition-frame-label="SvelteKit SPA (browser)" x="180" y="270" width="590" height="114" rx="12" class="c-region" stroke-width="1"/>
 
-        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="1" data-composition-frame-label="herdr-bridge (single Go binary, loopback :7331)" x="750" y="100" width="380" height="454" rx="12" class="c-region" stroke-width="1"/>
+        <rect data-graph-role="structural-frame" data-composition-frame-kind="region" data-composition-frame-id="1" data-composition-frame-label="herdrweb (single Go binary, loopback :7331)" x="750" y="100" width="380" height="454" rx="12" class="c-region" stroke-width="1"/>
 
         <!-- Connection paths (before components for correct z-order) -->
         <path data-edge-from="users" data-edge-to="ui" data-edge-label="opens app" data-edge-key="0" data-edge-id="users-to-ui" data-composition-points="170,332;210,332" d="M 170 332 L 210 332" class="a-emphasis" stroke-width="1.8" marker-end="url(#arrowhead-emphasis)"/>
@@ -5100,8 +5100,8 @@
         <text data-detail="context" x="670" y="346" class="t-muted" font-size="9" text-anchor="middle">correlated RPC</text>
         </g>
 
-        <g id="node-hub" data-node-id="hub" data-node-label="server.Hub" tabindex="0" role="button" aria-label="Focus server.Hub, WS fan-out + cache, herdr-bridge (single Go binary, loopback :7331)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="WS fan-out + cache" data-node-context="herdr-bridge (single Go binary, loopback :7331)">
-          <title>server.Hub · WS fan-out + cache · herdr-bridge (single Go binary, loopback :7331)</title>
+        <g id="node-hub" data-node-id="hub" data-node-label="server.Hub" tabindex="0" role="button" aria-label="Focus server.Hub, WS fan-out + cache, herdrweb (single Go binary, loopback :7331)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="WS fan-out + cache" data-node-context="herdrweb (single Go binary, loopback :7331)">
+          <title>server.Hub · WS fan-out + cache · herdrweb (single Go binary, loopback :7331)</title>
           <rect x="780" y="300" width="140" height="64" rx="6" class="c-mask"/>
           <rect x="780" y="300" width="140" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(786 306) scale(0.6875)">
@@ -5111,8 +5111,8 @@
         <text data-detail="context" x="850" y="346" class="t-muted" font-size="9" text-anchor="middle">WS fan-out + cache</text>
         </g>
 
-        <g id="node-client" data-node-id="client" data-node-label="herdr.Client" tabindex="0" role="button" aria-label="Focus herdr.Client, socket framing, herdr-bridge (single Go binary, loopback :7331)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="socket framing" data-node-context="herdr-bridge (single Go binary, loopback :7331)">
-          <title>herdr.Client · socket framing · herdr-bridge (single Go binary, loopback :7331)</title>
+        <g id="node-client" data-node-id="client" data-node-label="herdr.Client" tabindex="0" role="button" aria-label="Focus herdr.Client, socket framing, herdrweb (single Go binary, loopback :7331)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="socket framing" data-node-context="herdrweb (single Go binary, loopback :7331)">
+          <title>herdr.Client · socket framing · herdrweb (single Go binary, loopback :7331)</title>
           <rect x="960" y="300" width="140" height="64" rx="6" class="c-mask"/>
           <rect x="960" y="300" width="140" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(966 306) scale(0.6875)">
@@ -5134,8 +5134,8 @@
         <text data-detail="context" x="1205" y="346" class="t-muted" font-size="9" text-anchor="middle">herdr.sock</text>
         </g>
 
-        <g id="node-proto" data-node-id="proto" data-node-label="protocol normalizer" tabindex="0" role="button" aria-label="Focus protocol normalizer, snapshot -&gt; UI model, herdr-bridge (single Go binary, loopback :7331)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="snapshot -&gt; UI model" data-node-context="herdr-bridge (single Go binary, loopback :7331)">
-          <title>protocol normalizer · snapshot -&gt; UI model · herdr-bridge (single Go binary, loopback :7331)</title>
+        <g id="node-proto" data-node-id="proto" data-node-label="protocol normalizer" tabindex="0" role="button" aria-label="Focus protocol normalizer, snapshot -&gt; UI model, herdrweb (single Go binary, loopback :7331)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="snapshot -&gt; UI model" data-node-context="herdrweb (single Go binary, loopback :7331)">
+          <title>protocol normalizer · snapshot -&gt; UI model · herdrweb (single Go binary, loopback :7331)</title>
           <rect x="780" y="130" width="150" height="64" rx="6" class="c-mask"/>
           <rect x="780" y="130" width="150" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(786 136) scale(0.6875)">
@@ -5145,8 +5145,8 @@
         <text data-detail="context" x="855" y="176" class="t-muted" font-size="9" text-anchor="middle">snapshot -&gt; UI model</text>
         </g>
 
-        <g id="node-cfg" data-node-id="cfg" data-node-label="config" tabindex="0" role="button" aria-label="Focus config, config.toml [web], herdr-bridge (single Go binary, loopback :7331)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="config.toml [web]" data-node-context="herdr-bridge (single Go binary, loopback :7331)">
-          <title>config · config.toml [web] · herdr-bridge (single Go binary, loopback :7331)</title>
+        <g id="node-cfg" data-node-id="cfg" data-node-label="config" tabindex="0" role="button" aria-label="Focus config, config.toml [web], herdrweb (single Go binary, loopback :7331)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="config.toml [web]" data-node-context="herdrweb (single Go binary, loopback :7331)">
+          <title>config · config.toml [web] · herdrweb (single Go binary, loopback :7331)</title>
           <rect x="960" y="130" width="140" height="64" rx="6" class="c-mask"/>
           <rect x="960" y="130" width="140" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(966 136) scale(0.6875)">
@@ -5156,8 +5156,8 @@
         <text data-detail="context" x="1030" y="176" class="t-muted" font-size="9" text-anchor="middle">config.toml [web]</text>
         </g>
 
-        <g id="node-webui" data-node-id="webui" data-node-label="webui" tabindex="0" role="button" aria-label="Focus webui, go:embed assets, herdr-bridge (single Go binary, loopback :7331)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="go:embed assets" data-node-context="herdr-bridge (single Go binary, loopback :7331)">
-          <title>webui · go:embed assets · herdr-bridge (single Go binary, loopback :7331)</title>
+        <g id="node-webui" data-node-id="webui" data-node-label="webui" tabindex="0" role="button" aria-label="Focus webui, go:embed assets, herdrweb (single Go binary, loopback :7331)" aria-pressed="false" data-node-kind="backend" data-node-sublabel="go:embed assets" data-node-context="herdrweb (single Go binary, loopback :7331)">
+          <title>webui · go:embed assets · herdrweb (single Go binary, loopback :7331)</title>
           <rect x="780" y="470" width="150" height="64" rx="6" class="c-mask"/>
           <rect x="780" y="470" width="150" height="64" rx="6" class="c-backend" stroke-width="1.5"/>
           <g aria-hidden="true" data-semantic-sigil="backend" class="semantic-sigil s-backend" transform="translate(786 476) scale(0.6875)">
@@ -5211,9 +5211,9 @@
           <text data-boundary-label="" x="188" y="293" class="t-cloud" font-size="9" font-weight="600">SvelteKit SPA (browser)</text>
         </g>
 
-        <g data-graph-role="structural-frame-label" data-composition-frame-id="1" data-composition-frame-kind="region" data-composition-frame-label="herdr-bridge (single Go binary, loopback :7331)">
+        <g data-graph-role="structural-frame-label" data-composition-frame-id="1" data-composition-frame-kind="region" data-composition-frame-label="herdrweb (single Go binary, loopback :7331)">
           <rect data-graph-role="structural-frame-label-mask" x="754" y="110" width="263.79999999999995" height="16" rx="3" class="c-mask"/>
-          <text data-boundary-label="" x="758" y="123" class="t-cloud" font-size="9" font-weight="600">herdr-bridge (single Go binary, loopback :7331)</text>
+          <text data-boundary-label="" x="758" y="123" class="t-cloud" font-size="9" font-weight="600">herdrweb (single Go binary, loopback :7331)</text>
         </g>
 
         <!-- Legend -->

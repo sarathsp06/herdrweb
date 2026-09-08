@@ -5,7 +5,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart=/usr/local/bin/herdr-bridge -addr 127.0.0.1:7331 -log-file %h/.config/herdr/herdr-bridge.log
+ExecStart=/usr/local/bin/herdrweb -addr 127.0.0.1:7331 -log-file %h/.config/herdr/herdrweb.log
 Restart=on-failure
 RestartSec=5s
 

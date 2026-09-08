@@ -6,7 +6,7 @@ tags: [config, flags, toml, settings]
 timestamp: 2026-09-03T00:00:00Z
 ---
 
-# CLI flags (`herdr-bridge`)
+# CLI flags (`herdrweb`)
 
 | Flag | Default |
 |---|---|

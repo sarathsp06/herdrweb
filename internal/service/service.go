@@ -41,7 +41,7 @@ const launchdTemplate = `<?xml version="1.0" encoding="UTF-8"?>
 <plist version="1.0">
 <dict>
     <key>Label</key>
-    <string>com.herdrweb.herdr-bridge</string>
+    <string>com.herdrweb.herdrweb</string>
     <key>ProgramArguments</key>
     <array>
         <string>{{.ExecPath}}</string>
@@ -122,7 +122,7 @@ func installService(opts ServiceOptions) error {
 
 	if opts.LogPath == "" {
 		home, _ := os.UserHomeDir()
-		opts.LogPath = filepath.Join(home, ".config", "herdr", "herdr-bridge.log")
+		opts.LogPath = filepath.Join(home, ".config", "herdr", "herdrweb.log")
 	}
 
 	switch runtime.GOOS {
@@ -151,8 +151,8 @@ func installService(opts ServiceOptions) error {
 		}
 
 		runCmd("systemctl", append(cmdArgs, "daemon-reload")...)
-		runCmd("systemctl", append(cmdArgs, "enable", "herdr-bridge")...)
-		log.Println("Service enabled. Start with: herdr-bridge -service start (or systemctl --user start herdr-bridge)")
+		runCmd("systemctl", append(cmdArgs, "enable", "herdrweb")...)
+		log.Println("Service enabled. Start with: herdrweb -service start (or systemctl --user start herdrweb)")
 		return nil
 
 	case "darwin":
@@ -164,7 +164,7 @@ func installService(opts ServiceOptions) error {
 		if err != nil {
 			return fmt.Errorf("get user home dir: %w", err)
 		}
-		plistPath := filepath.Join(home, "Library", "LaunchAgents", "com.herdrweb.herdr-bridge.plist")
+		plistPath := filepath.Join(home, "Library", "LaunchAgents", "com.herdrweb.herdrweb.plist")
 
 		if err := os.MkdirAll(filepath.Dir(plistPath), 0755); err != nil {
 			return fmt.Errorf("create launchd directory: %w", err)
@@ -175,7 +175,7 @@ func installService(opts ServiceOptions) error {
 
 		log.Printf("Installed launchd plist at %s", plistPath)
 		runCmd("launchctl", "load", plistPath)
-		log.Println("Service loaded. Manage with: herdr-bridge -service start|stop|status")
+		log.Println("Service loaded. Manage with: herdrweb -service start|stop|status")
 		return nil
 
 	default:
@@ -194,8 +194,8 @@ func uninstallService() error {
 		if isUser {
 			cmdArgs = []string{"--user"}
 		}
-		_ = runCmd("systemctl", append(cmdArgs, "stop", "herdr-bridge")...)
-		_ = runCmd("systemctl", append(cmdArgs, "disable", "herdr-bridge")...)
+		_ = runCmd("systemctl", append(cmdArgs, "stop", "herdrweb")...)
+		_ = runCmd("systemctl", append(cmdArgs, "disable", "herdrweb")...)
 
 		if err := os.Remove(unitPath); err != nil && !os.IsNotExist(err) {
 			log.Printf("warning: could not remove %s: %v", unitPath, err)
@@ -210,7 +210,7 @@ func uninstallService() error {
 		if err != nil {
 			return fmt.Errorf("get user home dir: %w", err)
 		}
-		plistPath := filepath.Join(home, "Library", "LaunchAgents", "com.herdrweb.herdr-bridge.plist")
+		plistPath := filepath.Join(home, "Library", "LaunchAgents", "com.herdrweb.herdrweb.plist")
 		_ = runCmd("launchctl", "unload", plistPath)
 
 		if err := os.Remove(plistPath); err != nil && !os.IsNotExist(err) {
@@ -233,9 +233,9 @@ func startService() error {
 		if isUser {
 			cmdArgs = []string{"--user"}
 		}
-		return runCmdInteractive("systemctl", append(cmdArgs, "start", "herdr-bridge")...)
+		return runCmdInteractive("systemctl", append(cmdArgs, "start", "herdrweb")...)
 	case "darwin":
-		return runCmdInteractive("launchctl", "start", "com.herdrweb.herdr-bridge")
+		return runCmdInteractive("launchctl", "start", "com.herdrweb.herdrweb")
 	default:
 		return fmt.Errorf("service start is not supported on OS %q", runtime.GOOS)
 	}
@@ -249,9 +249,9 @@ func stopService() error {
 		if isUser {
 			cmdArgs = []string{"--user"}
 		}
-		return runCmdInteractive("systemctl", append(cmdArgs, "stop", "herdr-bridge")...)
+		return runCmdInteractive("systemctl", append(cmdArgs, "stop", "herdrweb")...)
 	case "darwin":
-		return runCmdInteractive("launchctl", "stop", "com.herdrweb.herdr-bridge")
+		return runCmdInteractive("launchctl", "stop", "com.herdrweb.herdrweb")
 	default:
 		return fmt.Errorf("service stop is not supported on OS %q", runtime.GOOS)
 	}
@@ -265,9 +265,9 @@ func statusService() error {
 		if isUser {
 			cmdArgs = []string{"--user"}
 		}
-		return runCmdInteractive("systemctl", append(cmdArgs, "status", "herdr-bridge")...)
+		return runCmdInteractive("systemctl", append(cmdArgs, "status", "herdrweb")...)
 	case "darwin":
-		return runCmdInteractive("launchctl", "list", "com.herdrweb.herdr-bridge")
+		return runCmdInteractive("launchctl", "list", "com.herdrweb.herdrweb")
 	default:
 		return fmt.Errorf("service status is not supported on OS %q", runtime.GOOS)
 	}
@@ -275,13 +275,13 @@ func statusService() error {
 
 func getSystemdUnitPath() (string, bool, error) {
 	if os.Geteuid() == 0 {
-		return "/etc/systemd/system/herdr-bridge.service", false, nil
+		return "/etc/systemd/system/herdrweb.service", false, nil
 	}
 	home, err := os.UserHomeDir()
 	if err != nil {
 		return "", true, fmt.Errorf("get user home dir: %w", err)
 	}
-	return filepath.Join(home, ".config", "systemd", "user", "herdr-bridge.service"), true, nil
+	return filepath.Join(home, ".config", "systemd", "user", "herdrweb.service"), true, nil
 }
 
 func runCmd(name string, args ...string) error {

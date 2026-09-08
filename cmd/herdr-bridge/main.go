@@ -64,7 +64,7 @@ func main() {
 			log.Fatalf("daemonize: %v", err)
 		}
 		if isParent {
-			fmt.Printf("herdr-bridge daemon started (PID %d)\n", pid)
+			fmt.Printf("herdrweb daemon started (PID %d)\n", pid)
 			return
 		}
 	}
@@ -111,7 +111,7 @@ func main() {
 		_ = srv.Shutdown(sctx)
 	}()
 
-	log.Printf("herdr-bridge %s listening on http://%s (socket %s)", version, *addr, *socket)
+	log.Printf("herdrweb %s listening on http://%s (socket %s)", version, *addr, *socket)
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("serve: %v", err)
 	}

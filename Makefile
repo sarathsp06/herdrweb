@@ -1,5 +1,5 @@
 # Herdr Web — Makefile
-BIN      := bin/herdr-bridge
+BIN      := bin/herdrweb
 PKG      := ./cmd/herdr-bridge
 VERSION  := $(shell git describe --tags --always --dirty 2>/dev/null || echo dev)
 LDFLAGS  := -s -w -X main.version=$(VERSION)

@@ -26,7 +26,7 @@ bridge that owns a single connection to the Herdr socket
 (`~/.config/herdr/herdr.sock`) and fans live session data to the browser.
 
 ```
-browser (SvelteKit)  ⇄  Go bridge (herdr-bridge)  ⇄  Herdr socket
+browser (SvelteKit)  ⇄  Go bridge (herdrweb)  ⇄  Herdr socket
         WebSocket + embedded static assets, one loopback origin
 ```
 
@@ -35,7 +35,7 @@ browser (SvelteKit)  ⇄  Go bridge (herdr-bridge)  ⇄  Herdr socket
 - **Agent inbox first** — every agent across your spaces, blocked ones on top; status shown by glyph, colour, and word.
 - **Raw terminal panes** — exact scrollback via `pane.read`, auto-fit to any phone width, with a key row and a composer; agent panes take image attach + clipboard-image paste.
 - **Installable PWA + push** — add to home screen and get a Web Push when an agent blocks or finishes, even with the app closed.
-- **One binary, zero deps** — the UI is embedded; drop `herdr-bridge` on a machine and run it.
+- **One binary, zero deps** — the UI is embedded; drop `herdrweb` on a machine and run it.
 - **Live & multiplexed** — one Herdr connection fanned to every browser over a thin WebSocket pass-through.
 
 ## Why not SSH, or [`herdr-web`](https://github.com/kcosr/herdr-web)?
@@ -75,22 +75,22 @@ curl -fsSL https://raw.githubusercontent.com/sarathsp06/herdrweb/main/install.sh
 Then run the bridge (loopback only by default):
 
 ```bash
-herdr-bridge        # serves http://127.0.0.1:7331
+herdrweb        # serves http://127.0.0.1:7331
 ```
 
 Or run as a background daemon with logging:
 
 ```bash
-herdr-bridge -daemon -log-file ~/.config/herdr/herdr-bridge.log -pid-file ~/.config/herdr/herdr-bridge.pid
+herdrweb -daemon -log-file ~/.config/herdr/herdrweb.log -pid-file ~/.config/herdr/herdrweb.pid
 ```
 
 Or install and manage it as a system daemon (systemd on Linux, launchd on macOS):
 
 ```bash
-herdr-bridge -service install    # installs user systemd unit or launchd plist
-herdr-bridge -service start      # starts the background service
-herdr-bridge -service status     # checks service status
-herdr-bridge -service stop       # stops the background service
+herdrweb -service install    # installs user systemd unit or launchd plist
+herdrweb -service start      # starts the background service
+herdrweb -service status     # checks service status
+herdrweb -service stop       # stops the background service
 ```
 
 Open <http://127.0.0.1:7331>. The bridge connects to your running Herdr server
@@ -208,7 +208,7 @@ Flags:
 ## Build & run from source
 
 ```bash
-make build      # builds the SvelteKit UI, embeds it, compiles the binary -> bin/herdr-bridge
+make build      # builds the SvelteKit UI, embeds it, compiles the binary -> bin/herdrweb
 make run        # build + run the bridge on http://127.0.0.1:7331
 ```
 
