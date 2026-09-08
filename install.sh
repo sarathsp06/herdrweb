@@ -98,7 +98,7 @@ fi
 mv -f "$tmp/$BIN" "$bindir/$BIN"
 
 if [ "$replaced" -eq 1 ]; then
-  warn "an already-running $BIN process (or service) was not replaced — restart it to pick up this update"
+  warn "if $BIN is already running (standalone or as a service), restart it to pick up this update"
 fi
 
 info "installed $BIN $num -> $bindir/$BIN"
