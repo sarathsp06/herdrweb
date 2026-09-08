@@ -72,6 +72,11 @@ button about it, reliably, from your phone? That's this.
 curl -fsSL https://raw.githubusercontent.com/sarathsp06/herdrweb/main/install.sh | sh
 ```
 
+Re-running this replaces the installed binary in place, but it does **not**
+restart an already-running bridge or service — the installer warns you to do
+that yourself (`herdrweb -service stop && herdrweb -service start`, or restart
+your own daemon/process).
+
 Then run the bridge (loopback only by default):
 
 ```bash

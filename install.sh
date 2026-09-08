@@ -89,14 +89,16 @@ tar -xzf "$tmp/$asset" -C "$tmp"
 [ -f "$tmp/$BIN" ] || err "archive did not contain $BIN"
 chmod +x "$tmp/$BIN"
 
+replaced=0
 if [ -e "$bindir/$BIN" ]; then
   oldver=$("$bindir/$BIN" -version 2>/dev/null || echo unknown)
   info "replacing existing $bindir/$BIN ($oldver)"
+  replaced=1
 fi
 mv -f "$tmp/$BIN" "$bindir/$BIN"
 
-if pgrep -x "$BIN" >/dev/null 2>&1; then
-  warn "a running $BIN process was not replaced — restart it (or its service) to pick up this update"
+if [ "$replaced" -eq 1 ]; then
+  warn "an already-running $BIN process (or service) was not replaced — restart it to pick up this update"
 fi
 
 info "installed $BIN $num -> $bindir/$BIN"

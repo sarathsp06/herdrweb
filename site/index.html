@@ -531,6 +531,13 @@ herdrweb -service status</pre>
         <a href="https://tailscale.com">tailnet</a>; never bind <code style="font-family:var(--mono)">0.0.0.0</code>.
       </p>
 
+      <p class="callout" style="margin-top:14px">
+        <b>Upgrading?</b> Re-running the install command replaces the binary in place, but it does
+        <b>not</b> restart an already-running bridge or service — restart it yourself
+        (<code style="font-family:var(--mono)">herdrweb -service stop &amp;&amp; herdrweb -service start</code>, or
+        restart your own daemon/process) to pick up the update.
+      </p>
+
       <div class="mobile-block">
         <div>
           <h3>On your phone</h3>
