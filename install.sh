@@ -91,10 +91,13 @@ chmod +x "$tmp/$BIN"
 
 if [ -e "$bindir/$BIN" ]; then
   oldver=$("$bindir/$BIN" -version 2>/dev/null || echo unknown)
-  info "removing existing $BIN $oldver at $bindir/$BIN"
-  rm -f "$bindir/$BIN"
+  info "replacing existing $bindir/$BIN ($oldver)"
 fi
 mv -f "$tmp/$BIN" "$bindir/$BIN"
+
+if pgrep -x "$BIN" >/dev/null 2>&1; then
+  warn "a running $BIN process was not replaced — restart it (or its service) to pick up this update"
+fi
 
 info "installed $BIN $num -> $bindir/$BIN"
 case ":$PATH:" in

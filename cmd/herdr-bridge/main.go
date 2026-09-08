@@ -1,4 +1,4 @@
-// Command herdr-bridge serves the Herdr Web UI and proxies the Herdr socket.
+// Command herdrweb serves the Herdr Web UI and proxies the Herdr socket.
 package main
 
 import (
