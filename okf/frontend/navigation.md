@@ -20,7 +20,7 @@ Confirmation barrier for every mutating action (create/rename/close workspace/ta
 
 # Theme & text size
 
-`+layout.svelte` applies `data-theme` and a document `zoom` from the [config](/config/settings.md) store, and syncs the `theme-color`/`apple-mobile-web-app-status-bar-style` meta tags so OS/browser chrome tracks the active theme. Themes: `herdr-dark`, `gruvbox`, `solarized-light`, `paper` — full palettes in `web/src/lib/tokens.css`. Mono font is Fira Code.
+`+layout.svelte` applies `data-theme` and a document `zoom` from the [config](/config/settings.md) store, and keeps the `theme-color` meta in live sync with the active theme so OS/browser chrome tracks it immediately (the `apple-mobile-web-app-status-bar-style` meta is also written but only takes visible effect on an installed PWA's next cold launch — see [Theming](/concepts/themes.md)). Themes: `herdr-dark`, `gruvbox`, `solarized-light`, `paper` — full palettes in `web/src/lib/tokens.css`. Mono font is Fira Code.
 
 # Citations
 
