@@ -31,7 +31,7 @@ Herdr Web: one Go binary (`herdrweb`) that embeds a SvelteKit SPA and bridges th
 ## Conventions & gotchas
 
 - No auth; binds loopback by design. Expose over a tailnet with `./bin/herdrweb -addr $(tailscale ip -4):7331` (not `0.0.0.0`).
-- Fonts are self-hosted via `@fontsource` and embedded (no CDN). Colours are CSS variables in `web/src/lib/tokens.css`; themes override via `[data-theme]` (`herdr-dark`/`ash`/`gruvbox`/`solarized-light`).
+- Fonts are self-hosted via `@fontsource` and embedded (no CDN). Colours are CSS variables in `web/src/lib/tokens.css`; themes override via `[data-theme]` (`herdr-dark`/`gruvbox`/`solarized-light`/`paper`).
 - `/.worktrees/` holds Rx-pipeline worktrees (gitignored); don't commit them.
 - Go tests use in-process fake Unix-socket servers (`internal/herdr/*_test.go`) — no real daemon needed.
 - `okf/` is a generated OKF bundle; validate with `python3 ~/.claude/skills/okf-repo/scripts/validate_okf.py okf --strict` after edits.

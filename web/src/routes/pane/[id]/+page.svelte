@@ -4,12 +4,14 @@
   import { page } from '$app/stores';
   import { session } from '$lib/session/live';
   import { findPaneIn, primaryPaneOfTab, tabHasBlocked } from '$lib/session/derive';
-  import { lastPane, rememberTab, config } from '$lib/ui/state';
+  import { lastPane, rememberTab, config, showToast } from '$lib/ui/state';
   import { startScrollback } from '$lib/session/scrollback';
   import { fitToWidth } from '$lib/layout/fit';
   import { followScroll } from '$lib/layout/scrollFollow';
+  import { swipe, type SwipeDirection } from '$lib/layout/swipe';
   import Composer from '$lib/chat/Composer.svelte';
   import { parseAnsiLines, segStyle } from '$lib/term/ansi';
+  import type { Call } from '$lib/protocol';
 
   const s = session();
   const spaces = s.spaces;
@@ -18,11 +20,39 @@
   const blocked = $derived(ref?.pane.status === 'blocked');
 
   let raw: string[] = $state([]);
+  // Direct control: while on, swiping the transcript sends arrow keys to the
+  // pane instead of scrolling - one swipe per keypress, no interpretation of
+  // what's on screen. Off by default, and reset on every pane switch so a
+  // gesture never accidentally reaches a different pane.
+  let controlMode = $state(false);
+  // Recomputed on every ref change (unlike controlMode itself): if the pane
+  // stops being an agent mid-session (process exits, replaced) while control
+  // mode is still on, this drops immediately so the transcript reverts to
+  // native scroll instead of silently eating touches with nowhere to send them.
+  const swipeEnabled = $derived(controlMode && !!ref?.pane.agent);
+
+  // Reset only when the pane identity actually changes - not on every
+  // snapshot/ref update (agent status ticks, tab renames, ...), which would
+  // otherwise silently flip direct control back off mid-use.
+  $effect(() => {
+    paneId;
+    controlMode = false;
+  });
 
   $effect(() => {
     lastPane.set(paneId);
     if (ref) rememberTab(ref.space.id, ref.tab.id);
   });
+
+  // Direct control is agent-only: it exists to speed up navigating an
+  // agent's interactive TUI (e.g. `/model`), so it only ever talks to
+  // `agent.send_keys`, never a plain terminal pane.
+  function sendSwipeKey(dir: SwipeDirection) {
+    if (!ref?.pane.agent) return;
+    const call: Call = { method: 'agent.send_keys', params: { target: paneId, keys: [dir] } };
+    void s.request(call).catch(() => {});
+    showToast(`swipe → ${dir}`);
+  }
 
   // Switch tabs from the chat header: jump to the target tab's primary pane.
   function openTab(tabId: string) {
@@ -65,7 +95,17 @@
       {/each}
     </div>
 
-    <div class="scroll" use:followScroll={{ deps: raw.length, key: paneId }}>
+    {#if ref.pane.agent}
+      <button
+        class="ctrltoggle mono"
+        class:active={controlMode}
+        onclick={() => (controlMode = !controlMode)}
+      >
+        {controlMode ? '◉ direct control — swipe to move' : '◎ direct control'}
+      </button>
+    {/if}
+
+    <div class="scroll" class:controlling={swipeEnabled} use:followScroll={{ deps: raw.length, key: paneId }} use:swipe={{ enabled: swipeEnabled, onSwipe: sendSwipeKey }}>
       {#if $config.devCaptions}<div class="cap mono">pane.read · source=recent_unwrapped · lines=200{$config.ansi ? ' · format=ansi' : ''}</div>{/if}
       <pre class="raw mono" use:fitToWidth={{ deps: raw }}>{#if rows}{#each rows as segs}<span class="ln">{#each segs as seg}<span style={segStyle(seg.sgr, isLight)}>{seg.text}</span>{/each}
 </span>{/each}{:else}{#each raw as line}<span class="ln">{line}
@@ -82,10 +122,13 @@
   .tabs { flex: none; display: flex; gap: 6px; overflow-x: auto; padding: 10px 14px; border-bottom: 1px solid var(--hairline); }
   .tab { flex: none; display: flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border-radius: var(--r-chip); border: 1px solid var(--control); background: var(--card); color: var(--text-3); font-size: 12px; }
   .tab.active { border-color: var(--control-selected-2); background: var(--surface-tint-2); color: var(--text-1); }
+  .ctrltoggle { flex: none; align-self: flex-start; margin: 0 14px; padding: 6px 12px; border-radius: var(--r-chip); border: 1px solid var(--control); background: var(--card); color: var(--text-3); font-size: 11.5px; }
+  .ctrltoggle.active { border-color: var(--control-selected-2); background: var(--surface-tint-2); color: var(--text-1); }
   .bdot { width: 6px; height: 6px; border-radius: 50%; background: var(--blocked); }
   .pc { color: var(--text-4); }
   .chat { display: flex; flex-direction: column; height: 100%; }
   .scroll { flex: 1; overflow-y: auto; padding: 14px; }
+  .scroll.controlling { touch-action: none; outline: 2px solid var(--control-selected-2); outline-offset: -2px; }
   .cap { font-size: 10.5px; color: var(--text-4); margin-bottom: 8px; }
   /* Terminal scrollback must render exact code points — kill Fira Code's
      contextual ligatures (calt) so ASCII art (-> == != |=> box rules) stays literal. */

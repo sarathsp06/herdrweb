@@ -77,7 +77,7 @@ graph TD
 * **Recent Dependencies**: Tailwind v4 (`@tailwindcss/vite`), `bits-ui`, `clsx`, `tailwind-merge`, and `@lucide/svelte` were added in commit `822c8fa`.
 * **Trade-Off Analysis**:
   * `bits-ui` provides headless accessible primitives for complex interactions ([`BottomSheet.svelte`](file:///Users/sarathsadasivanpillai/projects/herderweb/web/src/lib/ui/BottomSheet.svelte), [`Toggle.svelte`](file:///Users/sarathsadasivanpillai/projects/herderweb/web/src/lib/ui/Toggle.svelte)).
-  * However, migration must preserve the strict high-contrast design system, touch-target thresholds (minimum 44px on mobile), and dark/ash/gruvbox theme palettes without falling back to generic Tailwind presets.
+  * However, migration must preserve the strict high-contrast design system, touch-target thresholds (minimum 44px on mobile), and all four theme palettes (herdr-dark, gruvbox, solarized-light, paper) without falling back to generic Tailwind presets.
 
 ---
 
@@ -149,7 +149,7 @@ gantt
 ### Phase 3: Frontend Modernization (Tailwind v4 & Svelte 5 Native State)
 1. **Design Token Mapping**:
    * Configure Tailwind v4 `@theme` block in CSS to reference the existing OKLCH color palette and font definitions in [`tokens.css`](file:///Users/sarathsadasivanpillai/projects/herderweb/web/src/lib/tokens.css).
-   * Ensure dark, ash, and gruvbox CSS themes function identically without class name conflicts.
+   * Ensure all four themes (herdr-dark, gruvbox, solarized-light, paper) function identically without class name conflicts.
 2. **Headless Component Migration**:
    * Migrate [`BottomSheet.svelte`](file:///Users/sarathsadasivanpillai/projects/herderweb/web/src/lib/ui/BottomSheet.svelte) to `bits-ui` Dialog / Drawer primitives for full keyboard trapping, focus management, and ARIA compliance.
    * Migrate [`Toggle.svelte`](file:///Users/sarathsadasivanpillai/projects/herderweb/web/src/lib/ui/Toggle.svelte) to `bits-ui` Switch primitive.

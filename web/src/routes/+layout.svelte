@@ -1,6 +1,5 @@
 <script lang="ts">
   import '../app.css';
-  import { onMount } from 'svelte';
   import { page } from '$app/stores';
   import { afterNavigate } from '$app/navigation';
   import { session } from '$lib/session/live';
@@ -47,11 +46,23 @@
 
   const closeOnMobile = () => { if (!desktop) navOpen.set(false); };
 
-  onMount(() => {
-    document.documentElement.dataset.theme = $config.theme;
-  });
+  // Keep the OS/browser chrome colour in sync with the active theme - must
+  // match each theme's `--app-bg` in lib/tokens.css and app.html's pre-paint
+  // copy of this map. `$effect` already runs once on mount, so no separate
+  // onMount is needed.
+  const THEME_COLOR: Record<string, string> = {
+    'herdr-dark': '#0a0a0a',
+    gruvbox: '#1d2021',
+    'solarized-light': '#fdf6e3',
+    paper: '#ffffff'
+  };
   $effect(() => {
+    const isLight = $config.theme === 'solarized-light' || $config.theme === 'paper';
     document.documentElement.dataset.theme = $config.theme;
+    document.querySelector('meta[name="theme-color"]')?.setAttribute('content', THEME_COLOR[$config.theme] ?? '#0a0a0a');
+    document
+      .querySelector('meta[name="apple-mobile-web-app-status-bar-style"]')
+      ?.setAttribute('content', isLight ? 'default' : 'black-translucent');
   });
   // Webapp-level text size: scale the whole UI via document zoom. `zoom` also
   // scales viewport-unit heights (100dvh/100vh), so full-height shells must

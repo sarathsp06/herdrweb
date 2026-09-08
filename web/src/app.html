@@ -6,12 +6,40 @@
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
     <link rel="manifest" href="/manifest.webmanifest" />
     <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-    <meta name="color-scheme" content="dark" />
+    <meta name="color-scheme" content="dark light" />
     <meta name="theme-color" content="#0a0a0a" />
     <meta name="mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
     <meta name="apple-mobile-web-app-title" content="Herdr" />
+    <script>
+      // Apply the persisted theme (and matching OS/browser chrome colour)
+      // before first paint - otherwise every load flashes herdr-dark for one
+      // frame, and `theme-color` stays stuck on dark forever since nothing
+      // else sets it this early. Keep this map in sync with each theme's
+      // `--app-bg` in lib/tokens.css.
+      //
+      // Known gap: `manifest.webmanifest`'s own theme_color/background_color
+      // (the OS-level splash/task-switcher colour for an *installed* PWA
+      // cold launch) is a static file read once by the OS before any JS
+      // runs, so it always matches herdr-dark and cannot be patched here.
+      (function () {
+        try {
+          var raw = localStorage.getItem('herdrweb.config');
+          var theme = (raw && JSON.parse(raw).theme) || 'herdr-dark';
+          var colors = { 'herdr-dark': '#0a0a0a', gruvbox: '#1d2021', 'solarized-light': '#fdf6e3', paper: '#ffffff' };
+          var isLight = theme === 'solarized-light' || theme === 'paper';
+          document.documentElement.dataset.theme = theme;
+          var m = document.querySelector('meta[name="theme-color"]');
+          if (m) m.setAttribute('content', colors[theme] || '#0a0a0a');
+          // Standalone-launch iOS status bar tint; only takes effect on the
+          // next cold launch of an installed PWA, same static-read caveat as
+          // the manifest above - but keep it correct for that next launch.
+          var sb = document.querySelector('meta[name="apple-mobile-web-app-status-bar-style"]');
+          if (sb) sb.setAttribute('content', isLight ? 'default' : 'black-translucent');
+        } catch (e) {}
+      })();
+    </script>
     %sveltekit.head%
   </head>
   <body data-sveltekit-preload-data="hover">

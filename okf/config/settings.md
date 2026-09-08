@@ -21,7 +21,7 @@ Written by the bridge on a settings save (then `server.reload_config`), and mirr
 
 ```toml
 [web]
-theme = "herdr-dark"   # herdr-dark | ash | gruvbox | solarized-light
+theme = "herdr-dark"   # herdr-dark | gruvbox | solarized-light | paper
 notify = true          # push when an agent is blocked
 follow = true          # follow the focused pane
 ansi = true            # keep ANSI colours in raw mode

@@ -137,16 +137,22 @@ Desktop layout (≥ 880px) — the sidebar *is* the inbox:
   slash-command palette (↑/↓ to select, Tab/Enter to fill the draft, Esc to
   dismiss), and an image can be attached (button) or pasted from the clipboard
   — the bridge writes it host-side and drops the file path into the draft.
-  Everything only edits the draft; sending stays a deliberate act.
+  Everything only edits the draft; sending stays a deliberate act. Agent panes
+  also get a **◎ direct control** toggle: while on, swiping the transcript
+  sends one arrow key per swipe via `agent.send_keys` (native scroll resumes
+  the moment it's off, or if the pane stops being an agent) — a faster way to
+  drive an agent's own interactive picker (e.g. `/model`) than tapping the key
+  row repeatedly.
 - **Diff viewer** (`/pane/:id/diff`) — unified diff highlighted with Shiki, a
   per-file chip strip, a soft-wrap toggle, and add/remove row tints.
 - **Spaces** (`/spaces`) + **space detail** (`/spaces/:id`) — space cards with
   rollup status; detail with a tab strip, pane cards, and add-tab / split-pane
   affordances.
-- **Settings** (`/settings`) — theme picker (herdr-dark / ash / gruvbox /
-  solarized-light), UI text size, phone nav-button placement, and behaviour
-  toggles (push-when-blocked, follow focused pane, keep ANSI in raw, developer
-  captions). Writes persist to `config.toml` and call `server.reload_config`.
+- **Settings** (`/settings`) — theme picker (herdr-dark / gruvbox /
+  solarized-light / paper), UI text size, phone nav-button placement, and
+  behaviour toggles (push-when-blocked, follow focused pane, keep ANSI in raw,
+  developer captions). Writes persist to `config.toml` and call
+  `server.reload_config`.
 
 Every mutating action routes through a confirmation **bottom sheet** first —
 nothing mutates on a single tap — and confirming fires a toast.
@@ -184,7 +190,7 @@ UI preferences live under a `[web]` table in the Herdr config
 
 ```toml
 [web]
-theme = "herdr-dark"   # herdr-dark | ash | gruvbox | solarized-light
+theme = "herdr-dark"   # herdr-dark | gruvbox | solarized-light | paper
 notify = true          # push when an agent needs you (blocked, or finished)
 follow = true          # follow the focused pane
 ansi = true            # keep ANSI colours in raw mode

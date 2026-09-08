@@ -1,4 +1,11 @@
 :root {
+  /* Pin native form controls/scrollbars to dark even if the OS prefers light -
+     the meta theme-color/color-scheme tag advertises both schemes so a light
+     OS doesn't force a light PWA status bar, but that alone would also let
+     UA chrome for un-styled controls follow the OS. Light themes below
+     override this back to `light`. */
+  color-scheme: dark;
+
   /* surfaces */
   --app-bg: #0a0a0a;
   --page-bg: #08080a;

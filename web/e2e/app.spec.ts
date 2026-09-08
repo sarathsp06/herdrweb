@@ -72,6 +72,39 @@ test.describe('routes reachable (phone)', () => {
     await expect(page).toHaveURL(/\/$|\/pane\//);
     await expect(content).toHaveJSProperty('scrollTop', 0);
   });
+
+  test('direct control toggles and one swipe surfaces the expected direction toast', async ({ page }) => {
+    await page.goto('/pane/w1%3Ap2' + q);
+    const toggle = page.getByRole('button', { name: /direct control/ });
+    await expect(toggle).toBeVisible();
+    await expect(toggle).toHaveText('◎ direct control');
+    await toggle.click();
+    await expect(toggle).toHaveText(/swipe to move/);
+
+    const scroll = page.locator('.scroll');
+    const box = (await scroll.boundingBox())!;
+    const x = box.x + box.width / 2;
+    // One swipe, one direction: drag well past the gesture threshold in a single stroke.
+    await page.evaluate(
+      ([x, yStart, yEnd]) => {
+        const el = document.querySelector('.scroll')!;
+        const fire = (type: string, y: number) => {
+          const t = new Touch({ identifier: 1, target: el, clientX: x, clientY: y });
+          el.dispatchEvent(new TouchEvent(type, { touches: type === 'touchend' ? [] : [t], changedTouches: [t], bubbles: true, cancelable: true }));
+        };
+        fire('touchstart', yStart);
+        fire('touchmove', yEnd);
+        fire('touchend', yEnd);
+      },
+      [x, box.y + box.height - 20, box.y + 20]
+    );
+    await expect(page.getByText('swipe → up')).toBeVisible();
+  });
+
+  test('direct control toggle is absent on a non-agent pane', async ({ page }) => {
+    await page.goto('/pane/w1%3Ap3' + q);
+    await expect(page.getByRole('button', { name: /direct control/ })).toHaveCount(0);
+  });
 });
 
 test.describe('desktop layout (>=880px)', () => {

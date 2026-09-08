@@ -20,7 +20,7 @@ Confirmation barrier for every mutating action (create/rename/close workspace/ta
 
 # Theme & text size
 
-`+layout.svelte` applies `data-theme` and a document `zoom` from the [config](/config/settings.md) store. Themes: `herdr-dark`, `ash`, `gruvbox`, `solarized-light` — full palettes in `web/src/lib/tokens.css`. Mono font is Fira Code.
+`+layout.svelte` applies `data-theme` and a document `zoom` from the [config](/config/settings.md) store, and syncs the `theme-color`/`apple-mobile-web-app-status-bar-style` meta tags so OS/browser chrome tracks the active theme. Themes: `herdr-dark`, `gruvbox`, `solarized-light`, `paper` — full palettes in `web/src/lib/tokens.css`. Mono font is Fira Code.
 
 # Citations
 
