@@ -16,41 +16,26 @@
   ];
 </script>
 
-<nav class="tabbar" aria-label="primary">
+<nav
+  class="tabbar flex flex-none border-t border-(--hairline) bg-(--sidebar-bg) pb-[env(safe-area-inset-bottom)]"
+  aria-label="primary"
+>
   {#each tabs as t (t.href)}
     <button
-      class="tab"
-      class:active={t.match(path)}
+      class="flex min-h-[54px] flex-1 flex-col items-center justify-center gap-0.5 pt-1.5 pb-1 {t.match(path)
+        ? 'text-foreground'
+        : 'text-muted-foreground'}"
       aria-current={t.match(path) ? 'page' : undefined}
       onclick={() => goto(t.href)}
     >
-      <span class="glyph" aria-hidden="true">
+      <span class="relative text-lg leading-none" aria-hidden="true">
         {t.glyph}
-        {#if t.href === '/' && blocked > 0}<span class="badge mono">{blocked}</span>{/if}
+        {#if t.href === '/' && blocked > 0}<span
+            class="mono absolute -top-[5px] left-[calc(100%-2px)] h-[15px] min-w-[15px] rounded-full bg-blocked px-1 text-center text-[9.5px] leading-[15px] font-bold text-foreground"
+            >{blocked}</span
+          >{/if}
       </span>
-      <span class="label">{t.label}</span>
+      <span class="text-[10.5px] font-semibold tracking-[0.01em]">{t.label}</span>
     </button>
   {/each}
 </nav>
-
-<style>
-  .tabbar {
-    flex: none; display: flex;
-    background: var(--sidebar-bg); border-top: 1px solid var(--hairline);
-    padding-bottom: env(safe-area-inset-bottom);
-  }
-  .tab {
-    flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center;
-    gap: 2px; min-height: 54px; padding: 6px 0 4px;
-    background: none; border: none; color: var(--text-4);
-  }
-  .tab.active { color: var(--text-1); }
-  .glyph { position: relative; font-size: 18px; line-height: 1; }
-  .label { font-size: 10.5px; font-weight: 600; letter-spacing: 0.01em; }
-  .badge {
-    position: absolute; top: -5px; left: calc(100% - 2px);
-    min-width: 15px; height: 15px; padding: 0 4px; border-radius: 999px;
-    background: var(--blocked); color: var(--text-1);
-    font-size: 9.5px; font-weight: 700; line-height: 15px; text-align: center;
-  }
-</style>

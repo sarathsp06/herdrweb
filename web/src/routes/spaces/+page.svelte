@@ -6,6 +6,8 @@
   import { get } from 'svelte/store';
   import { openSheet, openActions, showToast, lastTabBySpace } from '$lib/ui/state';
   import StatusDot from '$lib/ui/StatusDot.svelte';
+  import { Button } from '$lib/components/ui/button';
+  import { Badge } from '$lib/components/ui/badge';
 
   const s = session();
   const spaces = s.spaces;
@@ -44,52 +46,53 @@
     ]);
   }
   const rollupWord = (r: string) => (r === 'none' ? '—' : r);
+  const rollupColor: Record<string, string> = {
+    blocked: 'text-(--blocked-badge-text)',
+    working: 'text-working'
+  };
 </script>
 
-<header class="hd">
+<header class="flex flex-wrap items-center gap-2.5 px-3.5 pt-4 pb-2">
   <h1 class="screen-title">Spaces</h1>
-  <span class="sub mono">{$spaces.length} spaces · {$spaces.reduce((n, s2) => n + s2.tabs.length, 0)} tabs</span>
-  <button class="new" onclick={newSpace}>＋ New</button>
+  <span class="mono text-[11px] text-muted-foreground"
+    >{$spaces.length} spaces · {$spaces.reduce((n, s2) => n + s2.tabs.length, 0)} tabs</span
+  >
+  <Button class="ml-auto min-h-11 rounded-lg px-3.5 font-semibold" onclick={newSpace}>＋ New</Button>
 </header>
 
-<div class="list">
+<div class="list flex flex-col gap-3 px-3.5 pt-1.5 pb-6">
   {#each $spaces as sp (sp.id)}
     {@const c = countsOf($spaces, sp.id)}
     {@const r = rollupOf($spaces, sp.id)}
-    <div class="wrap">
-      <button class="body" onclick={() => openChat(sp.id)}>
-        <span class="mono mono-square">{monogram(sp.label)}</span>
-        <span class="col">
-          <span class="mono label">{sp.label} {#if sp.worktree}<span class="wt mono">worktree</span>{/if}</span>
-          <span class="mono cwd">{sp.cwd}</span>
+    <div class="flex items-stretch overflow-hidden rounded-(--r-card) border border-(--hairline) bg-card">
+      <button class="flex min-w-0 flex-1 items-center gap-3 p-3 text-left" onclick={() => openChat(sp.id)}>
+        <span
+          class="mono flex h-[30px] w-[30px] flex-none items-center justify-center rounded-(--r-chip) bg-muted text-xs font-semibold text-(--text-2)"
+          >{monogram(sp.label)}</span
+        >
+        <span class="flex min-w-0 flex-1 flex-col">
+          <span class="mono text-[13.5px] font-semibold"
+            >{sp.label}
+            {#if sp.worktree}<Badge
+                variant="outline"
+                class="mono ml-1 h-auto rounded-(--r-badge) border-transparent bg-(--worktree-bg) px-[5px] py-px text-[10px] font-normal text-(--worktree-text)"
+                >worktree</Badge
+              >{/if}</span
+          >
+          <span class="mono truncate text-[11px] text-muted-foreground">{sp.cwd}</span>
         </span>
-        <span class="right">
-          <span class="rollup" data-status={r}><StatusDot status={r} /> {rollupWord(r)}</span>
-          <span class="counts mono">{c.tabs} tabs · {c.panes} panes</span>
+        <span class="flex flex-col items-end gap-0.5">
+          <span class="flex items-center gap-1.5 text-xs {rollupColor[r] ?? 'text-(--text-3)'}" data-status={r}
+            ><StatusDot status={r} /> {rollupWord(r)}</span
+          >
+          <span class="mono text-[10.5px] text-muted-foreground">{c.tabs} tabs · {c.panes} panes</span>
         </span>
       </button>
-      <button class="more" aria-label="actions for {sp.label}" onclick={() => overflow(sp.id, sp.label)}>⋯</button>
+      <button
+        class="w-11 flex-none border-l border-(--hairline) text-xl text-(--text-3) hover:bg-muted hover:text-foreground"
+        aria-label="actions for {sp.label}"
+        onclick={() => overflow(sp.id, sp.label)}>⋯</button
+      >
     </div>
   {/each}
 </div>
-
-<style>
-  .hd { display: flex; align-items: center; gap: 10px; padding: 16px 14px 8px; flex-wrap: wrap; }
-  .sub { font-size: 11px; color: var(--text-4); }
-  .new { margin-left: auto; background: var(--text-1); color: var(--text-on-light); border: none; border-radius: var(--r-btn); min-height: 44px; padding: 0 14px; font-weight: 600; }
-  .list { padding: 6px 14px 24px; display: flex; flex-direction: column; gap: 12px; }
-  .wrap { display: flex; align-items: stretch; background: var(--card); border: 1px solid var(--hairline); border-radius: var(--r-card); overflow: hidden; }
-  .body { flex: 1; min-width: 0; display: flex; gap: 12px; align-items: center; padding: 12px; background: none; border: none; text-align: left; }
-  .more { flex: none; width: 44px; border: none; border-left: 1px solid var(--hairline); background: none; color: var(--text-3); font-size: 20px; }
-  .more:hover { background: var(--surface-tint); color: var(--text-1); }
-  .mono-square { width: 30px; height: 30px; border-radius: var(--r-chip); background: var(--surface-tint); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--text-2); flex: none; }
-  .col { display: flex; flex-direction: column; min-width: 0; flex: 1; }
-  .label { font-size: 13.5px; font-weight: 600; }
-  .wt { font-size: 10px; color: var(--worktree-text); background: var(--worktree-bg); border-radius: var(--r-badge); padding: 1px 5px; margin-left: 4px; }
-  .cwd { font-size: 11px; color: var(--text-4); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .right { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
-  .rollup { display: flex; align-items: center; gap: 6px; font-size: 12px; color: var(--text-3); }
-  .rollup[data-status='blocked'] { color: var(--blocked-badge-text); }
-  .rollup[data-status='working'] { color: var(--working); }
-  .counts { font-size: 10.5px; color: var(--text-4); }
-</style>

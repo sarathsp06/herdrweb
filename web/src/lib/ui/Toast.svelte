@@ -1,18 +1,13 @@
 <script lang="ts">
-  import { toast } from '$lib/ui/state';
+	import { toast } from '$lib/ui/state';
 </script>
+
 {#if $toast}
-  <div class="toast" role="status">
-    <span class="dot"></span>
-    <span class="mono">{$toast}</span>
-  </div>
+	<div
+		class="fixed inset-x-3.5 bottom-[92px] z-60 mx-auto flex max-w-[520px] items-center gap-2 rounded-(--r-btn) border border-hairline bg-(--toast-bg) px-3.5 py-[11px] text-xs shadow-[0_12px_30px_-8px_rgba(0,0,0,0.8)]"
+		role="status"
+	>
+		<span class="size-[7px] flex-none rounded-full bg-done"></span>
+		<span class="mono">{$toast}</span>
+	</div>
 {/if}
-<style>
-  .toast {
-    position: fixed; left: 14px; right: 14px; bottom: 92px; z-index: 60;
-    background: var(--toast-bg); border: 1px solid var(--hairline); border-radius: var(--r-btn);
-    padding: 11px 14px; display: flex; gap: 9px; align-items: center; font-size: 12px;
-    box-shadow: 0 12px 30px -8px rgba(0, 0, 0, 0.8); max-width: 520px; margin: 0 auto;
-  }
-  .dot { width: 7px; height: 7px; border-radius: 50%; background: var(--done); flex: none; }
-</style>

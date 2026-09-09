@@ -1,15 +1,18 @@
 <script lang="ts">
-  import type { Rollup, Status } from '$lib/protocol';
-  let { status }: { status: Status | Rollup } = $props();
-  const color: Record<string, string> = {
-    working: 'var(--working)', blocked: 'var(--blocked)', done: 'var(--done)',
-    idle: 'var(--idle)', unknown: 'var(--unknown)', none: 'var(--unknown)'
-  };
+	import type { Rollup, Status } from '$lib/protocol';
+	let { status }: { status: Status | Rollup } = $props();
+	const color: Record<string, string> = {
+		working: 'var(--working)', blocked: 'var(--blocked)', done: 'var(--done)',
+		idle: 'var(--idle)', unknown: 'var(--unknown)', none: 'var(--unknown)'
+	};
+	const hollow = $derived(status === 'idle' || status === 'unknown' || status === 'none');
 </script>
-<span class="dot" style="--c: {color[status] ?? 'var(--unknown)'}" data-status={status} aria-hidden="true"></span>
-<style>
-  .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--c); display: inline-block; flex: none; }
-  .dot[data-status='idle'], .dot[data-status='unknown'], .dot[data-status='none'] {
-    background: transparent; box-shadow: inset 0 0 0 1.5px var(--c);
-  }
-</style>
+
+<span
+	class="inline-block size-2 flex-none rounded-full {hollow
+		? 'bg-transparent shadow-[inset_0_0_0_1.5px_var(--c)]'
+		: 'bg-(--c)'}"
+	style="--c: {color[status] ?? 'var(--unknown)'}"
+	data-status={status}
+	aria-hidden="true"
+></span>

@@ -3,30 +3,26 @@
   import StatusGlyph from '$lib/ui/StatusGlyph.svelte';
 
   let { agent, sub, onopen }: { agent: AgentRef; sub: string; onopen: () => void } = $props();
+
+  const wordColor: Record<string, string> = {
+    blocked: 'text-(--blocked-badge-text)',
+    working: 'text-working',
+    done: 'text-done'
+  };
 </script>
 
-<button class="arow" onclick={onopen}>
+<button
+  class="arow flex min-h-[52px] w-full items-center gap-2.5 rounded-(--r-chip) px-2 py-1.5 text-left hover:bg-muted"
+  onclick={onopen}
+>
   <StatusGlyph status={agent.pane.status} />
-  <span class="col">
-    <span class="mono name">{agent.pane.label} <span class="pid">{agent.pane.id}</span></span>
-    <span class="sub">{sub}</span>
+  <span class="flex min-w-0 flex-1 flex-col gap-px">
+    <span class="mono text-[13.5px] font-medium"
+      >{agent.pane.label} <span class="text-[11px] text-muted-foreground">{agent.pane.id}</span></span
+    >
+    <span class="truncate text-[11.5px] text-(--text-3b)">{sub}</span>
   </span>
-  <span class="word" data-status={agent.pane.status}>{agent.pane.status}</span>
+  <span class="mono flex-none text-[11px] {wordColor[agent.pane.status] ?? 'text-(--text-3)'}" data-status={agent.pane.status}
+    >{agent.pane.status}</span
+  >
 </button>
-
-<style>
-  .arow {
-    width: 100%; display: flex; align-items: center; gap: 10px;
-    min-height: 52px; padding: 6px 8px;
-    background: none; border: none; border-radius: var(--r-chip); text-align: left;
-  }
-  .arow:hover { background: var(--surface-tint); }
-  .col { display: flex; flex-direction: column; min-width: 0; flex: 1; gap: 1px; }
-  .name { font-size: 13.5px; font-weight: 500; }
-  .pid { color: var(--text-4); font-size: 11px; }
-  .sub { font-size: 11.5px; color: var(--text-3b); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-  .word { font-size: 11px; font-family: var(--font-mono); color: var(--text-3); flex: none; }
-  .word[data-status='blocked'] { color: var(--blocked-badge-text); }
-  .word[data-status='working'] { color: var(--working); }
-  .word[data-status='done'] { color: var(--done); }
-</style>

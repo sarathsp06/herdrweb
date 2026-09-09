@@ -9,33 +9,102 @@
 @import '@fontsource/fira-code/500.css';
 @import '@fontsource/fira-code/600.css';
 @import './lib/tokens.css';
+@import 'tailwindcss';
+@import 'tw-animate-css';
 
-* { box-sizing: border-box; }
-
-html, body { margin: 0; height: 100%; overflow: hidden; }
-
-body {
-  background: var(--page-bg);
-  color: var(--text-1);
-  font-family: var(--font-ui);
-  font-size: 15px;
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
-  overscroll-behavior: none;
+/* shadcn-svelte semantic tokens, derived from the theme palettes in
+   tokens.css. Each [data-theme] overrides the palette vars, so these remap
+   automatically per theme — no per-theme shadcn blocks needed. */
+:root {
+  --background: var(--app-bg);
+  --foreground: var(--text-1);
+  --card-foreground: var(--text-1);
+  --popover: var(--raised);
+  --popover-foreground: var(--text-1);
+  --primary: var(--text-1);
+  --primary-foreground: var(--text-on-light);
+  --secondary: var(--surface-tint-2);
+  --secondary-foreground: var(--text-1);
+  --muted: var(--surface-tint);
+  --muted-foreground: var(--text-4);
+  --accent: var(--surface-tint-2);
+  --accent-foreground: var(--text-1);
+  --destructive: var(--blocked);
+  --destructive-foreground: #fff;
+  --border: var(--control);
+  --input: var(--control-input);
+  --ring: var(--control-selected-2);
+  --radius: 10px;
 }
 
-#app { height: 100%; background: var(--app-bg); }
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-raised: var(--raised);
+  --color-hairline: var(--hairline);
+  --color-working: var(--working);
+  --color-blocked: var(--blocked);
+  --color-done: var(--done);
+  --color-idle: var(--idle);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: var(--font-ui);
+}
 
-button { font-family: inherit; color: inherit; cursor: pointer; }
+/* bits-ui exposes state as data-state="checked|unchecked"; shadcn components
+   style via data-checked:/data-unchecked: shorthands, which need these. */
+@custom-variant data-checked (&[data-state='checked']);
+@custom-variant data-unchecked (&[data-state='unchecked']);
+
+/* All element-level defaults live in @layer base so Tailwind utilities
+   (@layer utilities) can override them — unlayered CSS would always win. */
+@layer base {
+  * { border-color: var(--color-border); box-sizing: border-box; }
+
+  html, body { margin: 0; height: 100%; overflow: hidden; }
+
+  body {
+    background: var(--page-bg);
+    color: var(--text-1);
+    font-family: var(--font-ui);
+    font-size: 15px;
+    line-height: 1.5;
+    -webkit-font-smoothing: antialiased;
+    overscroll-behavior: none;
+  }
+
+  #app { height: 100%; background: var(--app-bg); }
+
+  button { font-family: inherit; color: inherit; cursor: pointer; }
+
+  /* hide scrollbars but keep scrolling */
+  * { scrollbar-width: none; }
+  *::-webkit-scrollbar { width: 0; height: 0; }
+
+  :focus-visible { outline: 2px solid var(--control-selected-2); outline-offset: 2px; }
+}
 
 .mono { font-family: var(--font-mono); font-feature-settings: 'tnum' 1, 'calt' 1; font-variant-ligatures: contextual; }
 .prose { text-wrap: pretty; }
-
-/* hide scrollbars but keep scrolling */
-* { scrollbar-width: none; }
-*::-webkit-scrollbar { width: 0; height: 0; }
-
-:focus-visible { outline: 2px solid var(--control-selected-2); outline-offset: 2px; }
 
 @keyframes hpulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
 @keyframes hsheet { from { transform: translateY(100%); } to { transform: translateY(0); } }

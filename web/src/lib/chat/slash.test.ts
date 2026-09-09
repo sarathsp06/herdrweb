@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { filterSlash, SLASH_COMMANDS } from './slash';
+import { filterSlash, mergeSlashCommands, SLASH_COMMANDS, type SlashCommand } from './slash';
 
 describe('filterSlash', () => {
   it('lists everything for a bare slash', () => {
@@ -24,5 +24,27 @@ describe('filterSlash', () => {
 
   it('returns nothing when nothing matches', () => {
     expect(filterSlash('/zzz')).toEqual([]);
+  });
+
+  it('filters an explicitly supplied command list', () => {
+    const commands: SlashCommand[] = [
+      { cmd: '/deploy', desc: 'ship it', source: 'user' },
+      { cmd: '/debug', desc: 'debug', source: 'project' }
+    ];
+    expect(filterSlash('/de', commands).map((c) => c.cmd)).toEqual(['/deploy', '/debug']);
+    expect(filterSlash('/clear', commands)).toEqual([]);
+  });
+});
+
+describe('mergeSlashCommands', () => {
+  it('puts discovered commands first and dedupes by cmd (discovered wins)', () => {
+    const discovered: SlashCommand[] = [
+      { cmd: '/deploy', desc: 'ship it', source: 'user' },
+      { cmd: '/clear', desc: 'user override of a builtin', source: 'user' }
+    ];
+    const merged = mergeSlashCommands(discovered, SLASH_COMMANDS);
+    expect(merged.slice(0, 2)).toEqual(discovered);
+    expect(merged.filter((c) => c.cmd === '/clear')).toEqual([discovered[1]]);
+    expect(merged.length).toBe(SLASH_COMMANDS.length + 1);
   });
 });

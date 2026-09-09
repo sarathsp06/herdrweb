@@ -1,95 +1,76 @@
 <script lang="ts">
-  import { sheet, closeSheet, type SheetAction } from '$lib/ui/state';
-  let label = $state('');
-  let cwd = $state('');
-  $effect(() => {
-    if ($sheet) { label = ''; cwd = ''; }
-  });
-  const actions = $derived($sheet && 'actions' in $sheet ? ($sheet.actions as SheetAction[]) : null);
-  function confirm() {
-    if ($sheet && !('actions' in $sheet)) $sheet.onConfirm(label, cwd);
-    closeSheet();
-  }
-  function pick(a: SheetAction) {
-    closeSheet();
-    a.onSelect();
-  }
+	import * as Drawer from '$lib/components/ui/drawer';
+	import { Button } from '$lib/components/ui/button';
+	import { Input } from '$lib/components/ui/input';
+	import { sheet, closeSheet, type SheetAction } from '$lib/ui/state';
+
+	let label = $state('');
+	let cwd = $state('');
+	$effect(() => {
+		if ($sheet) { label = ''; cwd = ''; }
+	});
+	const actions = $derived($sheet && 'actions' in $sheet ? ($sheet.actions as SheetAction[]) : null);
+	function confirm() {
+		if ($sheet && !('actions' in $sheet)) $sheet.onConfirm(label, cwd);
+		closeSheet();
+	}
+	function pick(a: SheetAction) {
+		closeSheet();
+		a.onSelect();
+	}
 </script>
-{#if $sheet}
-  <div class="scrim" onclick={closeSheet} role="presentation"></div>
-  <div class="sheet" role="dialog" aria-label={$sheet.title}>
-    <div class="handle"></div>
-    <h2>{$sheet.title}</h2>
-    {#if actions}
-      <ul class="menu" role="menu">
-        {#each actions as a (a.label)}
-          <li>
-            <button class="item" class:danger={a.destructive} class:active={a.active} role="menuitem" onclick={() => pick(a)}>
-              {#if a.glyph}<span class="glyph mono" aria-hidden="true">{a.glyph}</span>{/if}
-              <span class="ilabel">{a.label}</span>
-              {#if a.hint}<span class="hint mono">{a.hint}</span>{/if}
-            </button>
-          </li>
-        {/each}
-      </ul>
-      <div class="actions">
-        <button class="cancel" onclick={closeSheet}>Cancel</button>
-      </div>
-    {:else if !('actions' in $sheet)}
-      <p class="prose body">{$sheet.body}</p>
-      {#if $sheet.hasInput}
-        <label class="field">
-          <span>{$sheet.inputLabel ?? 'Label'}</span>
-          <input class="mono" bind:value={label} placeholder="name" />
-        </label>
-      {/if}
-      {#if $sheet.hasCwd}
-        <label class="field">
-          <span>Working directory</span>
-          <input class="mono" bind:value={cwd} placeholder="~/code/project" />
-        </label>
-      {/if}
-      <div class="call mono">{$sheet.call}</div>
-      <div class="actions">
-        <button class="cancel" onclick={closeSheet}>Cancel</button>
-        <button class="cta" class:danger={$sheet.destructive} onclick={confirm}>{$sheet.cta}</button>
-      </div>
-    {/if}
-  </div>
-{/if}
-<style>
-  .scrim { position: fixed; inset: 0; background: rgba(0, 0, 0, 0.55); z-index: 70; }
-  .sheet {
-    position: fixed; left: 0; right: 0; bottom: 0; z-index: 71; margin: 0 auto; max-width: 560px;
-    background: var(--raised); border: 1px solid var(--hairline);
-    border-radius: 22px 22px 34px 34px; padding: 10px 18px calc(18px + env(safe-area-inset-bottom));
-  animation: hsheet 0.22s cubic-bezier(0.32, 0.72, 0, 1);
-  }
-  .handle { width: 36px; height: 4px; border-radius: 999px; background: var(--control); margin: 6px auto 14px; }
-  h2 { font-size: 16px; font-weight: 600; margin: 0 0 6px; }
-  .body { color: var(--text-3); font-size: 13px; margin: 0 0 14px; }
-  .field { display: block; margin-bottom: 12px; }
-  .field span { display: block; font-size: 11px; color: var(--text-3b); margin-bottom: 6px; }
-  .field input {
-    width: 100%; background: var(--code-surface); border: 1px solid var(--control-input);
-    border-radius: var(--r-chip); padding: 10px 12px; color: var(--text-1); font-size: 14px;
-  }
-  .call { font-size: 11px; color: var(--text-4); background: var(--code-surface); border: 1px solid var(--hairline); border-radius: var(--r-chip); padding: 8px 10px; margin-bottom: 16px; }
-  .actions { display: flex; gap: 10px; }
-  .actions button { flex: 1; min-height: 46px; border-radius: var(--r-btn); font-weight: 600; font-size: 14px; border: 1px solid var(--control); background: none; color: var(--text-2); }
-  .cta { background: var(--text-1); color: var(--text-on-light); border-color: transparent; }
-  .cta.danger { background: var(--blocked); color: var(--text-1); }
-  .menu { list-style: none; margin: 6px 0 14px; padding: 0; max-height: 50dvh; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
-  .item {
-    width: 100%; display: flex; align-items: center; gap: 10px; min-height: 48px;
-    padding: 0 12px; text-align: left; border: none; border-radius: var(--r-chip);
-    background: none; color: var(--text-1); font-size: 14px;
-  }
-  .item:hover { background: var(--surface-tint); }
-  .item.active { background: var(--surface-tint-2); }
-  .item.danger { color: var(--blocked-badge-text); }
-  .glyph { flex: none; width: 20px; text-align: center; color: var(--text-3); }
-  .item.danger .glyph { color: inherit; }
-  .ilabel { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .hint { flex: none; font-size: 11px; color: var(--text-4); }
-</style>
+
+<Drawer.Root open={$sheet !== null} onOpenChange={(o) => { if (!o) closeSheet(); }}>
+	{#if $sheet}
+		<Drawer.Content class="mx-auto max-w-[560px] border-hairline bg-raised px-4.5 pb-[calc(18px+env(safe-area-inset-bottom))]">
+			<Drawer.Header class="p-0 text-left">
+				<Drawer.Title class="mb-1.5 text-base font-semibold text-foreground">{$sheet.title}</Drawer.Title>
+			</Drawer.Header>
+			{#if actions}
+				<ul class="my-1.5 mb-3.5 flex max-h-[50dvh] list-none flex-col gap-0.5 overflow-y-auto p-0" role="menu">
+					{#each actions as a (a.label)}
+						<li>
+							<button
+								class="flex min-h-12 w-full items-center gap-2.5 rounded-(--r-chip) px-3 text-left text-sm text-foreground hover:bg-muted data-[active=true]:bg-accent data-[danger=true]:text-(--blocked-badge-text)"
+								data-active={a.active || undefined}
+								data-danger={a.destructive || undefined}
+								role="menuitem"
+								onclick={() => pick(a)}
+							>
+								{#if a.glyph}<span class="mono w-5 flex-none text-center {a.destructive ? 'text-inherit' : 'text-(--text-3)'}" aria-hidden="true">{a.glyph}</span>{/if}
+								<span class="min-w-0 flex-1 truncate">{a.label}</span>
+								{#if a.hint}<span class="mono flex-none text-[11px] text-muted-foreground">{a.hint}</span>{/if}
+							</button>
+						</li>
+					{/each}
+				</ul>
+				<div class="flex gap-2.5">
+					<Button variant="outline" class="min-h-[46px] flex-1 rounded-(--r-btn) text-sm font-semibold" onclick={closeSheet}>Cancel</Button>
+				</div>
+			{:else if !('actions' in $sheet)}
+				<p class="prose mb-3.5 text-[13px] text-(--text-3)">{$sheet.body}</p>
+				{#if $sheet.hasInput}
+					<label class="mb-3 block">
+						<span class="mb-1.5 block text-[11px] text-(--text-3b)">{$sheet.inputLabel ?? 'Label'}</span>
+						<Input class="mono bg-(--code-surface) text-sm" bind:value={label} placeholder="name" />
+					</label>
+				{/if}
+				{#if $sheet.hasCwd}
+					<label class="mb-3 block">
+						<span class="mb-1.5 block text-[11px] text-(--text-3b)">Working directory</span>
+						<Input class="mono bg-(--code-surface) text-sm" bind:value={cwd} placeholder="~/code/project" />
+					</label>
+				{/if}
+				<div class="mono mb-4 rounded-(--r-chip) border border-hairline bg-(--code-surface) px-2.5 py-2 text-[11px] text-muted-foreground">{$sheet.call}</div>
+				<div class="flex gap-2.5">
+					<Button variant="outline" class="min-h-[46px] flex-1 rounded-(--r-btn) text-sm font-semibold" onclick={closeSheet}>Cancel</Button>
+					<Button
+						variant={$sheet.destructive ? 'destructive' : 'default'}
+						class="min-h-[46px] flex-1 rounded-(--r-btn) text-sm font-semibold"
+						onclick={confirm}
+					>{$sheet.cta}</Button>
+				</div>
+			{/if}
+		</Drawer.Content>
+	{/if}
+</Drawer.Root>

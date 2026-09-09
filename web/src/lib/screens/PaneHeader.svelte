@@ -60,41 +60,30 @@
   }
 </script>
 
-<header class="phd">
+<header class="flex flex-none items-center gap-2 border-b border-(--hairline) bg-(--sidebar-bg) px-2.5 py-1.5">
   {#if !desktop}
-    <button class="back" aria-label="back to agents" onclick={() => goto('/')}>‹</button>
+    <button
+      class="-ml-1.5 h-11 w-11 flex-none rounded-(--r-chip) text-[26px] leading-none text-(--text-2) active:bg-muted"
+      aria-label="back to agents"
+      onclick={() => goto('/')}>‹</button
+    >
   {/if}
-  <button class="title" class:tappable={multiTab} onclick={switchTab} aria-label={multiTab ? 'switch tab' : undefined}>
-    <span class="mono name">{agentRef.pane.label}</span>
-    <span class="sub">{agentRef.space.label} · {agentRef.tab.label}{#if multiTab}<span class="chev" aria-hidden="true"> ▾</span>{/if}</span>
+  <button
+    class="flex min-h-11 min-w-0 flex-1 flex-col justify-center gap-px rounded-(--r-chip) px-0.5 text-left {multiTab
+      ? 'hover:bg-muted'
+      : ''}"
+    onclick={switchTab}
+    aria-label={multiTab ? 'switch tab' : undefined}
+  >
+    <span class="mono truncate text-sm font-semibold text-foreground">{agentRef.pane.label}</span>
+    <span class="truncate text-[11px] text-(--text-3b)"
+      >{agentRef.space.label} · {agentRef.tab.label}{#if multiTab}<span class="text-muted-foreground" aria-hidden="true"> ▾</span>{/if}</span
+    >
   </button>
   <StatusPill status={agentRef.pane.status} />
-  <button class="more" aria-label="pane actions" onclick={overflow}>⋯</button>
+  <button
+    class="-mr-1.5 h-11 w-11 flex-none rounded-(--r-chip) text-xl leading-none text-(--text-2) active:bg-muted"
+    aria-label="pane actions"
+    onclick={overflow}>⋯</button
+  >
 </header>
-
-<style>
-  .phd {
-    flex: none; display: flex; align-items: center; gap: 8px;
-    padding: 6px 10px; border-bottom: 1px solid var(--hairline); background: var(--sidebar-bg);
-  }
-  .back {
-    flex: none; width: 44px; height: 44px; margin-left: -6px;
-    border: none; background: none; color: var(--text-2); font-size: 26px; line-height: 1;
-    border-radius: var(--r-chip);
-  }
-  .back:active, .more:active { background: var(--surface-tint); }
-  .title {
-    flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 1px;
-    min-height: 44px; justify-content: center; text-align: left;
-    background: none; border: none; padding: 0 2px; border-radius: var(--r-chip);
-  }
-  .title.tappable:hover { background: var(--surface-tint); }
-  .name { font-size: 14px; font-weight: 600; color: var(--text-1); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .sub { font-size: 11px; color: var(--text-3b); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-  .chev { color: var(--text-4); }
-  .more {
-    flex: none; width: 44px; height: 44px; margin-right: -6px;
-    border: none; background: none; color: var(--text-2); font-size: 20px; line-height: 1;
-    border-radius: var(--r-chip);
-  }
-</style>

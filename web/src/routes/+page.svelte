@@ -49,26 +49,37 @@
 </script>
 
 {#if !desktop}
-  <header class="hd">
+  <header class="flex items-center gap-2 px-3.5 pt-4 pb-2">
     <h1 class="screen-title">Agents</h1>
-    <span class="conn" style="--c: {connColor[$connection]}" title={$connection}></span>
-    <span class="mono meta">{$spaces.length} spaces · {$connection}</span>
+    <span
+      class="h-2 w-2 rounded-full animate-[hpulse_2.6s_ease-in-out_infinite]"
+      style="background: {connColor[$connection]}"
+      title={$connection}
+    ></span>
+    <span class="mono text-[11px] text-muted-foreground">{$spaces.length} spaces · {$connection}</span>
   </header>
 
-  <ul class="chips" aria-label="spaces">
+  <ul class="m-0 flex list-none gap-2 overflow-x-auto px-3.5 pt-1 pb-3" aria-label="spaces">
     {#each $spaces as sp (sp.id)}
-      <li>
-        <button class="chip" onclick={() => openSpace(sp.id)}>
+      <li class="flex flex-none">
+        <button
+          class="flex min-h-11 flex-none items-center gap-[7px] rounded-(--r-chip) border border-border bg-card px-3.5 text-(--text-2) hover:bg-muted"
+          onclick={() => openSpace(sp.id)}
+        >
           <StatusGlyph status={rollupOf($spaces, sp.id)} />
-          <span class="mono clabel">{sp.label}</span>
+          <span class="mono text-[12.5px] font-semibold">{sp.label}</span>
         </button>
       </li>
     {/each}
   </ul>
 
-  <div class="list">
+  <div class="list px-2 pb-6">
     {#each sections as sec (sec.label)}
-      <div class="ghead"><span class="section-label">{sec.label}</span><span class="count mono">{sec.items.length}</span></div>
+      <div class="flex items-center gap-2 px-2 pt-3.5 pb-1.5">
+        <span class="section-label">{sec.label}</span><span class="mono text-[10.5px] text-muted-foreground"
+          >{sec.items.length}</span
+        >
+      </div>
       {#each sec.items as a (a.pane.id)}
         <AgentRow
           agent={a}
@@ -78,28 +89,9 @@
       {/each}
     {/each}
     {#if agents.length === 0}
-      <div class="empty mono">no agents running</div>
+      <div class="mono p-10 text-center text-muted-foreground">no agents running</div>
     {/if}
   </div>
 {:else}
-  <div class="empty mono">select an agent</div>
+  <div class="mono p-10 text-center text-muted-foreground">select an agent</div>
 {/if}
-
-<style>
-  .hd { display: flex; align-items: center; gap: 8px; padding: 16px 14px 8px; }
-  .conn { width: 8px; height: 8px; border-radius: 50%; background: var(--c); animation: hpulse 2.6s ease-in-out infinite; }
-  .meta { font-size: 11px; color: var(--text-4); }
-  .chips { display: flex; gap: 8px; overflow-x: auto; padding: 4px 14px 12px; margin: 0; list-style: none; }
-  .chips li { flex: none; display: flex; }
-  .chip {
-    flex: none; display: flex; align-items: center; gap: 7px; min-height: 44px;
-    padding: 0 14px; border-radius: var(--r-chip); border: 1px solid var(--control);
-    background: var(--card); color: var(--text-2);
-  }
-  .chip:hover { background: var(--surface-tint); }
-  .clabel { font-size: 12.5px; font-weight: 600; }
-  .list { padding: 0 8px 24px; }
-  .ghead { display: flex; align-items: center; gap: 8px; padding: 14px 8px 6px; }
-  .count { font-size: 10.5px; color: var(--text-4); }
-  .empty { color: var(--text-4); padding: 40px; text-align: center; }
-</style>

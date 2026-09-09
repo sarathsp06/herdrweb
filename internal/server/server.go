@@ -443,6 +443,7 @@ func (h *Hub) Handler() (http.Handler, error) {
 	mux.HandleFunc("/api/push/subscribe", h.handlePushSubscribe)
 	mux.HandleFunc("/api/push/test", h.handlePushTest)
 	mux.HandleFunc("/api/upload", h.handleUpload)
+	mux.HandleFunc("/api/slash", h.handleSlash)
 	mux.Handle("/", ui)
 	return mux, nil
 }

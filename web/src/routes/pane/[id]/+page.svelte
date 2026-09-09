@@ -76,11 +76,15 @@
 </script>
 
 {#if ref}
-  <section class="chat">
+  <section class="flex h-full flex-col">
     <PaneHeader agentRef={ref} />
 
-    <div class="scroll" class:controlling={swipeEnabled} use:followScroll={{ deps: raw.length, key: paneId }} use:swipe={{ enabled: swipeEnabled, onSwipe: sendSwipeKey }}>
-      {#if $config.devCaptions}<div class="cap mono">pane.read · source=recent_unwrapped · lines=200{$config.ansi ? ' · format=ansi' : ''}</div>{/if}
+    <div
+      class="scroll flex-1 overflow-y-auto p-3.5 {swipeEnabled ? 'touch-none outline-2 outline-ring -outline-offset-2' : ''}"
+      use:followScroll={{ deps: raw.length, key: paneId }}
+      use:swipe={{ enabled: swipeEnabled, onSwipe: sendSwipeKey }}
+    >
+      {#if $config.devCaptions}<div class="mono mb-2 text-[10.5px] text-muted-foreground">pane.read · source=recent_unwrapped · lines=200{$config.ansi ? ' · format=ansi' : ''}</div>{/if}
       <pre class="raw mono" use:fitToWidth={{ deps: raw }}>{#if rows}{#each rows as segs}<span class="ln">{#each segs as seg}<span style={segStyle(seg.sgr, isLight)}>{seg.text}</span>{/each}
 </span>{/each}{:else}{#each raw as line}<span class="ln">{line}
 </span>{/each}{/if}</pre>
@@ -95,17 +99,12 @@
     />
   </section>
 {:else}
-  <div class="missing mono">pane {paneId} not found</div>
+  <div class="mono p-10 text-muted-foreground">pane {paneId} not found</div>
 {/if}
 
 <style>
-  .chat { display: flex; flex-direction: column; height: 100%; }
-  .scroll { flex: 1; overflow-y: auto; padding: 14px; }
-  .scroll.controlling { touch-action: none; outline: 2px solid var(--control-selected-2); outline-offset: -2px; }
-  .cap { font-size: 10.5px; color: var(--text-4); margin-bottom: 8px; }
   /* Terminal scrollback must render exact code points — kill Fira Code's
      contextual ligatures (calt) so ASCII art (-> == != |=> box rules) stays literal. */
   .raw { margin: 0; font-size: 14px; line-height: 1.6; color: var(--text-1); white-space: pre; overflow-x: auto; font-variant-ligatures: none; font-feature-settings: 'liga' 0, 'calt' 0, 'tnum' 1; }
   .raw .ln { display: inline; }
-  .missing { padding: 40px; color: var(--text-4); }
 </style>

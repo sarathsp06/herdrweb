@@ -61,13 +61,18 @@
   });
 </script>
 
-<div class="shell" class:desktop>
+<div class="flex h-[calc(100dvh/var(--font-scale,1))] overflow-hidden">
   {#if desktop}
     <Sidebar spaces={$spaces} connection={$connection} />
   {/if}
 
-  <div class="mainwrap">
-    <main class="content" class:desktop class:full={fullscreen} bind:this={contentEl}>
+  <div class="flex h-full min-h-0 min-w-0 flex-1 flex-col">
+    <main
+      class="content min-h-0 min-w-0 flex-1 overflow-y-auto {desktop && !fullscreen
+        ? 'px-[max(28px,calc(50%-560px))]'
+        : ''}"
+      bind:this={contentEl}
+    >
       {@render children()}
     </main>
     {#if !desktop && !fullscreen}
@@ -77,11 +82,3 @@
 </div>
 <Toast />
 <BottomSheet />
-
-<style>
-  .shell { height: calc(100dvh / var(--font-scale, 1)); display: flex; overflow: hidden; }
-  .mainwrap { flex: 1; min-width: 0; display: flex; flex-direction: column; height: 100%; min-height: 0; }
-  .content { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; }
-  .shell.desktop .content { padding: 0 max(28px, calc(50% - 560px)); }
-  .shell.desktop .content.full { padding: 0; }
-</style>

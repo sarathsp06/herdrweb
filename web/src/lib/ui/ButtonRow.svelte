@@ -2,9 +2,10 @@
   import type { Snippet } from 'svelte';
   let { children }: { children: Snippet } = $props();
 </script>
-<div class="row">{@render children()}</div>
+<div class="row flex border-t border-(--hairline)">{@render children()}</div>
 <style>
-  .row { display: flex; border-top: 1px solid var(--hairline); }
+  /* Slotted plain buttons — utilities can't reach rendered children, so the
+     child button chrome stays as scoped :global rules. */
   .row :global(button) {
     flex: 1; min-height: 44px; background: none; border: none; border-left: 1px solid var(--hairline);
     color: var(--text-2); font-size: 13px; font-weight: 500;

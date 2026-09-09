@@ -1,15 +1,14 @@
 <script lang="ts">
-  import type { Status } from '$lib/protocol';
-  let { status }: { status: Status } = $props();
+	import type { Status } from '$lib/protocol';
+	let { status }: { status: Status } = $props();
+	const cls: Partial<Record<Status, string>> = {
+		blocked: 'text-(--blocked-badge-text) border-(--blocked-border) bg-(--blocked-grad)',
+		working: 'text-working border-[color-mix(in_oklch,var(--working)_40%,transparent)]',
+		done: 'text-done border-[color-mix(in_oklch,var(--done)_40%,transparent)]'
+	};
 </script>
-<span class="pill mono" data-status={status}>{status}</span>
-<style>
-  .pill {
-    font-size: 10.5px; font-weight: 600; padding: 2px 7px; border-radius: var(--r-badge);
-    border: 1px solid var(--control); color: var(--text-3);
-    text-transform: lowercase; letter-spacing: 0.02em; white-space: nowrap;
-  }
-  .pill[data-status='blocked'] { color: var(--blocked-badge-text); border-color: var(--blocked-border); background: var(--blocked-grad); }
-  .pill[data-status='working'] { color: var(--working); border-color: color-mix(in oklch, var(--working) 40%, transparent); }
-  .pill[data-status='done'] { color: var(--done); border-color: color-mix(in oklch, var(--done) 40%, transparent); }
-</style>
+
+<span
+	class="mono rounded-(--r-badge) border border-(--control) px-[7px] py-0.5 text-[10.5px] font-semibold tracking-[0.02em] whitespace-nowrap lowercase text-(--text-3) {cls[status] ?? ''}"
+	data-status={status}
+>{status}</span>

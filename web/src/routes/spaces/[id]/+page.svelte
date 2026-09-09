@@ -6,6 +6,7 @@
   import { openSheet, showToast } from '$lib/ui/state';
   import StatusDot from '$lib/ui/StatusDot.svelte';
   import ButtonRow from '$lib/ui/ButtonRow.svelte';
+  import { Button } from '$lib/components/ui/button';
 
   const s = session();
   const spaces = s.spaces;
@@ -43,42 +44,66 @@
 </script>
 
 {#if space}
-  <header class="bar">
-    <button class="back" onclick={() => goto('/spaces')} aria-label="back">‹</button>
-    <div class="title"><span class="mono label">{space.label}</span><span class="mono cwd">{space.cwd}</span></div>
+  <header class="flex items-center gap-2.5 border-b border-(--hairline) px-3.5 py-3">
+    <button class="h-8 w-8 text-[22px] text-(--text-2)" onclick={() => goto('/spaces')} aria-label="back">‹</button>
+    <div class="flex flex-col">
+      <span class="mono text-[15px] font-semibold">{space.label}</span><span
+        class="mono text-[11px] text-muted-foreground">{space.cwd}</span
+      >
+    </div>
   </header>
 
-  <div class="tabs">
+  <div class="flex gap-1.5 overflow-x-auto border-b border-(--hairline) px-3.5 py-2.5">
     {#each space.tabs as t, i}
-      <button class="tab mono" class:active={i === activeTab} onclick={() => (activeTab = i)}>
+      <button
+        class="mono flex min-h-10 flex-none items-center gap-1.5 rounded-(--r-chip) border px-3 text-xs {i === activeTab
+          ? 'border-ring bg-accent text-foreground'
+          : 'border-border bg-card text-(--text-3)'}"
+        onclick={() => (activeTab = i)}
+      >
         {t.label}
-        {#if tabHasBlocked(t)}<span class="bdot"></span>{/if}
-        <span class="pc">{t.panes.length}</span>
+        {#if tabHasBlocked(t)}<span class="h-1.5 w-1.5 rounded-full bg-blocked"></span>{/if}
+        <span class="text-muted-foreground">{t.panes.length}</span>
       </button>
     {/each}
-    <button class="addtab" onclick={addTab}>＋</button>
+    <button
+      class="min-h-10 w-11 flex-none rounded-(--r-chip) border border-dashed border-border text-(--text-3)"
+      onclick={addTab}>＋</button
+    >
   </div>
 
   {#if tab}
-    <div class="tabhead">
-      <span class="mono up">{tab.label.toUpperCase()} <span class="tid">{tab.id}</span></span>
-      <div class="acts">
-        <button class="mini" onclick={renameTab}>Rename</button>
-        <button class="mini danger" onclick={closeTab}>Close tab</button>
+    <div class="flex items-center px-3.5 pt-3 pb-1.5">
+      <span class="mono text-[11px] tracking-[0.05em] text-(--text-3b)"
+        >{tab.label.toUpperCase()} <span class="text-muted-foreground">{tab.id}</span></span
+      >
+      <div class="ml-auto flex gap-2">
+        <Button variant="outline" size="sm" class="rounded-(--r-badge) text-[11.5px] text-(--text-2)" onclick={renameTab}
+          >Rename</Button
+        >
+        <Button
+          variant="outline"
+          size="sm"
+          class="rounded-(--r-badge) border-(--blocked-border) text-[11.5px] text-(--blocked-badge-text)"
+          onclick={closeTab}>Close tab</Button
+        >
       </div>
     </div>
 
-    <div class="panes">
+    <div class="panes flex flex-col gap-3 px-3.5 pt-1.5 pb-24">
       {#each tab.panes as p (p.id)}
-        <div class="pane">
-          <div class="ph">
+        <div class="overflow-hidden rounded-(--r-card) border border-(--hairline) bg-card">
+          <div class="flex items-center gap-2.5 p-3">
             <StatusDot status={p.status} />
-            <span class="col">
-              <span class="mono pl">{p.label} <span class="pid">{p.id}</span></span>
-              <span class="sub">{p.sub}</span>
+            <span class="flex flex-col">
+              <span class="mono text-[13px] font-medium"
+                >{p.label} <span class="text-[11px] text-muted-foreground">{p.id}</span></span
+              >
+              <span class="text-[11px] text-(--text-3b)">{p.sub}</span>
             </span>
           </div>
-          <pre class="tail mono">{p.tail.join('\n')}</pre>
+          <pre
+            class="mono m-0 overflow-x-auto border-t border-(--hairline) bg-(--code-surface) px-3 py-2 text-[10.5px] leading-[1.6] whitespace-pre text-(--text-3)">{p.tail.join('\n')}</pre>
           <ButtonRow>
             <button onclick={() => goto(`/pane/${encodeURIComponent(p.id)}`)}>{p.agent ? 'Chat' : 'Read'}</button>
             <button onclick={() => renamePane(p.id, p.label)}>Rename</button>
@@ -86,39 +111,12 @@
           </ButtonRow>
         </div>
       {/each}
-      <button class="split" onclick={split}>＋ Split a new pane</button>
+      <button
+        class="min-h-[46px] rounded-(--r-card) border border-dashed border-border text-(--text-3)"
+        onclick={split}>＋ Split a new pane</button
+      >
     </div>
   {/if}
 {:else}
-  <div class="missing mono">space {spaceId} not found</div>
+  <div class="mono p-10 text-muted-foreground">space {spaceId} not found</div>
 {/if}
-
-<style>
-  .bar { display: flex; align-items: center; gap: 10px; padding: 12px 14px; border-bottom: 1px solid var(--hairline); }
-  .back { width: 32px; height: 32px; border: none; background: none; color: var(--text-2); font-size: 22px; }
-  .title { display: flex; flex-direction: column; }
-  .title .label { font-size: 15px; font-weight: 600; }
-  .title .cwd { font-size: 11px; color: var(--text-4); }
-  .tabs { display: flex; gap: 6px; overflow-x: auto; padding: 10px 14px; border-bottom: 1px solid var(--hairline); }
-  .tab { flex: none; display: flex; align-items: center; gap: 6px; min-height: 40px; padding: 0 12px; border-radius: var(--r-chip); border: 1px solid var(--control); background: var(--card); color: var(--text-3); font-size: 12px; }
-  .tab.active { border-color: var(--control-selected-2); background: var(--surface-tint-2); color: var(--text-1); }
-  .bdot { width: 6px; height: 6px; border-radius: 50%; background: var(--blocked); }
-  .pc { color: var(--text-4); }
-  .addtab { flex: none; min-height: 40px; width: 44px; border: 1px dashed var(--control); border-radius: var(--r-chip); background: none; color: var(--text-3); }
-  .tabhead { display: flex; align-items: center; padding: 12px 14px 6px; }
-  .up { font-size: 11px; letter-spacing: 0.05em; color: var(--text-3b); }
-  .tid { color: var(--text-4); }
-  .acts { margin-left: auto; display: flex; gap: 8px; }
-  .mini { font-size: 11.5px; padding: 5px 10px; border-radius: var(--r-badge); border: 1px solid var(--control); background: none; color: var(--text-2); }
-  .mini.danger { color: var(--blocked-badge-text); border-color: var(--blocked-border); }
-  .panes { padding: 6px 14px 96px; display: flex; flex-direction: column; gap: 12px; }
-  .pane { background: var(--card); border: 1px solid var(--hairline); border-radius: var(--r-card); overflow: hidden; }
-  .ph { display: flex; align-items: center; gap: 10px; padding: 12px; }
-  .col { display: flex; flex-direction: column; }
-  .pl { font-size: 13px; font-weight: 500; }
-  .pid { color: var(--text-4); font-size: 11px; }
-  .sub { font-size: 11px; color: var(--text-3b); }
-  .tail { margin: 0; padding: 8px 12px; background: var(--code-surface); border-top: 1px solid var(--hairline); font-size: 10.5px; line-height: 1.6; color: var(--text-3); white-space: pre; overflow-x: auto; }
-  .split { min-height: 46px; border: 1px dashed var(--control); border-radius: var(--r-card); background: none; color: var(--text-3); }
-  .missing { padding: 40px; color: var(--text-4); }
-</style>

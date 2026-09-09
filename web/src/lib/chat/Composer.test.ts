@@ -3,7 +3,12 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/svelte';
 
 const request = vi.fn(async () => ({ ok: true }));
-vi.mock('$lib/session/live', () => ({ session: () => ({ request }) }));
+vi.mock('$lib/session/live', async () => {
+  // Dynamic import required: vi.mock factories are hoisted above top-level
+  // imports, so a static `readable` binding is not initialized yet here.
+  const { readable } = await import('svelte/store');
+  return { session: () => ({ request, spaces: readable([]) }) };
+});
 
 import Composer from './Composer.svelte';
 import { draft } from '$lib/ui/state';

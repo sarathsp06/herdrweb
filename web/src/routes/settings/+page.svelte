@@ -4,6 +4,7 @@
   import { config, showToast } from '$lib/ui/state';
   import { enablePush, sendTestPush } from '$lib/push/register';
   import Toggle from '$lib/ui/Toggle.svelte';
+  import { Button } from '$lib/components/ui/button';
 
   const s = session();
   type ThemeId = 'herdr-dark' | 'paper' | 'gruvbox' | 'solarized-light';
@@ -91,83 +92,106 @@
   });
 </script>
 
-<header class="hd"><h1 class="screen-title">Settings</h1></header>
+<header class="px-3.5 pt-4 pb-1"><h1 class="screen-title">Settings</h1></header>
 
-<section>
-  <div class="section-label">Theme</div>
-  <div class="themes">
+<section class="p-3.5">
+  <div class="section-label mb-2.5">Theme</div>
+  <div class="themes flex gap-2.5">
     {#each themes as t}
-      <button class="theme" class:sel={$config.theme === t.id} onclick={() => pickTheme(t.id)}>
-        <span class="swatches">{#each t.swatches as sw}<span style="background: {sw}"></span>{/each}</span>
-        <span class="mono name">{t.id}</span>
+      <button
+        class="flex flex-1 flex-col gap-2 rounded-(--r-card) border p-3 {$config.theme === t.id
+          ? 'border-ring bg-muted'
+          : 'border-(--hairline) bg-card'}"
+        onclick={() => pickTheme(t.id)}
+      >
+        <span class="flex gap-1"
+          >{#each t.swatches as sw}<span
+              class="h-3.5 w-3.5 rounded border border-(--hairline)"
+              style="background: {sw}"
+            ></span>{/each}</span
+        >
+        <span class="mono text-xs text-(--text-2)">{t.id}</span>
       </button>
     {/each}
   </div>
-  <div class="cap mono">writes [theme] in config.toml → server.reload_config</div>
+  <div class="mono mt-2 text-[10.5px] text-muted-foreground">writes [theme] in config.toml → server.reload_config</div>
 </section>
 
-<section>
-  <div class="section-label">Text size</div>
-  <div class="sizes">
+<section class="p-3.5">
+  <div class="section-label mb-2.5">Text size</div>
+  <div class="flex gap-2.5">
     {#each sizes as sz}
-      <button class="size" class:sel={($config.fontScale ?? 1) === sz.scale} onclick={() => setConfig({ fontScale: sz.scale })}>
-        <span class="aa" style="font-size: {13 + (sz.scale - 1) * 14}px">Aa</span>
-        <span class="mono szlabel">{sz.label}</span>
+      <button
+        class="flex flex-1 flex-col items-center gap-1.5 rounded-(--r-card) border p-3 text-(--text-2) {($config.fontScale ?? 1) === sz.scale
+          ? 'border-ring bg-muted'
+          : 'border-(--hairline) bg-card'}"
+        onclick={() => setConfig({ fontScale: sz.scale })}
+      >
+        <span class="leading-none font-semibold" style="font-size: {13 + (sz.scale - 1) * 14}px">Aa</span>
+        <span class="mono text-[11px] text-muted-foreground">{sz.label}</span>
       </button>
     {/each}
   </div>
-  <div class="cap mono">scales the whole UI · writes font_scale in config.toml</div>
+  <div class="mono mt-2 text-[10.5px] text-muted-foreground">scales the whole UI · writes font_scale in config.toml</div>
 </section>
 
 
-<section>
-  <div class="section-label">Behavior</div>
-  <div class="rows">
-    <div class="row"><div><div class="n">Push when blocked</div><div class="d">Notify when an agent needs you.</div></div><Toggle checked={$config.notify} onchange={toggleNotify} /></div>
-    {#if $config.notify}<div class="row"><div><div class="n">Send test notification</div><div class="d">Verify push reaches this device.</div></div><button class="test" onclick={testPush}>Send test</button></div>{/if}
-    <div class="row"><div><div class="n">Follow focused pane</div><div class="d">Open the pane Herdr focuses.</div></div><Toggle checked={$config.follow} onchange={(v) => setConfig({ follow: v })} /></div>
-    <div class="row"><div><div class="n">Keep ANSI colors in raw</div><div class="d">Render terminal colors in raw mode.</div></div><Toggle checked={$config.ansi} onchange={(v) => setConfig({ ansi: v })} /></div>
-    <div class="row"><div><div class="n">Developer captions</div><div class="d">Show socket-call captions in the UI.</div></div><Toggle checked={$config.devCaptions} onchange={(v) => setConfig({ devCaptions: v })} /></div>
+<section class="p-3.5">
+  <div class="section-label mb-2.5">Behavior</div>
+  <div class="flex flex-col rounded-(--r-card) border border-(--hairline) bg-card">
+    <div class="row flex items-center gap-3 px-3.5 py-3">
+      <div class="flex-1">
+        <div class="text-[13.5px] font-medium">Push when blocked</div>
+        <div class="text-[11.5px] text-muted-foreground">Notify when an agent needs you.</div>
+      </div>
+      <Toggle checked={$config.notify} onchange={toggleNotify} />
+    </div>
+    {#if $config.notify}
+      <div class="row flex items-center gap-3 border-t border-(--hairline) px-3.5 py-3">
+        <div class="flex-1">
+          <div class="text-[13.5px] font-medium">Send test notification</div>
+          <div class="text-[11.5px] text-muted-foreground">Verify push reaches this device.</div>
+        </div>
+        <Button variant="outline" class="rounded-lg text-[12.5px] font-semibold whitespace-nowrap text-(--text-2)" onclick={testPush}
+          >Send test</Button
+        >
+      </div>
+    {/if}
+    <div class="row flex items-center gap-3 border-t border-(--hairline) px-3.5 py-3">
+      <div class="flex-1">
+        <div class="text-[13.5px] font-medium">Follow focused pane</div>
+        <div class="text-[11.5px] text-muted-foreground">Open the pane Herdr focuses.</div>
+      </div>
+      <Toggle checked={$config.follow} onchange={(v) => setConfig({ follow: v })} />
+    </div>
+    <div class="row flex items-center gap-3 border-t border-(--hairline) px-3.5 py-3">
+      <div class="flex-1">
+        <div class="text-[13.5px] font-medium">Keep ANSI colors in raw</div>
+        <div class="text-[11.5px] text-muted-foreground">Render terminal colors in raw mode.</div>
+      </div>
+      <Toggle checked={$config.ansi} onchange={(v) => setConfig({ ansi: v })} />
+    </div>
+    <div class="row flex items-center gap-3 border-t border-(--hairline) px-3.5 py-3">
+      <div class="flex-1">
+        <div class="text-[13.5px] font-medium">Developer captions</div>
+        <div class="text-[11.5px] text-muted-foreground">Show socket-call captions in the UI.</div>
+      </div>
+      <Toggle checked={$config.devCaptions} onchange={(v) => setConfig({ devCaptions: v })} />
+    </div>
   </div>
 </section>
 
-<section>
-  <div class="section-label">Server</div>
-  <div class="server">
-    {#each Object.entries(server) as [k, v]}
-      <div class="kv"><span class="k mono">{k}</span><span class="v mono">{v}</span></div>
+<section class="p-3.5">
+  <div class="section-label mb-2.5">Server</div>
+  <div class="rounded-(--r-card) border border-(--hairline) bg-card px-3.5 py-1">
+    {#each Object.entries(server) as [k, v], i}
+      <div class="flex justify-between py-[9px] text-xs {i > 0 ? 'border-t border-(--hairline)' : ''}">
+        <span class="mono text-muted-foreground">{k}</span><span class="mono text-(--text-2)">{v}</span>
+      </div>
     {/each}
   </div>
-  <div class="cap mono">svelte → go bridge → herdr socket</div>
-  <button class="reload" onclick={reload}>Reload config</button>
+  <div class="mono mt-2 text-[10.5px] text-muted-foreground">svelte → go bridge → herdr socket</div>
+  <Button variant="outline" class="mt-3 min-h-[46px] w-full rounded-lg font-semibold text-(--text-2)" onclick={reload}
+    >Reload config</Button
+  >
 </section>
-
-<style>
-  .hd { padding: 16px 14px 4px; }
-  section { padding: 14px; }
-  .section-label { margin-bottom: 10px; }
-  .themes { display: flex; gap: 10px; }
-  .theme { flex: 1; background: var(--card); border: 1px solid var(--hairline); border-radius: var(--r-card); padding: 12px; display: flex; flex-direction: column; gap: 8px; }
-  .theme.sel { border-color: var(--control-selected-2); background: var(--surface-tint); }
-  .swatches { display: flex; gap: 4px; }
-  .swatches span { width: 14px; height: 14px; border-radius: 4px; border: 1px solid var(--hairline); }
-  .name { font-size: 12px; color: var(--text-2); }
-  .sizes { display: flex; gap: 10px; }
-  .size { flex: 1; background: var(--card); border: 1px solid var(--hairline); border-radius: var(--r-card); padding: 12px; display: flex; flex-direction: column; align-items: center; gap: 6px; color: var(--text-2); }
-  .size.sel { border-color: var(--control-selected-2); background: var(--surface-tint); }
-  .aa { line-height: 1; font-weight: 600; }
-  .szlabel { font-size: 11px; color: var(--text-4); }
-  .cap { font-size: 10.5px; color: var(--text-4); margin-top: 8px; }
-  .rows { display: flex; flex-direction: column; background: var(--card); border: 1px solid var(--hairline); border-radius: var(--r-card); }
-  .row { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-top: 1px solid var(--hairline); }
-  .row:first-child { border-top: none; }
-  .row > div:first-child { flex: 1; }
-  .n { font-size: 13.5px; font-weight: 500; }
-  .d { font-size: 11.5px; color: var(--text-4); }
-  .server { background: var(--card); border: 1px solid var(--hairline); border-radius: var(--r-card); padding: 4px 14px; }
-  .kv { display: flex; justify-content: space-between; padding: 9px 0; border-top: 1px solid var(--hairline); font-size: 12px; }
-  .kv:first-child { border-top: none; }
-  .k { color: var(--text-4); } .v { color: var(--text-2); }
-  .reload { margin-top: 12px; min-height: 46px; width: 100%; border-radius: var(--r-btn); border: 1px solid var(--control); background: none; color: var(--text-2); font-weight: 600; }
-  .test { padding: 7px 14px; border-radius: var(--r-btn); border: 1px solid var(--control); background: none; color: var(--text-2); font-weight: 600; font-size: 12.5px; white-space: nowrap; }
-</style>
