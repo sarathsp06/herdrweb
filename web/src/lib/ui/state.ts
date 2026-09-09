@@ -15,7 +15,7 @@ export function showToast(msg: string): void {
 }
 
 const CONFIG_KEY = 'herdrweb.config';
-const DEFAULT_CONFIG: Config = { theme: 'herdr-dark', notify: true, follow: true, ansi: true, devCaptions: false, fontScale: 1, navCorner: 'bottom-right' };
+const DEFAULT_CONFIG: Config = { theme: 'herdr-dark', notify: true, follow: true, ansi: true, devCaptions: false, fontScale: 1 };
 
 function loadConfig(): Config {
   if (!browser) return { ...DEFAULT_CONFIG };
@@ -39,7 +39,17 @@ if (browser) {
   });
 }
 
-export interface Sheet {
+export interface SheetAction {
+  label: string;
+  hint?: string;
+  glyph?: string;
+  destructive?: boolean;
+  active?: boolean;
+  onSelect: () => void;
+}
+
+/** Confirmation sheet: every mutation routes through one before firing. */
+export interface ConfirmSheet {
   kind: string;
   title: string;
   body: string;
@@ -50,11 +60,24 @@ export interface Sheet {
   inputLabel?: string;
   call: string;
   onConfirm: (label: string, cwd: string) => void;
+  actions?: undefined;
 }
+
+/** Action sheet: a tap-to-pick list (tab switcher, per-card overflow menus). */
+export interface ActionSheet {
+  kind: string;
+  title: string;
+  actions: SheetAction[];
+}
+
+export type Sheet = ConfirmSheet | ActionSheet;
 export const sheet = writable<Sheet | null>(null);
 
-export function openSheet(s: Sheet): void {
+export function openSheet(s: ConfirmSheet): void {
   sheet.set(s);
+}
+export function openActions(kind: string, title: string, actions: SheetAction[]): void {
+  sheet.set({ kind, title, actions });
 }
 export function closeSheet(): void {
   sheet.set(null);
@@ -91,7 +114,3 @@ if (browser) {
 export function rememberTab(spaceId: string, tabId: string): void {
   lastTabBySpace.update((m) => (m[spaceId] === tabId ? m : { ...m, [spaceId]: tabId }));
 }
-
-// Sidebar/nav visibility. Desktop: pushes content when open. Mobile: slide-in
-// drawer overlay. Layout sets the initial value per breakpoint on mount.
-export const navOpen = writable<boolean>(true);

@@ -4,9 +4,8 @@
   import { width, BREAKPOINT } from '$lib/layout/responsive';
   import { rollupOf, countsOf, monogram, chatPaneForSpace } from '$lib/session/derive';
   import { get } from 'svelte/store';
-  import { openSheet, showToast, lastTabBySpace } from '$lib/ui/state';
+  import { openSheet, openActions, showToast, lastTabBySpace } from '$lib/ui/state';
   import StatusDot from '$lib/ui/StatusDot.svelte';
-  import ButtonRow from '$lib/ui/ButtonRow.svelte';
 
   const s = session();
   const spaces = s.spaces;
@@ -37,6 +36,13 @@
     openSheet({ kind: 'workspace.close', title: `Close ${label}?`, body: 'Running processes are killed. A worktree checkout on disk is left alone.', cta: 'Close space', destructive: true, call: 'workspace.close { workspace_id }',
       onConfirm: async () => { await s.request({ method: 'workspace.close', params: { workspace_id: id } }).catch(() => {}); showToast('space closed'); } });
   }
+  function overflow(id: string, label: string) {
+    openActions('workspace.actions', label, [
+      { label: 'Tabs & panes', glyph: '⌗', onSelect: () => goto(`/spaces/${encodeURIComponent(id)}`) },
+      { label: 'Rename space', glyph: '✎', onSelect: () => rename(id, label) },
+      { label: 'Close space', glyph: '✕', destructive: true, onSelect: () => close(id, label) }
+    ]);
+  }
   const rollupWord = (r: string) => (r === 'none' ? '—' : r);
 </script>
 
@@ -62,11 +68,7 @@
           <span class="counts mono">{c.tabs} tabs · {c.panes} panes</span>
         </span>
       </button>
-      <ButtonRow>
-        <button onclick={() => goto(`/spaces/${encodeURIComponent(sp.id)}`)}>Tabs</button>
-        <button onclick={() => rename(sp.id, sp.label)}>Rename</button>
-        <button class="danger" onclick={() => close(sp.id, sp.label)}>Close</button>
-      </ButtonRow>
+      <button class="more" aria-label="actions for {sp.label}" onclick={() => overflow(sp.id, sp.label)}>⋯</button>
     </div>
   {/each}
 </div>
@@ -75,9 +77,11 @@
   .hd { display: flex; align-items: center; gap: 10px; padding: 16px 14px 8px; flex-wrap: wrap; }
   .sub { font-size: 11px; color: var(--text-4); }
   .new { margin-left: auto; background: var(--text-1); color: var(--text-on-light); border: none; border-radius: var(--r-btn); min-height: 44px; padding: 0 14px; font-weight: 600; }
-  .list { padding: 6px 14px 96px; display: flex; flex-direction: column; gap: 12px; }
-  .wrap { background: var(--card); border: 1px solid var(--hairline); border-radius: var(--r-card); overflow: hidden; }
-  .body { width: 100%; display: flex; gap: 12px; align-items: center; padding: 12px; background: none; border: none; text-align: left; }
+  .list { padding: 6px 14px 24px; display: flex; flex-direction: column; gap: 12px; }
+  .wrap { display: flex; align-items: stretch; background: var(--card); border: 1px solid var(--hairline); border-radius: var(--r-card); overflow: hidden; }
+  .body { flex: 1; min-width: 0; display: flex; gap: 12px; align-items: center; padding: 12px; background: none; border: none; text-align: left; }
+  .more { flex: none; width: 44px; border: none; border-left: 1px solid var(--hairline); background: none; color: var(--text-3); font-size: 20px; }
+  .more:hover { background: var(--surface-tint); color: var(--text-1); }
   .mono-square { width: 30px; height: 30px; border-radius: var(--r-chip); background: var(--surface-tint); display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 600; color: var(--text-2); flex: none; }
   .col { display: flex; flex-direction: column; min-width: 0; flex: 1; }
   .label { font-size: 13.5px; font-weight: 600; }

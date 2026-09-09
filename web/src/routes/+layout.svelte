@@ -4,9 +4,9 @@
   import { afterNavigate } from '$app/navigation';
   import { session } from '$lib/session/live';
   import { width, BREAKPOINT } from '$lib/layout/responsive';
-  import { config, navOpen } from '$lib/ui/state';
+  import { config } from '$lib/ui/state';
   import Sidebar from '$lib/screens/Sidebar.svelte';
-  import Breadcrumbs from '$lib/screens/Breadcrumbs.svelte';
+  import BottomNav from '$lib/screens/BottomNav.svelte';
   import Toast from '$lib/ui/Toast.svelte';
   import BottomSheet from '$lib/ui/BottomSheet.svelte';
 
@@ -28,23 +28,9 @@
 
   const desktop = $derived($width >= BREAKPOINT);
   const path = $derived($page.url.pathname);
-  // Full-screen pushes: chat and diff hide the tab bar and use the full width.
+  // Full-screen pushes: the pane (terminal + composer) and diff own the whole
+  // height — the tab bar yields so the keyboard row and composer stay reachable.
   const fullscreen = $derived(path.startsWith('/pane/'));
-  const navCorner = $derived($config.navCorner ?? 'bottom-right');
-  const fab = $derived(!desktop && navCorner !== 'top');
-  // Raise the FAB above the pane composer (chat route only; diff has a short footer).
-  const fabRaised = $derived(fullscreen && !path.endsWith('/diff'));
-
-  // Initialise nav visibility per breakpoint once: open on desktop, closed
-  // (drawer) on phones.
-  let inited = false;
-  $effect(() => {
-    if (inited) return;
-    navOpen.set(desktop);
-    inited = true;
-  });
-
-  const closeOnMobile = () => { if (!desktop) navOpen.set(false); };
 
   // Keep the OS/browser chrome colour in sync with the active theme - must
   // match each theme's `--app-bg` in lib/tokens.css and app.html's pre-paint
@@ -77,32 +63,18 @@
 
 <div class="shell" class:desktop>
   {#if desktop}
-    {#if $navOpen}
-      <Sidebar spaces={$spaces} connection={$connection} onselect={closeOnMobile} onclose={() => navOpen.set(false)} />
-    {/if}
-  {:else if $navOpen}
-    <button class="backdrop" aria-label="close navigation" onclick={() => navOpen.set(false)}></button>
-    <div class="drawer">
-      <Sidebar spaces={$spaces} connection={$connection} embedded onselect={closeOnMobile} onclose={() => navOpen.set(false)} />
-    </div>
+    <Sidebar spaces={$spaces} connection={$connection} />
   {/if}
 
   <div class="mainwrap">
-    <Breadcrumbs showNav={!fab} />
     <main class="content" class:desktop class:full={fullscreen} bind:this={contentEl}>
       {@render children()}
     </main>
+    {#if !desktop && !fullscreen}
+      <BottomNav />
+    {/if}
   </div>
 </div>
-{#if fab && !$navOpen}
-  <button
-    class="navfab {navCorner}"
-    class:raised={fabRaised}
-    aria-label="toggle navigation"
-    title="navigation"
-    onclick={() => navOpen.set(true)}
-  >☰</button>
-{/if}
 <Toast />
 <BottomSheet />
 
@@ -112,13 +84,4 @@
   .content { flex: 1; min-width: 0; min-height: 0; overflow-y: auto; }
   .shell.desktop .content { padding: 0 max(28px, calc(50% - 560px)); }
   .shell.desktop .content.full { padding: 0; }
-
-  .backdrop { position: fixed; inset: 0; z-index: 45; border: none; background: rgba(0, 0, 0, 0.5); }
-  .drawer { position: fixed; top: 0; left: 0; bottom: 0; z-index: 46; width: min(88vw, 340px); background: var(--sidebar-bg); border-right: 1px solid var(--hairline); overflow-y: auto; box-shadow: 0 0 40px rgba(0, 0, 0, 0.45); }
-  .navfab { position: fixed; z-index: 50; width: 48px; height: 48px; border-radius: 50%; border: 1px solid var(--control); background: var(--card); color: var(--text-1); font-size: 19px; line-height: 1; box-shadow: 0 6px 20px rgba(0, 0, 0, 0.4); bottom: calc(16px + env(safe-area-inset-bottom)); }
-  .navfab:active { background: var(--surface-tint); }
-  .navfab.bottom-right { right: 16px; }
-  .navfab.bottom-left { left: 16px; }
-  /* Clear the pane composer so the FAB doesn't cover the send button. */
-  .navfab.raised { bottom: calc(132px + env(safe-area-inset-bottom)); }
 </style>

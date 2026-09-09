@@ -17,12 +17,11 @@ type Settings struct {
 	Ansi        bool    `toml:"ansi" json:"ansi"`
 	DevCaptions bool    `toml:"dev_captions" json:"devCaptions"`
 	FontScale   float64 `toml:"font_scale" json:"fontScale"`
-	NavCorner   string  `toml:"nav_corner" json:"navCorner"`
 }
 
 // Default settings.
 func Default() Settings {
-	return Settings{Theme: "herdr-dark", Notify: true, Follow: true, Ansi: true, DevCaptions: false, FontScale: 1, NavCorner: "bottom-right"}
+	return Settings{Theme: "herdr-dark", Notify: true, Follow: true, Ansi: true, DevCaptions: false, FontScale: 1}
 }
 
 type file struct {

@@ -4,7 +4,8 @@
   import type { Call } from '$lib/protocol';
   import { filterSlash } from './slash';
   import { uploadImage } from './upload';
-  let { paneId, blocked, agent = true }: { paneId: string; blocked: boolean; agent?: boolean } = $props();
+  let { paneId, blocked, agent = true, controlMode = false, ontogglecontrol }:
+    { paneId: string; blocked: boolean; agent?: boolean; controlMode?: boolean; ontogglecontrol?: () => void } = $props();
   const s = session();
   let ta: HTMLTextAreaElement | undefined = $state();
 
@@ -143,6 +144,16 @@
 </script>
 <div class="composer">
   <div class="keys">
+    {#if agent && ontogglecontrol}
+      <button
+        class="key mono ctrl"
+        class:active={controlMode}
+        aria-label="direct control"
+        aria-pressed={controlMode}
+        title="direct control — swipe the transcript to send arrow keys"
+        onclick={ontogglecontrol}
+      >{controlMode ? '◉' : '◎'}</button>
+    {/if}
     {#each NAV as n}
       <button class="key mono" aria-label={n.label} title={n.label} onclick={() => sendKey(n.k)}>{n.glyph}</button>
     {/each}
@@ -192,15 +203,16 @@
   .composer { border-top: 1px solid var(--hairline); background: var(--app-bg); padding: 8px 14px calc(10px + env(safe-area-inset-bottom)); }
   .group { display: flex; flex-direction: column; border: 1px solid var(--control-input); border-radius: var(--r-composer); padding: 8px 10px; background: var(--code-surface); }
   .keys { display: flex; gap: 6px; overflow-x: auto; padding-bottom: 8px; }
-  .key { flex: none; min-width: 34px; height: 34px; padding: 0 10px; border-radius: var(--r-chip); border: 1px solid var(--control); background: var(--card); color: var(--text-2); font-size: 13px; }
+  .key { flex: none; min-width: 44px; height: 44px; padding: 0 10px; border-radius: var(--r-chip); border: 1px solid var(--control); background: var(--card); color: var(--text-2); font-size: 14px; }
   .key:hover { background: var(--surface-tint); }
+  .key.ctrl.active { border-color: var(--control-selected-2); background: var(--surface-tint-2); color: var(--text-1); }
   textarea { width: 100%; resize: none; border: none; background: none; color: var(--text-1); font-family: var(--font-ui); font-size: 14px; line-height: 1.45; max-height: 96px; }
   textarea:focus { outline: none; }
   .foot { display: flex; align-items: center; gap: 8px; margin-top: 4px; }
   .hint { font-size: 11px; color: var(--text-4); }
-  .send { margin-left: auto; width: 34px; height: 34px; border-radius: 50%; border: none; background: var(--control); color: var(--text-on-light); font-size: 16px; }
+  .send { margin-left: auto; width: 44px; height: 44px; border-radius: 50%; border: none; background: var(--control); color: var(--text-on-light); font-size: 18px; }
   .send.ready { background: var(--text-1); }
-  .attach { flex: none; width: 34px; height: 34px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid var(--control); background: var(--card); color: var(--text-2); padding: 0; }
+  .attach { flex: none; width: 44px; height: 44px; display: inline-flex; align-items: center; justify-content: center; border-radius: 50%; border: 1px solid var(--control); background: var(--card); color: var(--text-2); padding: 0; }
   .attach:hover { background: var(--surface-tint); }
   .hidden-file { display: none; }
   .slash { list-style: none; margin: 0 0 8px; padding: 4px; display: flex; flex-direction: column; gap: 2px; border: 1px solid var(--control-input); border-radius: var(--r-composer); background: var(--code-surface); max-height: 180px; overflow-y: auto; }

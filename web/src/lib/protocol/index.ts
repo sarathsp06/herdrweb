@@ -90,7 +90,6 @@ export interface Config {
   ansi: boolean; // keep ANSI colors in raw
   devCaptions: boolean; // show socket-call captions (developer setting, off by default)
   fontScale: number; // webapp text-size multiplier (applied as document zoom)
-  navCorner: 'top' | 'bottom-right' | 'bottom-left'; // phone nav-toggle placement
 }
 
 export interface ServerInfo {

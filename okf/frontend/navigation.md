@@ -1,22 +1,26 @@
 ---
 type: UI Component
 title: Navigation & Layout
-description: Persistent breadcrumb bar, toggleable sidebar/drawer, confirm sheet, theme + text-size application
-tags: [navigation, layout, breadcrumbs, sidebar, theme, frontend]
+description: Bottom tab bar shell, per-screen headers, confirm/action sheet, theme + text-size application
+tags: [navigation, layout, tab-bar, sidebar, theme, frontend]
 timestamp: 2026-09-03T00:00:00Z
 ---
 
-# Breadcrumbs bar (`screens/Breadcrumbs.svelte`)
+# Bottom tab bar (`screens/BottomNav.svelte`)
 
-Always visible on every route (including fullscreen panes). Holds the `☰` nav toggle, a clickable path (`⌂ / space / pane`), the pane status pill, and the `⚙` settings gear. Replaced the bottom TabBar (which vanished on the pane screen).
+Primary phone navigation: a fixed, safe-area-aware tab bar (Agents · Spaces · Settings) with a blocked-agent count badge on Agents. Hidden on `/pane/*` (the pane is a fullscreen push; back lives in `PaneHeader`) and on desktop (≥ 880px), where the persistent sidebar takes over.
+
+# Pane header (`screens/PaneHeader.svelte`)
+
+Compact chrome on `/pane/*`: 44px back chevron, pane title + space sub-label (tap opens a tab-switcher bottom sheet), status pill, and a `⋯` overflow sheet for pane actions (diff, rename, close).
 
 # Sidebar (`screens/Sidebar.svelte`)
 
-The inbox: spaces + agents (blocked-first). A push column on desktop, a slide-in drawer + backdrop on mobile, toggled via `navOpen`. Selecting a space opens its primary agent pane; a per-space `tabs` button opens the space detail. Footer nav links Agents/Spaces/Settings.
+Desktop-only inbox column: spaces + agents (blocked-first). On phones the inbox is the `/` route itself (urgency sections + space chips); there is no drawer.
 
 # BottomSheet (`ui/BottomSheet.svelte`)
 
-Confirmation barrier for every mutating action (create/rename/close workspace/tab/pane, split) — nothing mutates on a single tap.
+Two modes: a confirmation barrier for every mutating action (create/rename/close workspace/tab/pane, split) — nothing mutates on a single tap — and an action-list mode (tap-to-pick rows) used for the pane tab switcher, pane `⋯` actions, and space card overflow.
 
 # Theme & text size
 
@@ -25,5 +29,6 @@ Confirmation barrier for every mutating action (create/rename/close workspace/ta
 # Citations
 
 * [web/src/routes/+layout.svelte](/web/src/routes/+layout.svelte)
-* [web/src/lib/screens/Breadcrumbs.svelte](/web/src/lib/screens/Breadcrumbs.svelte)
+* [web/src/lib/screens/BottomNav.svelte](/web/src/lib/screens/BottomNav.svelte)
+* [web/src/lib/screens/PaneHeader.svelte](/web/src/lib/screens/PaneHeader.svelte)
 * [web/src/lib/tokens.css](/web/src/lib/tokens.css)

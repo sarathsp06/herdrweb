@@ -124,35 +124,39 @@ Desktop layout (≥ 880px) — the sidebar *is* the inbox:
 
 ## Screens
 
-- **Inbox** — mirrors Herdr's own sidebar: a **spaces** section (rollup status
-  glyph + label + branch) and an **agents** section (status glyph + name +
-  subtitle, with a grouped/flat toggle). Blocked agents sort first. Status is
-  carried by glyph shape, colour, and word — never colour alone.
-- **Pane** (`/pane/:id`) — the core screen: raw terminal scrollback via
-  `pane.read`, auto-fit to the viewport width (a box diagram keeps its columns
-  on any phone) and follow-on-new-output. The composer routes by pane kind —
-  agent panes use `agent.prompt` + `agent.send_keys`, plain terminals use
-  `pane.send_text` + `pane.send_keys` — above a key row
+- **Inbox** (`/`) — agents triaged by urgency: a **needs you** section
+  (blocked agents) on top, then **working**, then **idle/done**. A horizontal
+  strip of space chips (rollup glyph + label) sits above the list; tapping a
+  chip opens that space's chat pane. Status is carried by glyph shape, colour,
+  and word — never colour alone. On phones a fixed **bottom tab bar**
+  (Agents · Spaces · Settings, with a blocked-count badge) is the primary
+  navigation; on desktop (≥ 880px) the sidebar *is* the inbox.
+- **Pane** (`/pane/:id`) — the core screen, a full-screen push: a compact
+  header (back · pane title · status · ⋯ pane actions; tapping the title opens
+  a tab-switcher bottom sheet) over raw terminal scrollback via `pane.read`,
+  auto-fit to the viewport width (a box diagram keeps its columns on any
+  phone) and follow-on-new-output. The composer routes by pane kind — agent
+  panes use `agent.prompt` + `agent.send_keys`, plain terminals use
+  `pane.send_text` + `pane.send_keys` — above a 44px key row
   (↑ ↓ ← → ⇥ ⇧⇥ ⏎ esc ⌃C ⌃D). On agent panes, typing `/` opens a
   slash-command palette (↑/↓ to select, Tab/Enter to fill the draft, Esc to
   dismiss), and an image can be attached (button) or pasted from the clipboard
   — the bridge writes it host-side and drops the file path into the draft.
-  Everything only edits the draft; sending stays a deliberate act. Agent panes
-  also get a **◎ direct control** toggle: while on, swiping the transcript
-  sends one arrow key per swipe via `agent.send_keys` (native scroll resumes
-  the moment it's off, or if the pane stops being an agent) — a faster way to
-  drive an agent's own interactive picker (e.g. `/model`) than tapping the key
-  row repeatedly.
+  Everything only edits the draft; sending stays a deliberate act. The key row
+  also carries the **◎ direct control** toggle on agent panes: while on,
+  swiping the transcript sends one arrow key per swipe via `agent.send_keys`
+  (native scroll resumes the moment it's off, or if the pane stops being an
+  agent) — a faster way to drive an agent's own interactive picker (e.g.
+  `/model`) than tapping the key row repeatedly.
 - **Diff viewer** (`/pane/:id/diff`) — unified diff highlighted with Shiki, a
   per-file chip strip, a soft-wrap toggle, and add/remove row tints.
-- **Spaces** (`/spaces`) + **space detail** (`/spaces/:id`) — space cards with
-  rollup status; detail with a tab strip, pane cards, and add-tab / split-pane
-  affordances.
+- **Spaces** (`/spaces`) + **space detail** (`/spaces/:id`) — space cards
+  (tap opens the space's chat; management lives behind a ⋯ overflow sheet);
+  detail with a tab strip, pane cards, and add-tab / split-pane affordances.
 - **Settings** (`/settings`) — theme picker (herdr-dark / gruvbox /
-  solarized-light / paper), UI text size, phone nav-button placement, and
-  behaviour toggles (push-when-blocked, follow focused pane, keep ANSI in raw,
-  developer captions). Writes persist to `config.toml` and call
-  `server.reload_config`.
+  solarized-light / paper), UI text size, and behaviour toggles
+  (push-when-blocked, follow focused pane, keep ANSI in raw, developer
+  captions). Writes persist to `config.toml` and call `server.reload_config`.
 
 Every mutating action routes through a confirmation **bottom sheet** first —
 nothing mutates on a single tap — and confirming fires a toast.
@@ -195,7 +199,6 @@ notify = true          # push when an agent needs you (blocked, or finished)
 follow = true          # follow the focused pane
 ansi = true            # keep ANSI colours in raw mode
 font_scale = 1.0       # UI text-size multiplier
-nav_corner = "bottom-right"  # phone nav button: bottom-right | bottom-left | top
 dev_captions = false   # show socket-call captions (developer setting)
 ```
 

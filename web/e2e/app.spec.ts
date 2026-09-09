@@ -5,18 +5,38 @@ const q = '?fixtures=1';
 test.describe('routes reachable (phone)', () => {
   test.use({ viewport: { width: 402, height: 860 } });
 
-  test('inbox shows spaces and agents sections', async ({ page }) => {
+  test('inbox shows space chips, urgency sections and the tab bar', async ({ page }) => {
     await page.goto('/' + q);
-    await expect(page.getByText('spaces', { exact: true })).toBeVisible();
-    await expect(page.getByText('agents', { exact: true })).toBeVisible();
-    await expect(page.getByRole('button', { name: /hedr-web/ }).first()).toBeVisible();
+    await expect(page.getByRole('listitem').filter({ hasText: 'hedr-web' })).toBeVisible();
+    await expect(page.getByText('needs you', { exact: true })).toBeVisible();
+    await expect(page.locator('.section-label', { hasText: 'working' })).toBeVisible();
+    const bar = page.getByRole('navigation', { name: 'primary' });
+    await expect(bar.getByRole('button', { name: /Agents/ })).toBeVisible();
+    await expect(bar.getByRole('button', { name: /Spaces/ })).toBeVisible();
+    await expect(bar.getByRole('button', { name: /Settings/ })).toBeVisible();
   });
 
-  test('agent row opens the pane (raw terminal)', async ({ page }) => {
+  test('agent row opens the pane and the tab bar yields to the composer', async ({ page }) => {
     await page.goto('/' + q);
     await page.getByRole('button', { name: /codex w1:p2/ }).first().click();
     await expect(page).toHaveURL(/\/pane\/w1(%3A|:)p2/);
     await expect(page.getByPlaceholder('Message the agent')).toBeVisible();
+    await expect(page.getByRole('navigation', { name: 'primary' })).toHaveCount(0);
+  });
+
+  test('pane header switches tabs through the bottom sheet', async ({ page }) => {
+    await page.goto('/pane/w1%3Ap2' + q);
+    await page.getByRole('button', { name: 'switch tab' }).click();
+    const dialog = page.getByRole('dialog');
+    await expect(dialog).toBeVisible();
+    await dialog.getByRole('menuitem', { name: /server/ }).click();
+    await expect(page).toHaveURL(/\/pane\/w1(%3A|:)p3/);
+  });
+
+  test('pane header back returns to the inbox', async ({ page }) => {
+    await page.goto('/pane/w1%3Ap2' + q);
+    await page.getByRole('button', { name: 'back to agents' }).click();
+    await expect(page).toHaveURL(/\/$|\/\?fixtures=1$/);
   });
 
   test('composer shows nav keys and no free-text chips', async ({ page }) => {
@@ -41,9 +61,10 @@ test.describe('routes reachable (phone)', () => {
     await expect(wrap).toContainText('on');
   });
 
-  test('space mutation goes through the sheet then fires a toast', async ({ page }) => {
+  test('space mutation goes through overflow, then the sheet, then a toast', async ({ page }) => {
     await page.goto('/spaces' + q);
-    await page.getByRole('button', { name: 'Close' }).first().click();
+    await page.getByRole('button', { name: 'actions for hedr-web' }).click();
+    await page.getByRole('menuitem', { name: 'Close space' }).click();
     await expect(page.getByRole('dialog')).toBeVisible();
     await expect(page.getByText(/Running processes are killed/)).toBeVisible();
     await page.getByRole('button', { name: 'Close space' }).click();
@@ -67,19 +88,18 @@ test.describe('routes reachable (phone)', () => {
       el.scrollTop = 200;
     });
     await expect(content).toHaveJSProperty('scrollTop', 200);
-    await page.getByRole('button', { name: 'toggle navigation' }).click();
-    await page.getByRole('button', { name: 'Agents' }).click();
-    await expect(page).toHaveURL(/\/$|\/pane\//);
+    await page.getByRole('navigation', { name: 'primary' }).getByRole('button', { name: /Agents/ }).click();
+    await expect(page).toHaveURL(/\/$|\/\?fixtures=1$/);
     await expect(content).toHaveJSProperty('scrollTop', 0);
   });
 
-  test('direct control toggles and one swipe surfaces the expected direction toast', async ({ page }) => {
+  test('direct control toggles from the key row and one swipe surfaces the direction toast', async ({ page }) => {
     await page.goto('/pane/w1%3Ap2' + q);
-    const toggle = page.getByRole('button', { name: /direct control/ });
+    const toggle = page.getByRole('button', { name: 'direct control' });
     await expect(toggle).toBeVisible();
-    await expect(toggle).toHaveText('◎ direct control');
+    await expect(toggle).toHaveAttribute('aria-pressed', 'false');
     await toggle.click();
-    await expect(toggle).toHaveText(/swipe to move/);
+    await expect(toggle).toHaveAttribute('aria-pressed', 'true');
 
     const scroll = page.locator('.scroll');
     const box = (await scroll.boundingBox())!;
@@ -103,18 +123,17 @@ test.describe('routes reachable (phone)', () => {
 
   test('direct control toggle is absent on a non-agent pane', async ({ page }) => {
     await page.goto('/pane/w1%3Ap3' + q);
-    await expect(page.getByRole('button', { name: /direct control/ })).toHaveCount(0);
+    await expect(page.getByRole('button', { name: 'direct control' })).toHaveCount(0);
   });
 });
 
 test.describe('desktop layout (>=880px)', () => {
   test.use({ viewport: { width: 1200, height: 900 } });
 
-  test('desktop shows the sidebar and resolves / to a chat', async ({ page }) => {
+  test('desktop shows the sidebar, resolves / to a chat, and hides the tab bar', async ({ page }) => {
     await page.goto('/' + q);
     await expect(page.locator('aside.sidebar')).toBeVisible();
     await expect(page).toHaveURL(/\/pane\//);
-    // no floating tab bar on desktop
-    await expect(page.locator('nav.bar')).toHaveCount(0);
+    await expect(page.getByRole('navigation', { name: 'primary' })).toHaveCount(0);
   });
 });

@@ -6,4 +6,4 @@ SvelteKit + TypeScript SPA in `web/src`, built with the static adapter and embed
 * [Session store](session-store.md) - SessionModel → Svelte stores wiring
 * [Routes](routes.md) - the SvelteKit screens
 * [Composer](composer.md) - prompt input + terminal nav keys
-* [Navigation & layout](navigation.md) - breadcrumb bar, sidebar/drawer, themes/text-size
+* [Navigation & layout](navigation.md) - bottom tab bar, pane header, sidebar, themes/text-size

@@ -29,8 +29,8 @@ async function shoot(ctx, name, url, wait) {
 const scout = await browser.newContext(phone);
 const sp = await scout.newPage();
 await sp.goto(base + '/', { waitUntil: 'networkidle' });
-await sp.waitForSelector('aside.sidebar', { timeout: 8000 });
-const target = (await sp.$('.arow')) || (await sp.$('.srow-main'));
+await sp.waitForSelector('.arow', { timeout: 8000 });
+const target = await sp.$('.arow');
 if (!target) throw new Error('no space/agent in the live session — start one, then rerun');
 await target.click();
 await sp.waitForURL('**/pane/**', { timeout: 8000 });
@@ -40,7 +40,7 @@ const spaceId = paneId.split(':')[0];
 await scout.close();
 
 const phoneCtx = await browser.newContext(phone);
-await shoot(phoneCtx, 'inbox', '/', 'aside.sidebar');
+await shoot(phoneCtx, 'inbox', '/', 'nav.tabbar');
 await shoot(phoneCtx, 'spaces', '/spaces', '.list');
 await shoot(phoneCtx, 'space-detail', `/spaces/${spaceId}`, '.panes');
 await shoot(phoneCtx, 'pane', paneUrl, 'pre.raw');
