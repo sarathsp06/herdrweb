@@ -107,8 +107,6 @@
 .prose { text-wrap: pretty; }
 
 @keyframes hpulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.3; } }
-@keyframes hsheet { from { transform: translateY(100%); } to { transform: translateY(0); } }
-@keyframes hbounce { 0%, 100% { transform: translateY(0); opacity: 0.5; } 50% { transform: translateY(-4px); opacity: 1; } }
 
 .screen-title { font-size: 21px; line-height: 1.1; font-weight: 600; letter-spacing: -0.02em; }
 .section-label {
