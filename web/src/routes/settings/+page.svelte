@@ -95,10 +95,14 @@
 <header class="px-3.5 pt-4 pb-1"><h1 class="screen-title">Settings</h1></header>
 
 <section class="p-3.5">
-  <div class="section-label mb-2.5">Theme</div>
-  <div class="themes flex gap-2.5">
+  <div class="section-label mb-2.5" id="theme-group-label">Theme</div>
+  <div class="themes flex gap-2.5" role="radiogroup" aria-labelledby="theme-group-label">
     {#each themes as t}
       <button
+        type="button"
+        role="radio"
+        aria-checked={$config.theme === t.id}
+        aria-label={`Theme: ${t.id}`}
         class="flex flex-1 flex-col gap-2 rounded-(--r-card) border p-3 {$config.theme === t.id
           ? 'border-ring bg-muted'
           : 'border-(--hairline) bg-card'}"
@@ -118,10 +122,14 @@
 </section>
 
 <section class="p-3.5">
-  <div class="section-label mb-2.5">Text size</div>
-  <div class="flex gap-2.5">
+  <div class="section-label mb-2.5" id="text-size-group-label">Text size</div>
+  <div class="flex gap-2.5" role="radiogroup" aria-labelledby="text-size-group-label">
     {#each sizes as sz}
       <button
+        type="button"
+        role="radio"
+        aria-checked={($config.fontScale ?? 1) === sz.scale}
+        aria-label={`Text size: ${sz.label}`}
         class="flex flex-1 flex-col items-center gap-1.5 rounded-(--r-card) border p-3 text-(--text-2) {($config.fontScale ?? 1) === sz.scale
           ? 'border-ring bg-muted'
           : 'border-(--hairline) bg-card'}"

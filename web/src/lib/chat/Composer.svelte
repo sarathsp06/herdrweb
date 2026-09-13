@@ -219,6 +219,7 @@
 			onpaste={onPaste}
 			onkeydown={onKeydown}
 			placeholder={agent ? 'Message the agent' : 'Type into terminal'}
+			aria-label={agent ? 'Message the agent' : 'Type into terminal'}
 			rows="1"
 			class="max-h-24 w-full resize-none border-none bg-transparent text-sm leading-[1.45] text-foreground outline-none"
 		></textarea>

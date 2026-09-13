@@ -68,6 +68,7 @@
     {/each}
     <button
       class="min-h-10 w-11 flex-none rounded-(--r-chip) border border-dashed border-border text-(--text-3)"
+      aria-label="Add tab"
       onclick={addTab}>＋</button
     >
   </div>
