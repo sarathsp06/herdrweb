@@ -19,9 +19,9 @@ timestamp: 2026-09-03T00:00:00Z
 
 # WebSocket RPC
 
-The browser [SocketTransport](/frontend/transport.md) opens one WebSocket; RPCs are id-correlated. `handleCall` `delegates to` [herdr.Client.Call](/packages/herdr.md); concurrency is bounded per connection (`maxInflightPerConn`). Methods pass through to Herdr — see the [upstream socket](/services/herdr-socket.md).
+The browser [SocketTransport](/frontend/transport.md) opens one WebSocket; RPCs are id-correlated. `handleCall` `delegates to` [herdr.Client.Call](/packages/herdr.md); concurrency is bounded per connection (`maxInflightPerConn`). Only the UI's own methods (`browserMethods`, mirroring the web `Call` union) pass through to Herdr - see the [upstream socket](/services/herdr-socket.md); others get an error reply.
 
-Bound to `127.0.0.1:7331` by default, no auth (single operator). See [main flags](/packages/cmd-herdr-bridge.md).
+Bound to `127.0.0.1:7331` by default, no auth (single operator). Every route sits behind `hostGuard`: a Host that is not an IP literal, `localhost`, `*.ts.net` or an `-allow-host` name gets 403 (DNS rebinding), as does an `Origin` that is neither the request's own host nor loopback (cross-site WebSocket). See [main flags](/packages/cmd-herdr-bridge.md).
 
 # Citations
 

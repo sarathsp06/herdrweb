@@ -59,14 +59,11 @@ export type ConnState = 'connecting' | 'open' | 'reconnecting' | 'closed';
 // ---- Outbound socket calls (mirrors Herdr socket API surface used by the UI) ----
 export type SendKey = 'y' | 'a' | 'n' | 'esc';
 
-export interface PromptWait {
-  until: Status[];
-  timeout_ms: number;
-}
-
+// The bridge forwards only these methods: keep in sync with `browserMethods`
+// in internal/server/server.go, or new calls fail with "not available".
 export type Call =
   | { method: 'pane.read'; params: { pane_id: string; source: 'recent_unwrapped'; lines: number; format?: 'ansi' | 'text' } }
-  | { method: 'agent.prompt'; params: { target: string; text: string; wait: PromptWait } }
+  | { method: 'agent.prompt'; params: { target: string; text: string } }
   | { method: 'agent.send_keys'; params: { target: string; keys: string[] } }
   | { method: 'workspace.create'; params: { cwd: string; label: string; focus: boolean } }
   | { method: 'workspace.rename'; params: { workspace_id: string; label: string } }

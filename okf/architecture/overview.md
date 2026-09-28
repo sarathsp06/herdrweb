@@ -43,7 +43,7 @@ graph TD
 
 - ✎ **Single binary via `go:embed`** — zero runtime deps for the operator; build couples Node (build the SPA) then Go.
 - ✎ **Coarse re-snapshotting, not event sourcing** — every Herdr event (or a 1.5s poll tick) marks the cache dirty; a 120ms debounce pulls a full `session.snapshot`, normalizes, and broadcasts. Eliminates state-drift/ordering bugs; see [data flow](/architecture/data-flow.md).
-- ✎ **Persistent multiplexed IPC** — [herdr.Client](/packages/herdr.md) keeps one RPC connection with id-correlated waiters (post `bridge-ipc-hardening`); `Subscribe` keeps its own connection.
+- ✎ **One connection per call** — [herdr.Client](/packages/herdr.md) dials per RPC, because Herdr serves one request per connection (the earlier persistent multiplexed connection stalled every call behind a long one); `Subscribe` keeps its own connection.
 - ✎ **Bounded WS concurrency** — [server.Hub](/packages/server.md) caps in-flight browser RPC handlers per WebSocket connection.
 - ✎ **Terminal-first** — live agent panes render raw scrollback (`pane.read`); there is no chat-transcript parser. See [terminal view](/concepts/terminal-view.md).
 

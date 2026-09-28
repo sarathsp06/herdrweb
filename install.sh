@@ -32,7 +32,7 @@ os=$(uname -s)
 case "$os" in
   Linux)  os=linux ;;
   Darwin) os=darwin ;;
-  *) err "unsupported OS: $os (linux and darwin only)" ;;
+  *) err "unsupported OS: $os (linux and darwin only; on Windows use install.ps1)" ;;
 esac
 arch=$(uname -m)
 case "$arch" in

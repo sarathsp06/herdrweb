@@ -10,6 +10,7 @@ import (
 	"os"
 	"os/signal"
 	"path/filepath"
+	"strings"
 	"syscall"
 	"time"
 
@@ -27,10 +28,12 @@ var version = "dev"
 func main() {
 	addr := flag.String("addr", "127.0.0.1:7331", "listen address (loopback only by default)")
 	socket := flag.String("socket", herdr.DefaultSocketPath(), "path to the Herdr socket")
+	session := flag.String("session", "", "named Herdr session to attach to (herdr --session NAME); mutually exclusive with -socket")
 	cfgPath := flag.String("config", config.DefaultPath(), "path to Herdr config.toml")
 	logPath := flag.String("log-file", "", "path to write application logs")
 	pidPath := flag.String("pid-file", "", "path to write process PID file")
 	serviceAction := flag.String("service", "", "manage system service: install, uninstall, start, stop, status")
+	allowHosts := flag.String("allow-host", "", "extra comma-separated Host names to accept (IP literals, localhost and *.ts.net always are)")
 
 	var isDaemonLong, isDaemonShort bool
 	flag.BoolVar(&isDaemonLong, "daemon", false, "run in background as a daemon")
@@ -38,6 +41,15 @@ func main() {
 
 	showVersion := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
+
+	if *session != "" {
+		flag.Visit(func(f *flag.Flag) {
+			if f.Name == "socket" {
+				log.Fatal("-socket and -session are mutually exclusive")
+			}
+		})
+		*socket = herdr.SessionSocketPath(*session)
+	}
 
 	if *showVersion {
 		log.SetFlags(0)
@@ -47,10 +59,11 @@ func main() {
 
 	if *serviceAction != "" {
 		opts := service.ServiceOptions{
-			Addr:    *addr,
-			Socket:  *socket,
-			Config:  *cfgPath,
-			LogPath: *logPath,
+			Addr:       *addr,
+			Socket:     *socket,
+			Config:     *cfgPath,
+			LogPath:    *logPath,
+			AllowHosts: *allowHosts,
 		}
 		if err := service.Manage(*serviceAction, opts); err != nil {
 			log.Fatalf("service %s: %v", *serviceAction, err)
@@ -98,7 +111,7 @@ func main() {
 	defer stop()
 	go hub.Run(ctx)
 
-	handler, err := hub.Handler()
+	handler, err := hub.Handler(splitList(*allowHosts))
 	if err != nil {
 		log.Fatalf("build handler: %v", err)
 	}
@@ -115,4 +128,14 @@ func main() {
 	if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 		log.Fatalf("serve: %v", err)
 	}
+}
+
+func splitList(s string) []string {
+	var out []string
+	for _, part := range strings.Split(s, ",") {
+		if part = strings.TrimSpace(part); part != "" {
+			out = append(out, part)
+		}
+	}
+	return out
 }

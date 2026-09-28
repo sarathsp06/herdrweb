@@ -10,15 +10,18 @@ import (
 	"runtime"
 	"strings"
 	"text/template"
+
+	"github.com/sarathsp06/herdrweb/internal/herdr"
 )
 
 // ServiceOptions holds configurations for service file generation.
 type ServiceOptions struct {
-	ExecPath string
-	Addr     string
-	Socket   string
-	Config   string
-	LogPath  string
+	ExecPath   string
+	Addr       string
+	Socket     string
+	Config     string
+	LogPath    string
+	AllowHosts string
 }
 
 const systemdTemplate = `[Unit]
@@ -28,7 +31,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart={{.ExecPath}}{{if .Addr}} -addr {{.Addr}}{{end}}{{if .Socket}} -socket {{.Socket}}{{end}}{{if .Config}} -config {{.Config}}{{end}}{{if .LogPath}} -log-file {{.LogPath}}{{end}}
+ExecStart={{.ExecPath}}{{if .Addr}} -addr {{.Addr}}{{end}}{{if .Socket}} -socket {{.Socket}}{{end}}{{if .Config}} -config {{.Config}}{{end}}{{if .LogPath}} -log-file {{.LogPath}}{{end}}{{if .AllowHosts}} -allow-host {{.AllowHosts}}{{end}}
 Restart=on-failure
 RestartSec=5s
 
@@ -53,6 +56,8 @@ const launchdTemplate = `<?xml version="1.0" encoding="UTF-8"?>
         <string>{{.Config}}</string>
 {{end}}{{if .LogPath}}        <string>-log-file</string>
         <string>{{.LogPath}}</string>
+{{end}}{{if .AllowHosts}}        <string>-allow-host</string>
+        <string>{{.AllowHosts}}</string>
 {{end}}    </array>
     <key>RunAtLoad</key>
     <true/>
@@ -95,6 +100,9 @@ func GenerateLaunchdPlist(opts ServiceOptions) (string, error) {
 // Manage handles the service action: install, uninstall, start, stop, status.
 func Manage(action string, opts ServiceOptions) error {
 	action = strings.ToLower(strings.TrimSpace(action))
+	if runtime.GOOS == "windows" {
+		return manageTask(action, opts)
+	}
 	switch action {
 	case "install":
 		return installService(opts)
@@ -119,10 +127,8 @@ func installService(opts ServiceOptions) error {
 		}
 		opts.ExecPath = execPath
 	}
-
 	if opts.LogPath == "" {
-		home, _ := os.UserHomeDir()
-		opts.LogPath = filepath.Join(home, ".config", "herdr", "herdrweb.log")
+		opts.LogPath = filepath.Join(herdr.ConfigDir(), "herdrweb.log")
 	}
 
 	switch runtime.GOOS {

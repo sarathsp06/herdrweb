@@ -15,7 +15,7 @@ import (
 func fakeServer(t *testing.T) string {
 	t.Helper()
 	sock := filepath.Join(t.TempDir(), "h.sock")
-	ln, err := net.Listen("unix", sock)
+	ln, err := Listen(sock)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -48,6 +48,9 @@ func handleConn(conn net.Conn) {
 	switch req.Method {
 	case "ping":
 		writeLine(conn, map[string]any{"id": req.ID, "result": map[string]any{"type": "pong"}})
+	case "slow":
+		time.Sleep(time.Second)
+		writeLine(conn, map[string]any{"id": req.ID, "result": map[string]any{"type": "slow"}})
 	case "session.snapshot":
 		writeLine(conn, map[string]any{"id": req.ID, "result": map[string]any{
 			"snapshot": map[string]any{"workspaces": []any{map[string]any{"workspace_id": "w1", "label": "demo"}}},
@@ -77,6 +80,31 @@ func TestCallCorrelatesResponse(t *testing.T) {
 	}
 	if json.Unmarshal(res, &got) != nil || got.Type != "pong" {
 		t.Fatalf("bad ping result: %s", res)
+	}
+}
+
+// A call that Herdr holds open (an agent.prompt waiting for the agent) must not
+// delay or fail calls made meanwhile: Herdr serves one request per connection.
+func TestSlowCallDoesNotStallOthers(t *testing.T) {
+	c := New(fakeServer(t))
+	slow := make(chan error, 1)
+	go func() {
+		_, err := c.Call(context.Background(), "slow", nil)
+		slow <- err
+	}()
+	time.Sleep(100 * time.Millisecond) // let the slow call reach the server first
+
+	start := time.Now()
+	for range 3 {
+		if _, err := c.Call(context.Background(), "ping", nil); err != nil {
+			t.Fatalf("ping during a slow call: %v", err)
+		}
+	}
+	if d := time.Since(start); d > 500*time.Millisecond {
+		t.Fatalf("pings during a slow call took %v; they waited behind it", d)
+	}
+	if err := <-slow; err != nil {
+		t.Fatalf("slow call: %v", err)
 	}
 }
 

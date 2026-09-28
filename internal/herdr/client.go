@@ -11,38 +11,30 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"os"
 	"path/filepath"
-	"sync"
 	"sync/atomic"
 	"time"
 )
 
-// DefaultSocketPath returns ~/.config/herdr/herdr.sock.
+// DefaultSocketPath returns the default session's socket in ConfigDir.
 func DefaultSocketPath() string {
-	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".config", "herdr", "herdr.sock")
+	return filepath.Join(ConfigDir(), "herdr.sock")
 }
 
-// Client dials the Herdr Unix socket.
+// SessionSocketPath returns the socket of a named Herdr session
+// (`herdr --session <name>`); an empty name is the default session.
+func SessionSocketPath(name string) string {
+	if name == "" {
+		return DefaultSocketPath()
+	}
+	return filepath.Join(ConfigDir(), "sessions", name, "herdr.sock")
+}
+
+// Client dials the Herdr socket (a named pipe on Windows).
 type Client struct {
 	SocketPath  string
 	DialTimeout time.Duration
 	seq         int64
-
-	// mu guards the persistent RPC connection, its pending waiters, and the
-	// generation counter. Writes are serialized under mu; a single readLoop per
-	// connection dispatches responses to waiters by id.
-	mu      sync.Mutex
-	conn    net.Conn
-	pending map[string]chan call
-	gen     uint64
-}
-
-// call carries a correlated reply (or a transport error) to a waiting Call.
-type call struct {
-	resp response
-	err  error
 }
 
 // New returns a client for the given socket path (empty = default).
@@ -66,126 +58,56 @@ type response struct {
 }
 
 func (c *Client) dial(ctx context.Context) (net.Conn, error) {
-	d := net.Dialer{Timeout: c.DialTimeout}
-	return d.DialContext(ctx, "unix", c.SocketPath)
+	return dialSocket(ctx, c.SocketPath, c.DialTimeout)
 }
 
 func (c *Client) nextID(prefix string) string {
 	return fmt.Sprintf("%s:%d", prefix, atomic.AddInt64(&c.seq, 1))
 }
 
-// errClosed fails in-flight waiters when the persistent connection drops.
-var errClosed = errors.New("herdr: connection closed")
-
-// Call sends one request over the persistent multiplexed connection and returns
-// its id-correlated result. Concurrent calls share one connection; a single
-// reader dispatches replies by id. The connection is re-dialed lazily after a
-// drop; in-flight calls at drop time fail with an error.
+// Call sends one request on its own connection and returns its result.
+//
+// Herdr answers exactly one request per connection and then closes it, as the
+// CLI assumes, so connections cannot be shared. A second request written to a
+// busy connection waits behind the first and then fails when Herdr closes it:
+// behind an agent.prompt that waits for the agent, every pane.read and
+// snapshot the bridge made stalled until the agent went idle.
 func (c *Client) Call(ctx context.Context, method string, params any) (json.RawMessage, error) {
 	if params == nil {
 		params = map[string]any{}
 	}
-	id := c.nextID("req")
-	line, err := json.Marshal(request{ID: id, Method: method, Params: params})
+	line, err := json.Marshal(request{ID: c.nextID("req"), Method: method, Params: params})
 	if err != nil {
 		return nil, err
 	}
-
-	ch := make(chan call, 1)
-	c.mu.Lock()
-	if c.conn == nil {
-		if err := c.connectLocked(ctx); err != nil {
-			c.mu.Unlock()
-			return nil, err
-		}
-	}
-	conn, gen := c.conn, c.gen
-	c.pending[id] = ch
-	_, werr := conn.Write(append(line, '\n'))
-	c.mu.Unlock()
-	if werr != nil {
-		c.dropConn(gen, werr)
-		return nil, werr
-	}
-
-	select {
-	case <-ctx.Done():
-		c.mu.Lock()
-		delete(c.pending, id)
-		c.mu.Unlock()
-		return nil, ctx.Err()
-	case r := <-ch:
-		if r.err != nil {
-			return nil, r.err
-		}
-		if len(r.resp.Error) > 0 && string(r.resp.Error) != "null" {
-			return nil, fmt.Errorf("herdr %s error: %s", method, string(r.resp.Error))
-		}
-		return r.resp.Result, nil
-	}
-}
-
-// connectLocked dials a new RPC connection and starts its reader. Caller holds mu.
-func (c *Client) connectLocked(ctx context.Context) error {
 	conn, err := c.dial(ctx)
 	if err != nil {
-		return err
+		return nil, err
 	}
-	c.conn = conn
-	c.pending = make(map[string]chan call)
-	c.gen++
-	go c.readLoop(conn, c.gen)
-	return nil
-}
+	defer conn.Close()
+	// Closing the connection is what unblocks the read when ctx ends.
+	stop := context.AfterFunc(ctx, func() { _ = conn.Close() })
+	defer stop()
 
-// readLoop dispatches responses on conn to waiters by id until the connection
-// errors, then drops it (failing every outstanding waiter).
-func (c *Client) readLoop(conn net.Conn, gen uint64) {
-	r := bufio.NewReaderSize(conn, 1<<20)
-	for {
-		raw, err := readLine(r)
-		if err != nil {
-			c.dropConn(gen, err)
-			return
-		}
-		var resp response
-		if err := json.Unmarshal(raw, &resp); err != nil {
-			continue
-		}
-		c.mu.Lock()
-		ch, ok := c.pending[resp.ID]
-		if ok {
-			delete(c.pending, resp.ID)
-		}
-		c.mu.Unlock()
-		if ok {
-			ch <- call{resp: resp} // buffered, never blocks
-		}
+	_, err = conn.Write(append(line, '\n'))
+	var raw []byte
+	if err == nil {
+		raw, err = readLine(bufio.NewReaderSize(conn, 1<<20))
 	}
-}
-
-// dropConn tears down the given connection generation and fails its waiters.
-// A no-op if the generation is already superseded (concurrent drop / reconnect).
-func (c *Client) dropConn(gen uint64, cause error) {
-	c.mu.Lock()
-	if c.gen != gen || c.conn == nil {
-		c.mu.Unlock()
-		return
+	if err != nil {
+		if ctx.Err() != nil {
+			return nil, ctx.Err()
+		}
+		return nil, err
 	}
-	conn := c.conn
-	pending := c.pending
-	c.conn = nil
-	c.pending = nil
-	c.gen++ // invalidate this generation
-	c.mu.Unlock()
-
-	_ = conn.Close()
-	if cause == nil {
-		cause = errClosed
+	var resp response
+	if err := json.Unmarshal(raw, &resp); err != nil {
+		return nil, err
 	}
-	for _, ch := range pending {
-		ch <- call{err: cause} // buffered, never blocks
+	if len(resp.Error) > 0 && string(resp.Error) != "null" {
+		return nil, fmt.Errorf("herdr %s error: %s", method, string(resp.Error))
 	}
+	return resp.Result, nil
 }
 
 // Snapshot fetches session.snapshot and unmarshals it (handling both the bare

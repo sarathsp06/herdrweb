@@ -9,6 +9,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"fmt"
 	"log"
 	"net/http"
 	"sync"
@@ -279,7 +280,31 @@ func (h *Hub) removeBrowser(b *browser) {
 	b.mu.Unlock()
 }
 
+// Origin is enforced for every route by hostGuard (see Handler), which also
+// admits the loopback-origin Vite dev proxy that gorilla's default would reject.
 var upgrader = websocket.Upgrader{CheckOrigin: func(*http.Request) bool { return true }}
+
+// browserMethods are the Herdr socket methods the web UI may call through the
+// /ws pass-through: exactly the `Call` union in web/src/lib/protocol/index.ts
+// (keep the two in sync). Anything else - pane.run, agent.start, server.stop,
+// integration.install, plugin.* - is refused without reaching Herdr.
+var browserMethods = map[string]bool{
+	"pane.read":            true,
+	"agent.prompt":         true,
+	"agent.send_keys":      true,
+	"workspace.create":     true,
+	"workspace.rename":     true,
+	"workspace.close":      true,
+	"tab.create":           true,
+	"tab.rename":           true,
+	"tab.close":            true,
+	"pane.split":           true,
+	"pane.rename":          true,
+	"pane.close":           true,
+	"pane.send_text":       true,
+	"pane.send_keys":       true,
+	"server.reload_config": true,
+}
 
 type wsRequest struct {
 	ID     string          `json:"id"`
@@ -334,6 +359,11 @@ func (h *Hub) dispatch(sem chan struct{}, fn func()) {
 }
 
 func (h *Hub) handleCall(ctx context.Context, b *browser, req wsRequest) {
+	if !browserMethods[req.Method] {
+		out, _ := json.Marshal(map[string]any{"id": req.ID, "error": fmt.Sprintf("method %q is not available to the web UI", req.Method)})
+		b.trySend(out)
+		return
+	}
 	cctx, cancel := context.WithTimeout(ctx, 60*time.Second)
 	defer cancel()
 	var params any
@@ -429,8 +459,9 @@ func (h *Hub) handlePushTest(w http.ResponseWriter, r *http.Request) {
 	writeJSON(w, map[string]any{"ok": true, "subs": res.Subs, "sent": res.Sent, "failed": res.Failed})
 }
 
-// Handler returns the full HTTP handler (UI + /ws + /api).
-func (h *Hub) Handler() (http.Handler, error) {
+// Handler returns the full HTTP handler (UI + /ws + /api) behind hostGuard;
+// allowHosts extends the accepted Host names (see hostGuard).
+func (h *Hub) Handler(allowHosts []string) (http.Handler, error) {
 	ui, err := webui.Handler()
 	if err != nil {
 		return nil, err
@@ -445,7 +476,7 @@ func (h *Hub) Handler() (http.Handler, error) {
 	mux.HandleFunc("/api/upload", h.handleUpload)
 	mux.HandleFunc("/api/slash", h.handleSlash)
 	mux.Handle("/", ui)
-	return mux, nil
+	return newHostGuard(mux, allowHosts), nil
 }
 
 func writeJSON(w http.ResponseWriter, v any) {

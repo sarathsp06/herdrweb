@@ -8,7 +8,7 @@ timestamp: 2026-09-03T00:00:00Z
 
 # Inbound: Herdr → browser (snapshot fan-out)
 
-[server.Hub.Run](/packages/server.md) maintains one Herdr connection and a normalized snapshot cache:
+[server.Hub.Run](/packages/server.md) maintains a Herdr event subscription and a normalized snapshot cache:
 
 1. Bootstrap: `refresh` pulls `session.snapshot`, [normalizes](/packages/protocol.md) it, caches the JSON, and broadcasts.
 2. Live: `Client.Subscribe` streams Herdr resource events; each event calls `markDirty`. A 1.5s `poller` also marks dirty (Herdr emits no global agent-status event).
@@ -26,7 +26,7 @@ Methods used by the UI: `pane.read` (raw scrollback), `agent.prompt`, `agent.sen
 # Resilience
 
 - Herdr connection drop → `Hub.Run` reconnects with backoff and self-heals via a fresh snapshot.
-- RPC connection drop → `herdr.Client` fails in-flight calls and lazily reconnects on the next call.
+- RPC failures stay per call: every `herdr.Client.Call` dials its own connection, because Herdr serves one request per connection.
 - Browser send races (disconnect mid-reply) are guarded by a per-browser mutex + `closed` flag in [server.Hub](/packages/server.md).
 
 # Citations

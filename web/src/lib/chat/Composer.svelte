@@ -99,17 +99,15 @@
 		const t = (text ?? $draft).trim();
 		if (!t) return;
 		// Clear the composer as soon as input is submitted — the cleared box and
-		// the terminal echoing the input are the feedback; no toast. For agents,
-		// agent.prompt's wait resolves only when the agent next goes idle/blocked
-		// (long-lived), so the UI must not block on it. Terminals are not agents:
-		// type the literal text then press Enter via the pane.* API (agent.* is a
-		// silent no-op on a plain pane).
+		// the terminal echoing the input are the feedback; no toast. No `wait`:
+		// nothing reads it, and it would hold the bridge's call open until the
+		// agent next goes idle. Terminals are not agents: type the literal text
+		// then press Enter via the pane.* API (agent.* is a silent no-op on a
+		// plain pane).
 		draft.set('');
 		if (ta) ta.style.height = 'auto';
 		if (agent) {
-			void s
-				.request({ method: 'agent.prompt', params: { target: paneId, text: t, wait: { until: ['idle', 'blocked'], timeout_ms: 900000 } } })
-				.catch(() => {});
+			void s.request({ method: 'agent.prompt', params: { target: paneId, text: t } }).catch(() => {});
 			return;
 		}
 		void s.request({ method: 'pane.send_text', params: { pane_id: paneId, text: t } }).catch(() => {});

@@ -11,8 +11,10 @@ timestamp: 2026-09-03T00:00:00Z
 | Flag | Default |
 |---|---|
 | `-addr` | `127.0.0.1:7331` |
-| `-socket` | `~/.config/herdr/herdr.sock` |
-| `-config` | `~/.config/herdr/config.toml` |
+| `-socket` | `~/.config/herdr/herdr.sock` (`%APPDATA%\herdr\herdr.sock` on Windows) |
+| `-session` | none (named Herdr session instead of `-socket`) |
+| `-config` | `~/.config/herdr/config.toml` (`%APPDATA%\herdr\config.toml` on Windows) |
+| `-allow-host` | none (extra accepted Host names) |
 | `-version` | print and exit |
 
 # `[web]` table (config.toml)

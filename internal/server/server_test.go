@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"net"
 	"os"
 	"path/filepath"
 	"sync"
@@ -106,13 +105,12 @@ func TestApplySnapshotSkipsBroadcastWhenUnchanged(t *testing.T) {
 	}
 }
 
-// fakeHerdrServer answers session.snapshot requests on one persistent
-// connection (matching herdr.Client's multiplexed connection), each with a
-// per-arrival-order controllable delay and payload - lets a test force an
-// earlier call to resolve after a later one. respond is invoked synchronously
-// right after a request line is read and numbered (before its delayed
-// response is even scheduled), so a test can use it to signal "the wire has
-// this request" instead of guessing at a sleep duration.
+// fakeHerdrServer answers session.snapshot requests one per connection, as
+// Herdr does, each with a per-arrival-order controllable delay and payload -
+// lets a test force an earlier call to resolve after a later one. respond is
+// invoked synchronously right after a request line is read and numbered
+// (before its delayed response is even scheduled), so a test can use it to
+// signal "the wire has this request" instead of guessing at a sleep duration.
 func fakeHerdrServer(t *testing.T, respond func(callNum int) (delay time.Duration, workspaceLabel string)) string {
 	t.Helper()
 	// A short, test-name-independent dir: t.TempDir() embeds the (long) test
@@ -123,40 +121,38 @@ func fakeHerdrServer(t *testing.T, respond func(callNum int) (delay time.Duratio
 	}
 	t.Cleanup(func() { os.RemoveAll(dir) })
 	sock := filepath.Join(dir, "h.sock")
-	ln, err := net.Listen("unix", sock)
+	ln, err := herdr.Listen(sock)
 	if err != nil {
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { ln.Close() })
+	var mu sync.Mutex
+	callNum := 0
 	go func() {
-		conn, err := ln.Accept()
-		if err != nil {
-			return
-		}
-		defer conn.Close()
-		var writeMu sync.Mutex
-		r := bufio.NewReader(conn)
-		callNum := 0
 		for {
-			line, err := r.ReadBytes('\n')
+			conn, err := ln.Accept()
 			if err != nil {
 				return
 			}
-			var req struct {
-				ID string `json:"id"`
-			}
-			_ = json.Unmarshal(line, &req)
-			callNum++
-			n := callNum
-			delay, label := respond(n)
 			go func() {
+				defer conn.Close()
+				line, err := bufio.NewReader(conn).ReadBytes('\n')
+				if err != nil {
+					return
+				}
+				var req struct {
+					ID string `json:"id"`
+				}
+				_ = json.Unmarshal(line, &req)
+				mu.Lock()
+				callNum++
+				delay, label := respond(callNum)
+				mu.Unlock()
 				time.Sleep(delay)
 				b, _ := json.Marshal(map[string]any{"id": req.ID, "result": map[string]any{
 					"snapshot": map[string]any{"workspaces": []any{map[string]any{"workspace_id": "w1", "label": label}}},
 				}})
-				writeMu.Lock()
-				conn.Write(append(b, '\n'))
-				writeMu.Unlock()
+				_, _ = conn.Write(append(b, '\n'))
 			}()
 		}
 	}()
@@ -209,5 +205,66 @@ func TestRefreshSerializesAgainstOutOfOrderCompletion(t *testing.T) {
 	}
 	if len(got.Spaces) != 1 || got.Spaces[0].Label != "second" {
 		t.Fatalf("cached snapshot label = %+v, want the later refresh's data (\"second\")", got.Spaces)
+	}
+}
+
+// TestHandleCallRefusesMethodsOutsideTheUI proves the /ws pass-through only
+// forwards the methods the UI uses: a page that reaches the socket cannot
+// launch processes (pane.run) or stop the server, and such calls never reach
+// Herdr, while UI methods still round-trip.
+func TestHandleCallRefusesMethodsOutsideTheUI(t *testing.T) {
+	dir, err := os.MkdirTemp("", "hsock")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.RemoveAll(dir) })
+	sock := filepath.Join(dir, "h.sock")
+	ln, err := herdr.Listen(sock)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { ln.Close() })
+	seen := make(chan string, 8)
+	go func() {
+		conn, err := ln.Accept()
+		if err != nil {
+			return
+		}
+		defer conn.Close()
+		r := bufio.NewReader(conn)
+		for {
+			line, err := r.ReadBytes('\n')
+			if err != nil {
+				return
+			}
+			var req struct{ ID, Method string }
+			_ = json.Unmarshal(line, &req)
+			seen <- req.Method
+			b, _ := json.Marshal(map[string]any{"id": req.ID, "result": map[string]any{"type": "ok"}})
+			conn.Write(append(b, '\n'))
+		}
+	}()
+
+	h := NewHub(herdr.New(sock), "", "test", nil)
+	b := &browser{send: make(chan []byte, 4)}
+	call := func(method string) map[string]any {
+		h.handleCall(context.Background(), b, wsRequest{ID: "c1", Method: method, Params: json.RawMessage(`{}`)})
+		var reply map[string]any
+		if err := json.Unmarshal(<-b.send, &reply); err != nil {
+			t.Fatal(err)
+		}
+		return reply
+	}
+
+	for _, m := range []string{"pane.run", "server.stop", "agent.start", "integration.install"} {
+		if reply := call(m); reply["error"] == nil || reply["result"] != nil {
+			t.Fatalf("%s: reply %v, want an error and no result", m, reply)
+		}
+	}
+	if reply := call("pane.read"); reply["result"] == nil {
+		t.Fatalf("pane.read: reply %v, want a forwarded result", reply)
+	}
+	if got := <-seen; got != "pane.read" {
+		t.Fatalf("first method to reach Herdr = %q, want pane.read (refused calls must never be sent)", got)
 	}
 }
