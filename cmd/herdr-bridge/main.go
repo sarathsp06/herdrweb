@@ -28,6 +28,7 @@ var version = "dev"
 func main() {
 	addr := flag.String("addr", "127.0.0.1:7331", "listen address (loopback only by default)")
 	socket := flag.String("socket", herdr.DefaultSocketPath(), "path to the Herdr socket")
+	session := flag.String("session", "", "named Herdr session to attach to (herdr --session NAME); mutually exclusive with -socket")
 	cfgPath := flag.String("config", config.DefaultPath(), "path to Herdr config.toml")
 	logPath := flag.String("log-file", "", "path to write application logs")
 	pidPath := flag.String("pid-file", "", "path to write process PID file")
@@ -40,6 +41,15 @@ func main() {
 
 	showVersion := flag.Bool("version", false, "print version and exit")
 	flag.Parse()
+
+	if *session != "" {
+		flag.Visit(func(f *flag.Flag) {
+			if f.Name == "socket" {
+				log.Fatal("-socket and -session are mutually exclusive")
+			}
+		})
+		*socket = herdr.SessionSocketPath(*session)
+	}
 
 	if *showVersion {
 		log.SetFlags(0)

@@ -10,6 +10,8 @@ import (
 	"runtime"
 	"strings"
 	"text/template"
+
+	"github.com/sarathsp06/herdrweb/internal/herdr"
 )
 
 // ServiceOptions holds configurations for service file generation.
@@ -98,6 +100,9 @@ func GenerateLaunchdPlist(opts ServiceOptions) (string, error) {
 // Manage handles the service action: install, uninstall, start, stop, status.
 func Manage(action string, opts ServiceOptions) error {
 	action = strings.ToLower(strings.TrimSpace(action))
+	if runtime.GOOS == "windows" {
+		return manageTask(action, opts)
+	}
 	switch action {
 	case "install":
 		return installService(opts)
@@ -122,10 +127,8 @@ func installService(opts ServiceOptions) error {
 		}
 		opts.ExecPath = execPath
 	}
-
 	if opts.LogPath == "" {
-		home, _ := os.UserHomeDir()
-		opts.LogPath = filepath.Join(home, ".config", "herdr", "herdrweb.log")
+		opts.LogPath = filepath.Join(herdr.ConfigDir(), "herdrweb.log")
 	}
 
 	switch runtime.GOOS {

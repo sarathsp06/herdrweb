@@ -16,6 +16,10 @@ Documented the pane view's `◎ direct control` toggle (agent panes: swipe the t
 
 ## 2026-09-28
 
+**Windows support.**
+
+Documented the Windows transport (Herdr's named pipe behind `herdr.ConfigDir()`/`Listen`), the `-session` flag, and the Task Scheduler `-service` backend.
+
 **Browser hardening.**
 
 Documented the bridge's `hostGuard` (Host/Origin checks against DNS rebinding and cross-site WebSocket hijacking), the `-allow-host` flag, and the `browserMethods` allowlist on the `/ws` pass-through.

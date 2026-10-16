@@ -15,7 +15,7 @@ import (
 func fakeServer(t *testing.T) string {
 	t.Helper()
 	sock := filepath.Join(t.TempDir(), "h.sock")
-	ln, err := net.Listen("unix", sock)
+	ln, err := Listen(sock)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -7,6 +7,8 @@ import (
 	"path/filepath"
 
 	"github.com/BurntSushi/toml"
+
+	"github.com/sarathsp06/herdrweb/internal/herdr"
 )
 
 // Settings are the UI-owned preferences.
@@ -28,10 +30,10 @@ type file struct {
 	Web Settings `toml:"web"`
 }
 
-// DefaultPath returns ~/.config/herdr/config.toml.
+// DefaultPath returns Herdr's config.toml: ~/.config/herdr/config.toml, or
+// %APPDATA%\herdr\config.toml on Windows.
 func DefaultPath() string {
-	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".config", "herdr", "config.toml")
+	return filepath.Join(herdr.ConfigDir(), "config.toml")
 }
 
 // Load reads [web] settings from path, falling back to defaults for missing

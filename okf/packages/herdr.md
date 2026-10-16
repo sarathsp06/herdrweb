@@ -8,7 +8,7 @@ timestamp: 2026-09-03T00:00:00Z
 
 # Responsibilities
 
-Speaks Herdr's Unix-socket protocol: newline-delimited JSON, id-correlated request/response, plus a long-lived event stream. Consumed by [server.Hub](/packages/server.md).
+Speaks Herdr's local-socket protocol: newline-delimited JSON, id-correlated request/response, plus a long-lived event stream. Consumed by [server.Hub](/packages/server.md). The transport is a Unix domain socket, or on Windows the named pipe `\\.\pipe\<socket path>` (the `herdr.sock` file there only records the server PID); `socket_{windows,other}.go` hold the platform split.
 
 # Surface
 
@@ -18,7 +18,9 @@ Speaks Herdr's Unix-socket protocol: newline-delimited JSON, id-correlated reque
 | `Call(ctx, method, params) (json.RawMessage, error)` | one RPC over the persistent connection |
 | `Snapshot(ctx, out)` | `session.snapshot`, unwrapping the `{snapshot:…}` envelope; rides `Call` |
 | `Subscribe(ctx, types, onEvent)` | long-lived events connection; blocks until drop/ctx |
-| `DefaultSocketPath()` | `~/.config/herdr/herdr.sock` |
+| `ConfigDir()` | Herdr's per-user dir: `~/.config/herdr`, `%APPDATA%\herdr` on Windows |
+| `DefaultSocketPath()` / `SessionSocketPath(name)` | `<ConfigDir>/herdr.sock` / `<ConfigDir>/sessions/<name>/herdr.sock` |
+| `Listen(path)` | serve a Herdr-style socket (Unix socket or named pipe); test fakes use it |
 | `AllEventTypes` | global resource events subscribed by default |
 
 # Persistent multiplexing

@@ -4,7 +4,6 @@ import (
 	"bufio"
 	"context"
 	"encoding/json"
-	"net"
 	"os"
 	"path/filepath"
 	"sync"
@@ -123,7 +122,7 @@ func fakeHerdrServer(t *testing.T, respond func(callNum int) (delay time.Duratio
 	}
 	t.Cleanup(func() { os.RemoveAll(dir) })
 	sock := filepath.Join(dir, "h.sock")
-	ln, err := net.Listen("unix", sock)
+	ln, err := herdr.Listen(sock)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -223,7 +222,7 @@ func TestHandleCallRefusesMethodsOutsideTheUI(t *testing.T) {
 	}
 	t.Cleanup(func() { os.RemoveAll(dir) })
 	sock := filepath.Join(dir, "h.sock")
-	ln, err := net.Listen("unix", sock)
+	ln, err := herdr.Listen(sock)
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -5,6 +5,7 @@ Herdr Web: one Go binary (`herdrweb`) that embeds a SvelteKit SPA and bridges th
 ## Build & run
 
 - `make build` — builds the SPA, copies it to `internal/webui/dist/`, then compiles the binary. **`go build` alone does NOT refresh the UI** (it's `go:embed`ed from `dist/`); always `make build` after web changes. Node is required at build time.
+- Windows (no `make`): `pwsh -File build.ps1` does the same (`-SkipWeb` for Go only) and writes `bin\herdrweb.exe`. Herdr on Windows serves a named pipe, not a Unix socket: all dialing/listening goes through `internal/herdr/socket_{windows,other}.go`.
 - `make run` — build + run on `http://127.0.0.1:7331`.
 - `make dev` — Vite dev server with HMR; it proxies `/ws` + `/api` to a bridge on `:7331`, so run `make run` in another shell for live data.
 - Keep `internal/webui/dist/.gitkeep` (dir must stay tracked; built assets are gitignored). `make build` deletes it — restore before committing.
@@ -33,5 +34,5 @@ Herdr Web: one Go binary (`herdrweb`) that embeds a SvelteKit SPA and bridges th
 - No auth; binds loopback by design. Expose over a tailnet with `tailscale serve --bg --https=443 127.0.0.1:7331` or `./bin/herdrweb -addr $(tailscale ip -4):7331` (not `0.0.0.0`). `hostGuard` (`internal/server/guard.go`) 403s any other Host name unless passed via `-allow-host`, and any cross-origin `Origin`.
 - Fonts are self-hosted via `@fontsource` and embedded (no CDN). Styling is Tailwind v4 + shadcn-svelte (`web/src/lib/components/ui/`): palette colours are CSS variables in `web/src/lib/tokens.css`, mapped to shadcn semantic tokens in `web/src/app.css`; themes override via `[data-theme]` (`herdr-dark`/`gruvbox`/`solarized-light`/`paper`). Element-level resets in `app.css` must stay inside `@layer base` (unlayered CSS beats Tailwind utilities); bits-ui state styling relies on the `data-checked`/`data-unchecked` custom variants defined there.
 - `/.worktrees/` holds Rx-pipeline worktrees (gitignored); don't commit them.
-- Go tests use in-process fake Unix-socket servers (`internal/herdr/*_test.go`) — no real daemon needed.
+- Go tests use in-process fake Herdr servers built on `herdr.Listen` (Unix socket, or named pipe on Windows) — no real daemon needed.
 - `okf/` is a generated OKF bundle; validate with `python3 ~/.claude/skills/okf-repo/scripts/validate_okf.py okf --strict` after edits.

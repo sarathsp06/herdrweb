@@ -19,7 +19,7 @@ import (
 func muxServer(t *testing.T, handle func(conn net.Conn, accepts *int64)) (sock string, accepts *int64) {
 	t.Helper()
 	sock = filepath.Join(t.TempDir(), "h.sock")
-	ln, err := net.Listen("unix", sock)
+	ln, err := Listen(sock)
 	if err != nil {
 		t.Fatal(err)
 	}

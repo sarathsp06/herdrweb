@@ -8,7 +8,7 @@
 
 [![Release](https://img.shields.io/github/v/release/sarathsp06/herdrweb?sort=semver&style=flat-square)](https://github.com/sarathsp06/herdrweb/releases)
 [![Go](https://img.shields.io/badge/Go-1.24-00ADD8?style=flat-square&logo=go)](go.mod)
-[![Platforms](https://img.shields.io/badge/platforms-linux%20%7C%20macOS-555?style=flat-square)](#install)
+[![Platforms](https://img.shields.io/badge/platforms-linux%20%7C%20macOS%20%7C%20windows-555?style=flat-square)](#install)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](https://opensource.org/license/mit)
 
 [Install](#install) · [Screens](#screens) · [Mobile](#mobile) · [Contributing](#contributing)
@@ -72,6 +72,13 @@ button about it, reliably, from your phone? That's this.
 curl -fsSL https://raw.githubusercontent.com/sarathsp06/herdrweb/main/install.sh | sh
 ```
 
+On **Windows** (PowerShell; installs to `%LOCALAPPDATA%\Programs\herdrweb` and
+adds it to your user `PATH`):
+
+```powershell
+irm https://raw.githubusercontent.com/sarathsp06/herdrweb/main/install.ps1 | iex
+```
+
 Re-running this replaces the installed binary in place. If a bridge or
 service is already running from it, that process keeps running the old
 binary until you restart it yourself (`herdrweb -service stop &&
@@ -89,7 +96,8 @@ Or run as a background daemon with logging:
 herdrweb -daemon -log-file ~/.config/herdr/herdrweb.log -pid-file ~/.config/herdr/herdrweb.pid
 ```
 
-Or install and manage it as a system daemon (systemd on Linux, launchd on macOS):
+Or install and manage it as a system daemon (systemd on Linux, launchd on macOS,
+a Task Scheduler task on Windows):
 
 ```bash
 herdrweb -service install    # installs user systemd unit or launchd plist
@@ -97,6 +105,11 @@ herdrweb -service start      # starts the background service
 herdrweb -service status     # checks service status
 herdrweb -service stop       # stops the background service
 ```
+
+On Windows the task starts at logon, runs as you with no console window
+(`S4U` logon, "run whether user is logged on or not"), restarts after a crash,
+and logs to `%APPDATA%\herdr\herdrweb.log`. If `schtasks` reports access
+denied, run `-service install` from an elevated terminal.
 
 Open <http://127.0.0.1:7331>. The bridge connects to your running Herdr server
 and streams live spaces, tabs, panes, and agent status. To use it from your
@@ -189,8 +202,8 @@ HTTPS front — a reverse proxy, your own cert — works just as well.
 ## Configuration
 
 UI preferences live under a `[web]` table in the Herdr config
-(`~/.config/herdr/config.toml`), written by the bridge and applied with
-`server.reload_config`:
+(`~/.config/herdr/config.toml`; `%APPDATA%\herdr\config.toml` on Windows),
+written by the bridge and applied with `server.reload_config`:
 
 ```toml
 [web]
@@ -204,7 +217,8 @@ dev_captions = false   # show socket-call captions (developer setting)
 
 Flags:
 - `-addr` (listen address, default `127.0.0.1:7331`)
-- `-socket` (Herdr socket path, default `~/.config/herdr/herdr.sock`)
+- `-socket` (Herdr socket path, default `~/.config/herdr/herdr.sock`; `%APPDATA%\herdr\herdr.sock` on Windows, where it names Herdr's named pipe)
+- `-session` (attach to a named Herdr session, `herdr --session NAME`, instead of `-socket`)
 - `-allow-host` (extra comma-separated `Host` names to accept, e.g. a reverse-proxy domain; see below)
 - `-config` (path to config.toml)
 - `-log-file` (path to redirect output logs)
@@ -231,6 +245,9 @@ Flags:
 make build      # builds the SvelteKit UI, embeds it, compiles the binary -> bin/herdrweb
 make run        # build + run the bridge on http://127.0.0.1:7331
 ```
+
+On Windows without `make`, `pwsh -File build.ps1` does the same and writes
+`bin\herdrweb.exe`.
 
 ## Development
 

@@ -11,20 +11,27 @@ import (
 	"errors"
 	"fmt"
 	"net"
-	"os"
 	"path/filepath"
 	"sync"
 	"sync/atomic"
 	"time"
 )
 
-// DefaultSocketPath returns ~/.config/herdr/herdr.sock.
+// DefaultSocketPath returns the default session's socket in ConfigDir.
 func DefaultSocketPath() string {
-	home, _ := os.UserHomeDir()
-	return filepath.Join(home, ".config", "herdr", "herdr.sock")
+	return filepath.Join(ConfigDir(), "herdr.sock")
 }
 
-// Client dials the Herdr Unix socket.
+// SessionSocketPath returns the socket of a named Herdr session
+// (`herdr --session <name>`); an empty name is the default session.
+func SessionSocketPath(name string) string {
+	if name == "" {
+		return DefaultSocketPath()
+	}
+	return filepath.Join(ConfigDir(), "sessions", name, "herdr.sock")
+}
+
+// Client dials the Herdr socket (a named pipe on Windows).
 type Client struct {
 	SocketPath  string
 	DialTimeout time.Duration
@@ -66,8 +73,7 @@ type response struct {
 }
 
 func (c *Client) dial(ctx context.Context) (net.Conn, error) {
-	d := net.Dialer{Timeout: c.DialTimeout}
-	return d.DialContext(ctx, "unix", c.SocketPath)
+	return dialSocket(ctx, c.SocketPath, c.DialTimeout)
 }
 
 func (c *Client) nextID(prefix string) string {
