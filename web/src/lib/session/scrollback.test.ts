@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import type { Call, CallResult } from '$lib/protocol';
-import { sameLines, startScrollback } from './scrollback';
+import { pokeScrollback, sameLines, startScrollback } from './scrollback';
 
 describe('sameLines', () => {
   it('detects equality and difference', () => {
@@ -200,5 +200,31 @@ describe('startScrollback', () => {
     await Promise.resolve();
     expect(calls).toBe(2);
     expect(emitted).toEqual([['first'], ['second']]);
+  });
+});
+
+describe('pokeScrollback', () => {
+  it('triggers an immediate read on the matching pane only, until stopped', async () => {
+    const t = fakeTimer();
+    const request = vi.fn(async (): Promise<CallResult> => ({ read: { text: 'x' } }));
+    const stop = startScrollback('p7', {
+      request,
+      fallback: () => [],
+      onLines: () => {},
+      setInterval: t.setInterval,
+      clearInterval: () => {}
+    });
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(request).toHaveBeenCalledTimes(1);
+    pokeScrollback('other');
+    expect(request).toHaveBeenCalledTimes(1);
+    pokeScrollback('p7');
+    expect(request).toHaveBeenCalledTimes(2);
+    await Promise.resolve();
+    await Promise.resolve();
+    stop();
+    pokeScrollback('p7');
+    expect(request).toHaveBeenCalledTimes(2);
   });
 });

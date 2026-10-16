@@ -21,6 +21,16 @@ export interface ScrollbackDeps {
   clearInterval?(handle: number): void;
 }
 
+// Live pollers by pane id, so input paths can ask for an immediate re-read
+// instead of waiting up to a full interval for their own echo.
+const pokers = new Map<string, Set<() => void>>();
+
+/** Ask any running poller for `paneId` to read now (no-op if none, or if a
+ *  read is already in flight — that one will pick up the change). */
+export function pokeScrollback(paneId: string): void {
+  for (const fn of pokers.get(paneId) ?? []) fn();
+}
+
 /**
  * Poll a pane's raw scrollback via `pane.read`. There is no push event for plain
  * terminal output, so this owns the interval, the dedupe (only emits on change),
@@ -87,8 +97,14 @@ export function startScrollback(paneId: string, deps: ScrollbackDeps, intervalMs
 
   void readOnce();
   const handle = si(readOnce, intervalMs);
+  const poke = () => void readOnce();
+  let set = pokers.get(paneId);
+  if (!set) pokers.set(paneId, (set = new Set()));
+  set.add(poke);
   return () => {
     alive = false;
     ci(handle);
+    set.delete(poke);
+    if (set.size === 0) pokers.delete(paneId);
   };
 }

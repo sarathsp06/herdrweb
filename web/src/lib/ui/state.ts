@@ -3,7 +3,6 @@ import { browser } from '$app/environment';
 import type { Config } from '$lib/protocol';
 
 // View-local UI state (selection, draft, collapse, theme, toggles, toast, sheet).
-export const draft = writable<string>('');
 export const wrap = writable<boolean>(false);
 export const toast = writable<string>('');
 
@@ -12,6 +11,72 @@ export function showToast(msg: string): void {
   toast.set(msg);
   if (toastTimer) clearTimeout(toastTimer);
   toastTimer = setTimeout(() => toast.set(''), 2200);
+}
+
+// Composer drafts, keyed by pane id, so text typed in one pane can never be
+// sent to another after switching. Persisted: mobile browsers drop background
+// tabs, and a half-written prompt shouldn't die with the reload.
+const DRAFTS_KEY = 'herdrweb.drafts';
+function loadDrafts(): Record<string, string> {
+  if (!browser) return {};
+  try {
+    const raw = localStorage.getItem(DRAFTS_KEY);
+    if (raw) return JSON.parse(raw) as Record<string, string>;
+  } catch {
+    // ignore corrupt storage
+  }
+  return {};
+}
+export const drafts = writable<Record<string, string>>(loadDrafts());
+if (browser) {
+  drafts.subscribe((m) => {
+    try {
+      localStorage.setItem(DRAFTS_KEY, JSON.stringify(m));
+    } catch {
+      // storage unavailable; in-memory only
+    }
+  });
+}
+/** Set one pane's draft; an empty draft drops the key so the map stays small. */
+export function setDraft(paneId: string, text: string): void {
+  drafts.update((m) => {
+    if ((m[paneId] ?? '') === text) return m;
+    const { [paneId]: _, ...rest } = m;
+    return text ? { ...rest, [paneId]: text } : rest;
+  });
+}
+
+// Sent-prompt history per pane, newest last, so the operator can recall and
+// resend/edit instead of retyping on a phone keyboard. Persisted like drafts.
+const HISTORY_KEY = 'herdrweb.history';
+export const HISTORY_MAX = 50;
+function loadHistory(): Record<string, string[]> {
+  if (!browser) return {};
+  try {
+    const raw = localStorage.getItem(HISTORY_KEY);
+    if (raw) return JSON.parse(raw) as Record<string, string[]>;
+  } catch {
+    // ignore corrupt storage
+  }
+  return {};
+}
+export const history = writable<Record<string, string[]>>(loadHistory());
+if (browser) {
+  history.subscribe((m) => {
+    try {
+      localStorage.setItem(HISTORY_KEY, JSON.stringify(m));
+    } catch {
+      // storage unavailable; in-memory only
+    }
+  });
+}
+/** Record a sent prompt; an immediate repeat is not stored twice. */
+export function pushHistory(paneId: string, text: string): void {
+  history.update((m) => {
+    const list = m[paneId] ?? [];
+    if (list[list.length - 1] === text) return m;
+    return { ...m, [paneId]: [...list, text].slice(-HISTORY_MAX) };
+  });
 }
 
 const CONFIG_KEY = 'herdrweb.config';
