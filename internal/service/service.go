@@ -14,11 +14,12 @@ import (
 
 // ServiceOptions holds configurations for service file generation.
 type ServiceOptions struct {
-	ExecPath string
-	Addr     string
-	Socket   string
-	Config   string
-	LogPath  string
+	ExecPath   string
+	Addr       string
+	Socket     string
+	Config     string
+	LogPath    string
+	AllowHosts string
 }
 
 const systemdTemplate = `[Unit]
@@ -28,7 +29,7 @@ After=network.target
 
 [Service]
 Type=simple
-ExecStart={{.ExecPath}}{{if .Addr}} -addr {{.Addr}}{{end}}{{if .Socket}} -socket {{.Socket}}{{end}}{{if .Config}} -config {{.Config}}{{end}}{{if .LogPath}} -log-file {{.LogPath}}{{end}}
+ExecStart={{.ExecPath}}{{if .Addr}} -addr {{.Addr}}{{end}}{{if .Socket}} -socket {{.Socket}}{{end}}{{if .Config}} -config {{.Config}}{{end}}{{if .LogPath}} -log-file {{.LogPath}}{{end}}{{if .AllowHosts}} -allow-host {{.AllowHosts}}{{end}}
 Restart=on-failure
 RestartSec=5s
 
@@ -53,6 +54,8 @@ const launchdTemplate = `<?xml version="1.0" encoding="UTF-8"?>
         <string>{{.Config}}</string>
 {{end}}{{if .LogPath}}        <string>-log-file</string>
         <string>{{.LogPath}}</string>
+{{end}}{{if .AllowHosts}}        <string>-allow-host</string>
+        <string>{{.AllowHosts}}</string>
 {{end}}    </array>
     <key>RunAtLoad</key>
     <true/>

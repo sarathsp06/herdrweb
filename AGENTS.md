@@ -22,7 +22,7 @@ Herdr Web: one Go binary (`herdrweb`) that embeds a SvelteKit SPA and bridges th
 
 - **Protocol is mirrored, not generated.** `internal/protocol/*.go` is canonical; `web/src/lib/protocol/index.ts` is a hand-written twin — change both together, and keep `web/src/lib/transport/fixture.ts` in sync.
 - **Snapshot wire shape is flat**: `{"type":"snapshot","spaces":[…],"focus":{…}}` — no nested `snapshot` wrapper. Fixtures and `SessionModel.apply` must match, or the UI renders "0 spaces".
-- **The browser↔bridge WebSocket is a thin pass-through**: the frontend calls Herdr socket methods directly, so params must match Herdr exactly:
+- **The browser↔bridge WebSocket is a thin pass-through**, restricted to `browserMethods` in `internal/server/server.go` (a twin of the web `Call` union - add a UI call to both or it fails "not available"), so params must match Herdr exactly:
   - `pane.read` → `{ pane_id, source: 'recent_unwrapped', lines }`; the reply is `result.read.text` (a string), not `lines`.
   - `agent.send_keys` → `keys` is a **string array** (e.g. `['esc']`), tokens `up/down/left/right/tab/shift+tab/enter/esc/ctrl+c/ctrl+d` (Herdr accepts any key-combo string: printable keys, `enter`/`esc`, `ctrl+`/`alt+`/`shift+` chords, `f1`…).
   - `agent.prompt` → `wait.until` is an array; don't block the UI on its (long) resolution.
@@ -30,7 +30,7 @@ Herdr Web: one Go binary (`herdrweb`) that embeds a SvelteKit SPA and bridges th
 
 ## Conventions & gotchas
 
-- No auth; binds loopback by design. Expose over a tailnet with `./bin/herdrweb -addr $(tailscale ip -4):7331` (not `0.0.0.0`).
+- No auth; binds loopback by design. Expose over a tailnet with `tailscale serve --bg --https=443 127.0.0.1:7331` or `./bin/herdrweb -addr $(tailscale ip -4):7331` (not `0.0.0.0`). `hostGuard` (`internal/server/guard.go`) 403s any other Host name unless passed via `-allow-host`, and any cross-origin `Origin`.
 - Fonts are self-hosted via `@fontsource` and embedded (no CDN). Styling is Tailwind v4 + shadcn-svelte (`web/src/lib/components/ui/`): palette colours are CSS variables in `web/src/lib/tokens.css`, mapped to shadcn semantic tokens in `web/src/app.css`; themes override via `[data-theme]` (`herdr-dark`/`gruvbox`/`solarized-light`/`paper`). Element-level resets in `app.css` must stay inside `@layer base` (unlayered CSS beats Tailwind utilities); bits-ui state styling relies on the `data-checked`/`data-unchecked` custom variants defined there.
 - `/.worktrees/` holds Rx-pipeline worktrees (gitignored); don't commit them.
 - Go tests use in-process fake Unix-socket servers (`internal/herdr/*_test.go`) — no real daemon needed.

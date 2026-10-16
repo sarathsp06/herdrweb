@@ -18,7 +18,7 @@ Bootstrap snapshot → `Subscribe` to Herdr events (each `markDirty`) → 1.5s `
 
 - Each `/ws` connection gets a write-pump goroutine draining `browser.send`, plus a read loop.
 - `const maxInflightPerConn = 8`: the read loop acquires a semaphore token via `dispatch` before spawning `handleCall`, applying per-connection backpressure (no unbounded goroutines).
-- `handleCall` forwards `{id,method,params}` to `Client.Call` and replies `{id,result|error}` via `trySend`.
+- `handleCall` forwards `{id,method,params}` to `Client.Call` and replies `{id,result|error}` via `trySend` - but only for methods in `browserMethods` (the web `Call` union: pane.read, agent.prompt/send_keys, workspace/tab/pane create-rename-close-split, pane.send_text/send_keys, server.reload_config); anything else is refused without reaching Herdr.
 - `browser` has `mu` + `closed` so an in-flight reply can't `send on closed channel` when the read loop removes the browser (`internal/server/browser_test.go`). Concurrency bound covered by `internal/server/server_test.go`.
 
 # REST
@@ -26,7 +26,7 @@ Bootstrap snapshot → `Subscribe` to Herdr events (each `markDirty`) → 1.5s `
 - `GET/PUT /api/config` — read/write the [web] settings; a write persists then calls `server.reload_config`.
 - `GET /api/health` — `{ok, herdr:<state>, version, socket}`.
 
-`Handler()` wires `/ws`, `/api/config`, `/api/health`, and `/` → [webui](/packages/webui.md). See the [HTTP service](/services/bridge-http.md).
+`Handler(allowHosts)` wires `/ws`, `/api/*`, and `/` → [webui](/packages/webui.md), all behind `hostGuard` (`guard.go`): Host must be an IP literal, `localhost`, `*.ts.net` or an `-allow-host` name (DNS rebinding), and a present `Origin` must equal the Host or be loopback (cross-site WebSocket hijacking; loopback admits the Vite dev proxy). See the [HTTP service](/services/bridge-http.md).
 
 # Citations
 

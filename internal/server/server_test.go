@@ -211,3 +211,64 @@ func TestRefreshSerializesAgainstOutOfOrderCompletion(t *testing.T) {
 		t.Fatalf("cached snapshot label = %+v, want the later refresh's data (\"second\")", got.Spaces)
 	}
 }
+
+// TestHandleCallRefusesMethodsOutsideTheUI proves the /ws pass-through only
+// forwards the methods the UI uses: a page that reaches the socket cannot
+// launch processes (pane.run) or stop the server, and such calls never reach
+// Herdr, while UI methods still round-trip.
+func TestHandleCallRefusesMethodsOutsideTheUI(t *testing.T) {
+	dir, err := os.MkdirTemp("", "hsock")
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { os.RemoveAll(dir) })
+	sock := filepath.Join(dir, "h.sock")
+	ln, err := net.Listen("unix", sock)
+	if err != nil {
+		t.Fatal(err)
+	}
+	t.Cleanup(func() { ln.Close() })
+	seen := make(chan string, 8)
+	go func() {
+		conn, err := ln.Accept()
+		if err != nil {
+			return
+		}
+		defer conn.Close()
+		r := bufio.NewReader(conn)
+		for {
+			line, err := r.ReadBytes('\n')
+			if err != nil {
+				return
+			}
+			var req struct{ ID, Method string }
+			_ = json.Unmarshal(line, &req)
+			seen <- req.Method
+			b, _ := json.Marshal(map[string]any{"id": req.ID, "result": map[string]any{"type": "ok"}})
+			conn.Write(append(b, '\n'))
+		}
+	}()
+
+	h := NewHub(herdr.New(sock), "", "test", nil)
+	b := &browser{send: make(chan []byte, 4)}
+	call := func(method string) map[string]any {
+		h.handleCall(context.Background(), b, wsRequest{ID: "c1", Method: method, Params: json.RawMessage(`{}`)})
+		var reply map[string]any
+		if err := json.Unmarshal(<-b.send, &reply); err != nil {
+			t.Fatal(err)
+		}
+		return reply
+	}
+
+	for _, m := range []string{"pane.run", "server.stop", "agent.start", "integration.install"} {
+		if reply := call(m); reply["error"] == nil || reply["result"] != nil {
+			t.Fatalf("%s: reply %v, want an error and no result", m, reply)
+		}
+	}
+	if reply := call("pane.read"); reply["result"] == nil {
+		t.Fatalf("pane.read: reply %v, want a forwarded result", reply)
+	}
+	if got := <-seen; got != "pane.read" {
+		t.Fatalf("first method to reach Herdr = %q, want pane.read (refused calls must never be sent)", got)
+	}
+}

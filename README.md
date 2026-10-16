@@ -205,6 +205,7 @@ dev_captions = false   # show socket-call captions (developer setting)
 Flags:
 - `-addr` (listen address, default `127.0.0.1:7331`)
 - `-socket` (Herdr socket path, default `~/.config/herdr/herdr.sock`)
+- `-allow-host` (extra comma-separated `Host` names to accept, e.g. a reverse-proxy domain; see below)
 - `-config` (path to config.toml)
 - `-log-file` (path to redirect output logs)
 - `-pid-file` (path to write PID file)
@@ -216,6 +217,11 @@ Flags:
 > The bridge has **no authentication** and binds `127.0.0.1:7331` (loopback)
 > by design — one operator, one machine. Only expose it over a private network
 > such as a [tailnet](#mobile); never bind `0.0.0.0`.
+>
+> Browsers are fenced off anyway: requests must name an IP literal, `localhost`,
+> a Tailscale `*.ts.net` host or an `-allow-host` name (DNS-rebinding guard), a
+> page may only connect from its own origin (no cross-site WebSocket), and the
+> WebSocket forwards only the Herdr methods the UI uses.
 
 # Contributing
 

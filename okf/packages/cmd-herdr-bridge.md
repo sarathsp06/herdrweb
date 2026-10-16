@@ -8,7 +8,7 @@ timestamp: 2026-09-03T00:00:00Z
 
 # Responsibilities
 
-`main` builds a [herdr.Client](/packages/herdr.md) and a [server.Hub](/packages/server.md), starts `hub.Run` in the background, and serves `hub.Handler()` over `net/http` with `signal.NotifyContext` for graceful shutdown.
+`main` builds a [herdr.Client](/packages/herdr.md) and a [server.Hub](/packages/server.md), starts `hub.Run` in the background, and serves `hub.Handler(allowHosts)` over `net/http` with `signal.NotifyContext` for graceful shutdown.
 
 # Flags
 
@@ -17,6 +17,7 @@ timestamp: 2026-09-03T00:00:00Z
 | `-addr` | `127.0.0.1:7331` | listen address (loopback only by default) |
 | `-socket` | `~/.config/herdr/herdr.sock` | path to the Herdr socket |
 | `-config` | `~/.config/herdr/config.toml` | path to Herdr config.toml |
+| `-allow-host` | — | extra comma-separated Host names for the [host guard](/packages/server.md) |
 | `-version` | — | print version and exit |
 
 `version` is injected at release via `-ldflags -X main.version=…`.

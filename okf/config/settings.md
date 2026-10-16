@@ -13,6 +13,7 @@ timestamp: 2026-09-03T00:00:00Z
 | `-addr` | `127.0.0.1:7331` |
 | `-socket` | `~/.config/herdr/herdr.sock` |
 | `-config` | `~/.config/herdr/config.toml` |
+| `-allow-host` | none (extra accepted Host names) |
 | `-version` | print and exit |
 
 # `[web]` table (config.toml)
