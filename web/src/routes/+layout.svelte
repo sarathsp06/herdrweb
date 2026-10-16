@@ -13,7 +13,7 @@
   let { children } = $props();
   let contentEl: HTMLElement | undefined = $state();
 
-  // The outer window/body scroll is locked (dvh app shell), so SvelteKit's
+  // The outer window/body scroll is locked (full-screen app shell), so SvelteKit's
   // default scroll-reset-on-navigate never runs — `.content` below is the real
   // scroll container for every route without its own inner scroller. Reset it
   // ourselves on every completed client-side navigation regardless of source
@@ -61,7 +61,10 @@
   });
 </script>
 
-<div class="flex h-[calc(100dvh/var(--font-scale,1))] overflow-hidden">
+<!-- --screen-h: see app.css. pt keeps headers below a translucent iOS status bar. -->
+<div
+  class="flex h-[calc(var(--screen-h)/var(--font-scale,1))] overflow-hidden pt-[calc(env(safe-area-inset-top)/var(--font-scale,1))]"
+>
   {#if desktop}
     <Sidebar spaces={$spaces} connection={$connection} />
   {/if}

@@ -31,14 +31,21 @@ sw.addEventListener('push', (event) => {
   }
   const title = data.title ?? 'Herdr';
   event.waitUntil(
-    sw.registration.showNotification(title, {
-      body: data.body ?? 'An agent needs you.',
-      icon: '/icon-192.png',
-      badge: '/icon-192.png',
-      tag: data.url ?? 'herdr',
-      renotify: true,
-      data: { url: data.url ?? '/' }
-    } as NotificationOptions)
+    (async () => {
+      // Always show it: iOS revokes a subscription whose pushes display nothing.
+      await sw.registration.showNotification(title, {
+        body: data.body ?? 'An agent needs you.',
+        icon: '/icon-192.png',
+        badge: '/icon-192.png',
+        tag: data.url ?? 'herdr',
+        renotify: true,
+        data: { url: data.url ?? '/' }
+      } as NotificationOptions);
+      // iOS shows no banner while the installed app is in front, so tell open
+      // windows it arrived (Settings uses this to confirm a test push).
+      const clients = await sw.clients.matchAll({ type: 'window', includeUncontrolled: true });
+      for (const client of clients) client.postMessage({ type: 'push', title });
+    })()
   );
 });
 

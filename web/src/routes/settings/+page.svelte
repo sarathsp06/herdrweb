@@ -30,11 +30,26 @@
   }
   async function reload() { await persist(); await s.request({ method: 'server.reload_config', params: {} }).catch(() => {}); showToast('config reloaded'); }
   function setConfig(patch: Partial<typeof $config>) { config.update((c) => ({ ...c, ...patch })); persist(); }
-  function testToast(t: Awaited<ReturnType<typeof sendTestPush>>) {
+  // A test's send result only says the push service accepted it - Apple answers
+  // 201 even for subscriptions of an app that has since been removed. The
+  // service worker's 'push' message (see onMount) confirms it reached this
+  // device, which also covers iOS showing no banner while the app is in front.
+  // Waiting starts before the send (delivery can beat the HTTP response) and
+  // lasts 30 s, so a later agent push is not mistaken for the test.
+  let awaitTestUntil = 0;
+  let receivedTest = false;
+  async function runTest() {
+    awaitTestUntil = Date.now() + 30_000;
+    receivedTest = false;
+    const t = await sendTestPush();
+    if (!t.ok || t.sent === 0) awaitTestUntil = 0;
     if (!t.ok) showToast('test failed — check bridge logs');
     else if (t.subs === 0) showToast('no device subscribed — enable push on this device');
-    else if (t.sent > 0) showToast(`test sent to ${t.sent} device${t.sent > 1 ? 's' : ''}`);
-    else showToast('push service rejected it — check bridge logs');
+    else if (t.sent === 0) showToast('push service rejected it — check bridge logs');
+    else {
+      const sent = `sent to ${t.sent} subscription${t.sent > 1 ? 's' : ''}`;
+      showToast(receivedTest ? `${sent} · received on this device` : `${sent} — waiting for this device`);
+    }
   }
   // Enrol this browser and surface why it failed. Idempotent (reuses an existing
   // subscription), so both the toggle and the test button can call it.
@@ -55,13 +70,13 @@
     setConfig({ notify: v });
     if (!v) return;
     // Enrol, then fire a test so success (or failure) is immediately visible.
-    if (await ensureEnrolled()) testToast(await sendTestPush());
+    if (await ensureEnrolled()) await runTest();
   }
   async function testPush() {
     // The button is shown whenever `notify` is on — including the default-on
     // first load where this device was never actually subscribed. Enrol first
     // (this click is the required user gesture) so the test has a device to reach.
-    if (await ensureEnrolled()) testToast(await sendTestPush());
+    if (await ensureEnrolled()) await runTest();
   }
   function pickTheme(id: ThemeId) {
     setConfig({ theme: id });
@@ -89,6 +104,17 @@
         }
       })
       .catch(() => {});
+
+    const worker = navigator.serviceWorker;
+    if (!worker) return;
+    const onMessage = (e: MessageEvent) => {
+      if (Date.now() > awaitTestUntil || e.data?.type !== 'push') return;
+      awaitTestUntil = 0;
+      receivedTest = true;
+      showToast('test received on this device');
+    };
+    worker.addEventListener('message', onMessage);
+    return () => worker.removeEventListener('message', onMessage);
   });
 </script>
 

@@ -183,8 +183,11 @@ HTTPS front — a reverse proxy, your own cert — works just as well.
 > itself — not just the desktop. Each device must open the app over **HTTPS**
 > (a plain `http://…:7331` is not a secure context and silently refuses to
 > subscribe). Use **Settings → Send test notification** to check: it reports how
-> many devices are subscribed and whether delivery succeeded, and the bridge log
-> prints any rejection reason from the push service.
+> many subscriptions the push service accepted it for and confirms when *this*
+> device received it, even on iOS, which shows no banner while the installed app
+> is in front. The bridge log prints any rejection reason from the push service.
+> An accepted push can still go nowhere: Apple keeps accepting pushes for the
+> subscription of a home-screen app that was removed and re-added.
 
 ## Configuration
 
