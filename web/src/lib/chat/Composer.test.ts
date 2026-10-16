@@ -11,13 +11,14 @@ vi.mock('$lib/session/live', async () => {
 });
 
 import Composer from './Composer.svelte';
-import { drafts } from '$lib/ui/state';
+import { drafts, history } from '$lib/ui/state';
 import { get } from 'svelte/store';
 
 beforeEach(() => {
   request.mockClear();
   request.mockImplementation(async () => ({ ok: true }));
   drafts.set({});
+  history.set({});
 });
 afterEach(() => vi.unstubAllGlobals());
 
@@ -188,5 +189,77 @@ describe('Composer', () => {
     await fireEvent.input(ta, { target: { value: 'line one' } });
     await fireEvent.keyDown(ta, { key: 'Enter' });
     expect(request).not.toHaveBeenCalled();
+  });
+
+  it('↑ in an empty box recalls this pane\'s sent prompts, ↓ walks back', async () => {
+    render(Composer, { paneId: 'w1:p1', blocked: false, agent: true });
+    const ta = screen.getByPlaceholderText('Message the agent') as HTMLTextAreaElement;
+    for (const t of ['first', 'second']) {
+      await fireEvent.input(ta, { target: { value: t } });
+      await fireEvent.click(screen.getByLabelText('send'));
+    }
+    request.mockClear();
+    await fireEvent.keyDown(ta, { key: 'ArrowUp' });
+    expect(ta.value).toBe('second');
+    await fireEvent.keyDown(ta, { key: 'ArrowUp' });
+    expect(ta.value).toBe('first');
+    await fireEvent.keyDown(ta, { key: 'ArrowUp' });
+    expect(ta.value).toBe('first');
+    await fireEvent.keyDown(ta, { key: 'ArrowDown' });
+    expect(ta.value).toBe('second');
+    await fireEvent.keyDown(ta, { key: 'ArrowDown' });
+    expect(ta.value).toBe('');
+    expect(request).not.toHaveBeenCalled();
+  });
+
+  it('history is per pane and ↑ does nothing once you type', async () => {
+    history.set({ 'w1:p2': ['other pane'] });
+    render(Composer, { paneId: 'w1:p1', blocked: false, agent: true });
+    const ta = screen.getByPlaceholderText('Message the agent') as HTMLTextAreaElement;
+    await fireEvent.keyDown(ta, { key: 'ArrowUp' });
+    expect(ta.value).toBe('');
+    history.set({ 'w1:p1': ['old'] });
+    await fireEvent.input(ta, { target: { value: 'typing' } });
+    await fireEvent.keyDown(ta, { key: 'ArrowUp' });
+    expect(ta.value).toBe('typing');
+  });
+
+  it('the ↺ key cycles older prompts then wraps to empty', async () => {
+    history.set({ 'w1:p9': ['a', 'b'] });
+    render(Composer, { paneId: 'w1:p9', blocked: false, agent: false });
+    const ta = screen.getByPlaceholderText('Type into terminal') as HTMLTextAreaElement;
+    const btn = screen.getByLabelText('previous prompt');
+    await fireEvent.click(btn);
+    expect(ta.value).toBe('b');
+    await fireEvent.click(btn);
+    expect(ta.value).toBe('a');
+    await fireEvent.click(btn);
+    expect(ta.value).toBe('');
+    await fireEvent.click(btn);
+    expect(ta.value).toBe('b');
+  });
+
+  it('a recalled slash command does not open the palette', async () => {
+    history.set({ 'w1:p1': ['/clear', '/compact'] });
+    render(Composer, { paneId: 'w1:p1', blocked: false, agent: true });
+    const ta = screen.getByPlaceholderText('Message the agent') as HTMLTextAreaElement;
+    await fireEvent.keyDown(ta, { key: 'ArrowUp' });
+    expect(ta.value).toBe('/compact');
+    expect(screen.queryByRole('option')).toBeNull();
+    await fireEvent.keyDown(ta, { key: 'ArrowUp' });
+    expect(ta.value).toBe('/clear');
+  });
+
+  it('blocked panes show quick replies that send single keys', async () => {
+    render(Composer, { paneId: 'w1:p1', blocked: true, agent: true });
+    await fireEvent.click(screen.getByLabelText('reply 2'));
+    expect(request).toHaveBeenCalledWith({ method: 'agent.send_keys', params: { target: 'w1:p1', keys: ['2'] } });
+    await fireEvent.click(screen.getByLabelText('reply y'));
+    expect(request).toHaveBeenCalledWith({ method: 'agent.send_keys', params: { target: 'w1:p1', keys: ['y'] } });
+  });
+
+  it('quick replies are hidden when not blocked', () => {
+    render(Composer, { paneId: 'w1:p1', blocked: false, agent: true });
+    expect(screen.queryByLabelText('reply 1')).toBeNull();
   });
 });

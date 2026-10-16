@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { session } from '$lib/session/live';
 	import { findPaneIn } from '$lib/session/derive';
-	import { drafts, setDraft, config, showToast } from '$lib/ui/state';
+	import { drafts, setDraft, history, pushHistory, config, showToast } from '$lib/ui/state';
 	import { pokeScrollback } from '$lib/session/scrollback';
 	import type { Call } from '$lib/protocol';
 	import { filterSlash, loadSlashCommands, SLASH_COMMANDS, type SlashCommand } from './slash';
@@ -23,6 +23,36 @@
 	// Autocorrect mangles paths, flags and code in both panes.
 	const NO_AUTOCORRECT = { autocorrect: 'off' };
 
+	// ---- Prompt history ------------------------------------------------------
+	// ↑ in an empty box (or the ↺ key, for phones) walks back through this
+	// pane's sent prompts, ↓ walks forward and finally back to an empty box.
+	// Recall only fills the draft; sending stays deliberate. histIdx counts back
+	// from the newest entry; -1 means not browsing. Any real typing stops
+	// browsing, so ↑/↓ go back to moving the caret.
+	let histIdx = $state(-1);
+	const past = $derived($history[paneId] ?? []);
+	$effect(() => {
+		paneId;
+		histIdx = -1;
+	});
+	function recall(step: 1 | -1): boolean {
+		const next = histIdx + step;
+		if (next >= past.length) return false;
+		histIdx = Math.max(next, -1);
+		setDraft(paneId, histIdx === -1 ? '' : past[past.length - 1 - histIdx]);
+		queueMicrotask(() => {
+			ta?.focus();
+			autogrow();
+		});
+		return true;
+	}
+	// The ↺ key: step back one prompt; past the oldest, wrap to an empty box.
+	function recallOlder() {
+		if (recall(1)) return;
+		histIdx = -1;
+		setDraft(paneId, '');
+	}
+
 	// ---- Slash-command palette (agent panes only) ----------------------------
 	// Typing "/foo" (or tapping the / key) surfaces a filtered command list.
 	// Arrow keys move the highlight, Tab/Enter accept (filling the draft, never
@@ -39,7 +69,8 @@
 		void loadSlashCommands(cwd).then((c) => (commands = c));
 	});
 	const slashMatches = $derived(agent ? filterSlash(draft, commands) : []);
-	const slashOpen = $derived(slashMatches.length > 0 && !slashDismissed);
+	// While browsing history a recalled "/cmd" must not hijack ↑/↓.
+	const slashOpen = $derived(slashMatches.length > 0 && !slashDismissed && histIdx < 0);
 	// Reset the highlight to the top whenever the match set changes (on typing);
 	// arrow navigation mutates slashSel without touching slashMatches.
 	$effect(() => {
@@ -114,6 +145,7 @@
 		queueMicrotask(autogrow);
 	});
 	function onInput(e: Event) {
+		histIdx = -1;
 		setDraft(paneId, (e.currentTarget as HTMLTextAreaElement).value);
 		autogrow();
 	}
@@ -140,6 +172,8 @@
 		// type the literal text then press Enter via the pane.* API (agent.* is a
 		// silent no-op on a plain pane) — in order, so Enter can't overtake it.
 		setDraft(id, '');
+		pushHistory(id, t);
+		histIdx = -1;
 		if (agent) {
 			s.request({ method: 'agent.prompt', params: { target: id, text: t, wait: { until: ['idle', 'blocked'], timeout_ms: 900000 } } }).catch(
 				() => restoreOnFailure(id, t, sentAt)
@@ -166,6 +200,15 @@
 		{ k: 'esc', glyph: 'esc', label: 'esc' },
 		{ k: 'ctrl+c', glyph: '⌃C', label: 'ctrl+c' },
 		{ k: 'ctrl+d', glyph: '⌃D', label: 'ctrl+d' }
+	];
+	// One-tap answers for the menus and y/n questions a blocked agent asks.
+	const QUICK: { k: string; glyph: string }[] = [
+		{ k: '1', glyph: '1' },
+		{ k: '2', glyph: '2' },
+		{ k: '3', glyph: '3' },
+		{ k: 'y', glyph: 'y' },
+		{ k: 'n', glyph: 'n' },
+		{ k: 'enter', glyph: '⏎' }
 	];
 	function sendKey(k: string) {
 		const call: Call = agent
@@ -199,6 +242,16 @@
 				return;
 			}
 		}
+		const plain = !e.shiftKey && !e.altKey && !e.metaKey && !e.ctrlKey;
+		if (plain && e.key === 'ArrowUp' && (histIdx >= 0 || draft === '')) {
+			if (recall(1)) e.preventDefault();
+			return;
+		}
+		if (plain && e.key === 'ArrowDown' && histIdx >= 0) {
+			e.preventDefault();
+			recall(-1);
+			return;
+		}
 		if (enterSends && e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
 			e.preventDefault();
 			void send();
@@ -227,6 +280,14 @@
 				onclick={openSlash}
 			>/</button>
 		{/if}
+		{#if past.length > 0}
+			<button
+				class="mono h-11 min-w-11 flex-none rounded-(--r-chip) border border-border bg-card px-2.5 text-sm text-(--text-2) hover:bg-muted"
+				aria-label="previous prompt"
+				title="previous prompt (↑)"
+				onclick={recallOlder}
+			>↺</button>
+		{/if}
 		{#each NAV as n (n.k)}
 			<button
 				class="mono h-11 min-w-11 flex-none rounded-(--r-chip) border border-border bg-card px-2.5 text-sm text-(--text-2) hover:bg-muted"
@@ -236,6 +297,18 @@
 			>{n.glyph}</button>
 		{/each}
 	</div>
+	{#if blocked}
+		<div class="flex items-center gap-1.5 overflow-x-auto pb-2" role="group" aria-label="quick replies">
+			<span class="mono flex-none text-[11px] text-muted-foreground">reply</span>
+			{#each QUICK as q (q.k)}
+				<button
+					class="mono h-11 min-w-11 flex-none rounded-(--r-chip) border border-(--control-selected-2) bg-accent px-2.5 text-sm text-foreground hover:bg-muted"
+					aria-label="reply {q.k}"
+					onclick={() => sendKey(q.k)}
+				>{q.glyph}</button>
+			{/each}
+		</div>
+	{/if}
 	{#if slashOpen}
 		<ul class="mb-2 flex max-h-[180px] list-none flex-col gap-0.5 overflow-y-auto rounded-(--r-composer) border border-input bg-(--code-surface) p-1" role="listbox" aria-label="slash commands">
 			{#each slashMatches as m, i (m.cmd)}
