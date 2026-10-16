@@ -3,13 +3,17 @@
   import type { ConnState, Space } from '$lib/protocol';
   import { agentsOf, rollupOf, chatPaneForSpace } from '$lib/session/derive';
   import { get } from 'svelte/store';
-  import { agentsGrouped, lastPane, lastTabBySpace } from '$lib/ui/state';
+  import { agentsGrouped, lastPane, lastTabBySpace, sidebarCollapsed, sidebarPeek } from '$lib/ui/state';
   import StatusGlyph from '$lib/ui/StatusGlyph.svelte';
   import AgentRow from '$lib/screens/AgentRow.svelte';
   import { Button } from '$lib/components/ui/button';
   import { Badge } from '$lib/components/ui/badge';
 
-  let { spaces, connection }: { spaces: Space[]; connection: ConnState } = $props();
+  // Header control, set by the layout: `hide` collapses the docked sidebar (only
+  // offered on /pane/*, the one route collapse applies to); `pin` docks it again
+  // from the overlay shown over a collapsed pane view.
+  let { spaces, connection, control }: { spaces: Space[]; connection: ConnState; control?: 'hide' | 'pin' } =
+    $props();
 
   const agents = $derived(agentsOf(spaces));
 
@@ -28,7 +32,7 @@
 </script>
 
 <aside
-  class="sidebar h-[calc(100vh/var(--font-scale,1))] w-[328px] flex-none overflow-y-auto border-r border-(--hairline) bg-(--sidebar-bg) px-3 pt-4 pb-6"
+  class="sidebar h-full w-[328px] flex-none overflow-y-auto border-r border-(--hairline) bg-(--sidebar-bg) px-3 pt-4 pb-6"
 >
   <header class="mb-1 flex items-center gap-2">
     <span class="mono text-[15px] font-bold tracking-[-0.02em]">herdr</span>
@@ -37,6 +41,24 @@
       style="background: {connColor[connection]}"
       title={connection}
     ></span>
+    {#if control === 'pin'}
+      <button
+        class="mono ml-auto min-h-9 rounded-(--r-badge) border border-border px-2 text-[11px] text-(--text-3b) hover:bg-muted"
+        aria-label="pin sidebar"
+        title="keep the sidebar docked"
+        onclick={() => {
+          sidebarCollapsed.set(false);
+          sidebarPeek.set(false);
+        }}>pin</button
+      >
+    {:else if control === 'hide'}
+      <button
+        class="mono ml-auto min-h-9 rounded-(--r-badge) border border-border px-2 text-[11px] text-(--text-3b) hover:bg-muted"
+        aria-label="hide sidebar"
+        title="give the terminal the full width"
+        onclick={() => sidebarCollapsed.set(true)}>hide</button
+      >
+    {/if}
   </header>
   <div class="mono mb-4 text-[11px] text-muted-foreground">default session · {spaces.length} spaces · {connection}</div>
 

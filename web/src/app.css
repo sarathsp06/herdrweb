@@ -82,6 +82,18 @@
 
   html, body { margin: 0; height: 100%; overflow: hidden; }
 
+  /* Full-screen height (--screen-h, used by the app shell). An installed iOS
+     app sizes 100%, 100dvh and innerHeight to the screen minus the status bar
+     (852 of 896 pt on an iPhone 11 Pro Max, iOS 18.7) and paints nothing
+     below the document, so in standalone mode the document itself is 100lvh,
+     the unit that spans the whole screen. In a browser tab lvh counts toolbars
+     that may be showing, so dvh stays. Divided by --font-scale to undo zoom. */
+  :root { --screen-h: 100dvh; }
+  @media (display-mode: standalone) {
+    :root { --screen-h: 100lvh; }
+    html { height: calc(var(--screen-h) / var(--font-scale, 1)); }
+  }
+
   body {
     background: var(--page-bg);
     color: var(--text-1);

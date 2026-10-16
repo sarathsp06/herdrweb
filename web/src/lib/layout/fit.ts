@@ -1,5 +1,4 @@
 import type { Action } from 'svelte/action';
-import { BREAKPOINT } from './responsive';
 
 /**
  * The scaled font-size (px) that makes monospace `content` fit within `avail`,
@@ -29,35 +28,33 @@ export function widthAtBase(content: number, currentPx: number, base = 14): numb
 export interface FitParams {
   /** Container whose width bounds the fit; defaults to the node's parent. */
   observe?: HTMLElement;
-  /** Below this viewport width fitting applies; at/above it, full columns. */
-  breakpoint?: number;
   /** Reference the reactive content so the action re-fits when lines change. */
   deps?: unknown;
 }
 
 /**
- * Svelte action: fit ASCII/box output to the viewport on phones so a diagram
- * keeps its columns on every screen size instead of soft-wrapping into garbage.
- * Observes the container (font-independent width) — never the node itself, whose
- * height tracks font-size and would feed back into a resize loop. Desktop
- * (viewport >= breakpoint) keeps full-size columns.
+ * Svelte action: fit terminal output to its view at every width — a phone, or a
+ * tablet whose pane is a few columns wider than the screen — so a diagram keeps
+ * its columns instead of soft-wrapping into garbage. Observes the container
+ * (font-independent width) — never the node itself, whose height tracks
+ * font-size and would feed back into a resize loop.
  */
 export const fitToWidth: Action<HTMLElement, FitParams | undefined> = (node, params) => {
-  let bp = params?.breakpoint ?? BREAKPOINT;
   let observed: HTMLElement = params?.observe ?? node.parentElement ?? node;
   const base = 14;
+  const range = document.createRange();
 
   const apply = () => {
-    if (window.innerWidth >= bp) {
-      if (node.style.fontSize) node.style.fontSize = '';
-      return;
-    }
-    // Measure at whatever size is already applied (or `base` on first run) and
-    // normalize to base-equivalent width — never reset first, so an
-    // already-fitted node doesn't flash back to full size every re-fit.
+    // Measure the text itself at whatever size is already applied (or `base` on
+    // first run) and normalize to base-equivalent width — never reset first, so
+    // an already-fitted node doesn't flash back to full size every re-fit. Not
+    // scrollWidth: it never drops below the box, so once fitted it could not
+    // tell that a wider box (sidebar hidden, rotation) has room to grow back.
+    // Both widths come from bounding rects, which share one scale under zoom.
+    range.selectNodeContents(node);
     const currentPx = parseFloat(node.style.fontSize) || base;
-    const content = widthAtBase(node.scrollWidth, currentPx, base);
-    const size = fitFontSize(node.clientWidth, content, base);
+    const content = widthAtBase(range.getBoundingClientRect().width, currentPx, base);
+    const size = fitFontSize(node.getBoundingClientRect().width, content, base);
     const next = size !== null ? size + 'px' : '';
     if (node.style.fontSize !== next) node.style.fontSize = next;
   };
@@ -69,7 +66,6 @@ export const fitToWidth: Action<HTMLElement, FitParams | undefined> = (node, par
 
   return {
     update(next?: FitParams) {
-      bp = next?.breakpoint ?? BREAKPOINT;
       const target = next?.observe ?? node.parentElement ?? node;
       if (target !== observed) {
         ro.disconnect();

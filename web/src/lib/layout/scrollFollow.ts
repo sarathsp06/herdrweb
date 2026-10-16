@@ -11,8 +11,6 @@ export function isPinned(scrollHeight: number, scrollTop: number, clientHeight: 
 export interface FollowParams {
   /** Reference the reactive content so the action scrolls after new output. */
   deps?: unknown;
-  /** When this changes (e.g. pane id), re-pin to the bottom. */
-  key?: unknown;
   /** Distance from the bottom still counted as "following". */
   threshold?: number;
 }
@@ -20,11 +18,10 @@ export interface FollowParams {
 /**
  * Svelte action: follow new output only while the user is already at the bottom,
  * so scrolling up to read history is not yanked back down by live refreshes.
- * Changing `key` (pane switch) re-pins to the bottom.
+ * A fresh node starts pinned (the pane view re-creates its scroller per pane).
  */
 export const followScroll: Action<HTMLElement, FollowParams | undefined> = (node, params) => {
   let threshold = params?.threshold ?? 40;
-  let key = params?.key;
   let pinned = true;
 
   const onScroll = () => {
@@ -41,10 +38,6 @@ export const followScroll: Action<HTMLElement, FollowParams | undefined> = (node
   return {
     update(next?: FollowParams) {
       threshold = next?.threshold ?? 40;
-      if (next?.key !== key) {
-        key = next?.key;
-        pinned = true;
-      }
       toBottom();
     },
     destroy() {

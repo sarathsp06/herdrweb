@@ -151,6 +151,31 @@ export function closeSheet(): void {
 // Grouped/flat toggle for the agents section of the inbox sidebar.
 export const agentsGrouped = writable<boolean>(true);
 
+// Desktop terminal focus: hide the docked sidebar on `/pane/*` so the terminal
+// gets the full width. Persisted; other routes always keep the sidebar docked.
+const SIDEBAR_KEY = 'herdrweb.sidebarCollapsed';
+function loadSidebarCollapsed(): boolean {
+  if (!browser) return false;
+  try {
+    return localStorage.getItem(SIDEBAR_KEY) === '1';
+  } catch {
+    return false; // storage unavailable
+  }
+}
+export const sidebarCollapsed = writable<boolean>(loadSidebarCollapsed());
+if (browser) {
+  sidebarCollapsed.subscribe((v) => {
+    try {
+      localStorage.setItem(SIDEBAR_KEY, v ? '1' : '0');
+    } catch {
+      // storage unavailable; in-memory only
+    }
+  });
+}
+// While collapsed, the sidebar can be shown over the terminal (it does not
+// resize it); any navigation closes it again.
+export const sidebarPeek = writable<boolean>(false);
+
 // Last-selected pane, so desktop `/` resolves to its chat.
 export const lastPane = writable<string | null>(null);
 

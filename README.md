@@ -33,7 +33,7 @@ browser (SvelteKit)  ⇄  Go bridge (herdrweb)  ⇄  Herdr socket
 ## Features
 
 - **Agent inbox first** — every agent across your spaces, blocked ones on top; status shown by glyph, colour, and word.
-- **Raw terminal panes** — exact scrollback via `pane.read`, auto-fit to any phone width, with a key row and a composer; agent panes take image attach + clipboard-image paste.
+- **Raw terminal panes** — exact scrollback via `pane.read`, auto-fit to any screen width, with a key row and a composer; agent panes take image attach + clipboard-image paste.
 - **Installable PWA + push** — add to home screen and get a Web Push when an agent blocks or finishes, even with the app closed.
 - **One binary, zero deps** — the UI is embedded; drop `herdrweb` on a machine and run it.
 - **Live & multiplexed** — one Herdr connection fanned to every browser over a thin WebSocket pass-through.
@@ -130,12 +130,17 @@ Desktop layout (≥ 880px) — the sidebar *is* the inbox:
   chip opens that space's chat pane. Status is carried by glyph shape, colour,
   and word — never colour alone. On phones a fixed **bottom tab bar**
   (Agents · Spaces · Settings, with a blocked-count badge) is the primary
-  navigation; on desktop (≥ 880px) the sidebar *is* the inbox.
+  navigation; on desktop (≥ 880px) the sidebar *is* the inbox. On a pane its
+  **hide** button gives the terminal the full width (remembered per browser);
+  **☰** in the pane header then shows the sidebar over the terminal, closing on
+  the next pick, and its **pin** docks it again.
 - **Pane** (`/pane/:id`) — the core screen, a full-screen push: a compact
   header (back · pane title · status · ⋯ pane actions; tapping the title opens
   a tab-switcher bottom sheet) over raw terminal scrollback via `pane.read`,
-  auto-fit to the viewport width (a box diagram keeps its columns on any
-  phone) and follow-on-new-output. The composer routes by pane kind — agent
+  auto-fit to the view's width at any screen size (a box diagram keeps its
+  columns; text shrinks to no less than 10px and grows back when the view
+  widens) and follow-on-new-output. Each pane gets a fresh scroller, starting at
+  the bottom and left edge. The composer routes by pane kind — agent
   panes use `agent.prompt` + `agent.send_keys`, plain terminals use
   `pane.send_text` + `pane.send_keys` — above a 44px key row
   (↑ ↓ ← → ⇥ ⇧⇥ ⏎ esc ⌃C ⌃D). On agent panes, typing `/` opens a
@@ -183,8 +188,11 @@ HTTPS front — a reverse proxy, your own cert — works just as well.
 > itself — not just the desktop. Each device must open the app over **HTTPS**
 > (a plain `http://…:7331` is not a secure context and silently refuses to
 > subscribe). Use **Settings → Send test notification** to check: it reports how
-> many devices are subscribed and whether delivery succeeded, and the bridge log
-> prints any rejection reason from the push service.
+> many subscriptions the push service accepted it for and confirms when *this*
+> device received it, even on iOS, which shows no banner while the installed app
+> is in front. The bridge log prints any rejection reason from the push service.
+> An accepted push can still go nowhere: Apple keeps accepting pushes for the
+> subscription of a home-screen app that was removed and re-added.
 
 ## Configuration
 

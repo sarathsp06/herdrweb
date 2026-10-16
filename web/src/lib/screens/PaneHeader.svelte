@@ -2,7 +2,7 @@
   import { goto } from '$app/navigation';
   import { session } from '$lib/session/live';
   import { width, BREAKPOINT } from '$lib/layout/responsive';
-  import { openActions, openSheet, showToast } from '$lib/ui/state';
+  import { openActions, openSheet, showToast, sidebarCollapsed, sidebarPeek } from '$lib/ui/state';
   import { primaryPaneOfTab, tabHasBlocked, type AgentRef } from '$lib/session/derive';
   import StatusPill from '$lib/ui/StatusPill.svelte';
 
@@ -66,6 +66,12 @@
       class="-ml-1.5 h-11 w-11 flex-none rounded-(--r-chip) text-[26px] leading-none text-(--text-2) active:bg-muted"
       aria-label="back to agents"
       onclick={() => goto('/')}>‹</button
+    >
+  {:else if $sidebarCollapsed}
+    <button
+      class="-ml-1.5 h-11 w-11 flex-none rounded-(--r-chip) text-xl leading-none text-(--text-2) active:bg-muted"
+      aria-label="show sidebar"
+      onclick={() => sidebarPeek.set(true)}>☰</button
     >
   {/if}
   <button

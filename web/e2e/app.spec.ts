@@ -136,4 +136,68 @@ test.describe('desktop layout (>=880px)', () => {
     await expect(page).toHaveURL(/\/pane\//);
     await expect(page.getByRole('navigation', { name: 'primary' })).toHaveCount(0);
   });
+
+  test('pane view hides the sidebar for a full-width terminal, shows it over the pane, and pins it back', async ({ page }) => {
+    await page.goto('/pane/w1%3Ap1' + q);
+    const sidebar = page.locator('aside.sidebar');
+    await expect(sidebar).toBeVisible();
+    await page.getByRole('button', { name: 'hide sidebar' }).click();
+    await expect(sidebar).toHaveCount(0);
+    expect((await page.locator('.scroll').boundingBox())!.width).toBe(page.viewportSize()!.width);
+
+    // Persisted; a non-pane route keeps it docked so navigation is never stranded.
+    await page.reload();
+    await expect(sidebar).toHaveCount(0);
+    await page.goto('/settings' + q);
+    await expect(sidebar).toBeVisible();
+    await page.goto('/pane/w1%3Ap1' + q);
+    await expect(sidebar).toHaveCount(0);
+
+    // Shown over the pane, it closes on picking an agent and the pane stays full width.
+    await page.getByRole('button', { name: 'show sidebar' }).click();
+    await sidebar.getByRole('button', { name: /codex w1:p2/ }).click();
+    await expect(page).toHaveURL(/\/pane\/w1(%3A|:)p2/);
+    await expect(sidebar).toHaveCount(0);
+
+    await page.getByRole('button', { name: 'show sidebar' }).click();
+    await page.getByRole('button', { name: 'pin sidebar' }).click();
+    await expect(sidebar).toBeVisible();
+    await expect(page.getByRole('button', { name: 'show sidebar' })).toHaveCount(0);
+  });
+
+  test('switching panes starts the terminal at its left edge with only the new pane text', async ({ page }) => {
+    await page.goto('/pane/w1%3Ap1' + q);
+    const pre = page.locator('pre.raw');
+    await expect(pre).toContainText('running vitest');
+    // Simulate a user who scrolled a wide transcript sideways.
+    await pre.evaluate((el) => {
+      el.append('x'.repeat(2000));
+      el.scrollLeft = 500;
+    });
+    await expect(pre).toHaveJSProperty('scrollLeft', 500);
+    await page.locator('aside.sidebar').getByRole('button', { name: /codex w1:p2/ }).click();
+    await expect(page).toHaveURL(/\/pane\/w1(%3A|:)p2/);
+    await expect(pre).toContainText('Apply patch');
+    await expect(pre).not.toContainText('running vitest');
+    await expect(pre).toHaveJSProperty('scrollLeft', 0);
+  });
+
+  test('the terminal shrinks to fit a wide pane and grows back when the sidebar hides', async ({ page }) => {
+    await page.goto('/pane/w1%3Ap1' + q);
+    const pre = page.locator('pre.raw');
+    await expect(pre).toContainText('running vitest');
+    // 120 columns: too wide beside the sidebar at 14px, narrow enough to fit
+    // there above the 10px floor, and within the full width at 14px.
+    await pre.evaluate((el) => el.append('x'.repeat(120)));
+    await page.setViewportSize({ width: 1201, height: 900 }); // a resize refits
+    const fits = () => pre.evaluate((el) => el.scrollWidth <= el.clientWidth);
+    const fontPx = () => pre.evaluate((el) => parseFloat(getComputedStyle(el).fontSize));
+    await expect.poll(fits).toBe(true);
+    const docked = await fontPx();
+    expect(docked).toBeLessThan(14);
+
+    await page.getByRole('button', { name: 'hide sidebar' }).click();
+    await expect.poll(fontPx).toBe(14);
+    expect(await fits()).toBe(true);
+  });
 });
