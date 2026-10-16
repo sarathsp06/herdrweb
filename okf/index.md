@@ -20,7 +20,7 @@ browser (SvelteKit)  ⇄  Go bridge (herdrweb)  ⇄  Herdr socket
 * [Frontend](/frontend/index.md) - SvelteKit UI (`web/src/`): transport, routes, components
 * [Services](/services/index.md) - the bridge's HTTP/WS surface and the upstream Herdr socket client
 * [Concepts](/concepts/index.md) - snapshot model, terminal view, themes
-* [Configuration](/config/index.md) - CLI flags and the `[web]` config.toml table
+* [Configuration](/config/index.md) - CLI flags and the UI settings file
 * [References](/references/index.md) - external APIs and design docs
 
 # Citations

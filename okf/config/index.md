@@ -1,3 +1,3 @@
 # Configuration
 
-* [Settings](settings.md) - CLI flags and the `[web]` config.toml table
+* [Settings](settings.md) - CLI flags and the UI settings file

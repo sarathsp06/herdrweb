@@ -156,7 +156,7 @@ Desktop layout (≥ 880px) — the sidebar *is* the inbox:
 - **Settings** (`/settings`) — theme picker (herdr-dark / gruvbox /
   solarized-light / paper), UI text size, and behaviour toggles
   (push-when-blocked, follow focused pane, keep ANSI in raw, developer
-  captions). Writes persist to `config.toml` and call `server.reload_config`.
+  captions). Writes persist to the bridge's settings file (see [Configuration](#configuration)).
 
 Every mutating action routes through a confirmation **bottom sheet** first —
 nothing mutates on a single tap — and confirming fires a toast.
@@ -188,24 +188,35 @@ HTTPS front — a reverse proxy, your own cert — works just as well.
 
 ## Configuration
 
-UI preferences live under a `[web]` table in the Herdr config
-(`~/.config/herdr/config.toml`), written by the bridge and applied with
-`server.reload_config`:
+UI preferences are saved by the bridge in `herdrweb-settings.json`, in the
+Herdr config directory (`~/.config/herdr/`) next to the push keys and
+subscriptions. Herdr itself never reads them. Earlier versions kept them in a
+`[web]` table inside Herdr's `config.toml`, which Herdr reports as an unknown
+section; on startup the bridge moves that table into the settings file and
+deletes just those lines, leaving the rest of `config.toml` as it was.
 
-```toml
-[web]
-theme = "herdr-dark"   # herdr-dark | gruvbox | solarized-light | paper
-notify = true          # push when an agent needs you (blocked, or finished)
-follow = true          # follow the focused pane
-ansi = true            # keep ANSI colours in raw mode
-font_scale = 1.0       # UI text-size multiplier
-dev_captions = false   # show socket-call captions (developer setting)
+```json
+{
+  "theme": "herdr-dark",
+  "notify": true,
+  "follow": true,
+  "ansi": true,
+  "devCaptions": false,
+  "fontScale": 1
+}
 ```
+
+- `theme`: `herdr-dark` | `gruvbox` | `solarized-light` | `paper`
+- `notify`: push when an agent needs you (blocked, or finished)
+- `follow`: follow the focused pane
+- `ansi`: keep ANSI colours in raw mode
+- `devCaptions`: show socket-call captions (developer setting)
+- `fontScale`: UI text-size multiplier
 
 Flags:
 - `-addr` (listen address, default `127.0.0.1:7331`)
 - `-socket` (Herdr socket path, default `~/.config/herdr/herdr.sock`)
-- `-config` (path to config.toml)
+- `-config` (path to Herdr's config.toml; the bridge keeps its own files in the same directory)
 - `-log-file` (path to redirect output logs)
 - `-pid-file` (path to write PID file)
 - `-daemon` / `-d` (run as background daemon)
@@ -241,7 +252,7 @@ the socket traffic so the UI has live data during development.
 cmd/herdr-bridge/       # main: serves UI + /ws + /api, proxies the Herdr socket
 internal/protocol/      # canonical Go types + Herdr snapshot -> UI normalization
 internal/herdr/         # Herdr socket client (framing, snapshot, event subscribe, reconnect)
-internal/config/        # config.toml [web] read/write
+internal/config/        # settings file read/write, [web] migration
 internal/server/        # hub: one Herdr connection, WS fan-out, periodic re-snapshot
 internal/webui/         # go:embed of the built SvelteKit assets
 web/                    # SvelteKit + TypeScript front end

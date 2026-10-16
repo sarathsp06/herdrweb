@@ -88,11 +88,19 @@ func main() {
 	}
 
 	client := herdr.New(*socket)
-	pm, err := push.New(filepath.Dir(*cfgPath))
+	// herdrweb keeps its own files beside Herdr's config.toml.
+	dir := filepath.Dir(*cfgPath)
+	settingsPath := filepath.Join(dir, config.FileName)
+	if moved, err := config.Migrate(*cfgPath, settingsPath); err != nil {
+		log.Printf("settings: could not move [web] out of %s: %v", *cfgPath, err)
+	} else if moved {
+		log.Printf("settings: moved [web] from %s to %s", *cfgPath, settingsPath)
+	}
+	pm, err := push.New(dir)
 	if err != nil {
 		log.Printf("web push disabled: %v", err)
 	}
-	hub := server.NewHub(client, *cfgPath, version, pm)
+	hub := server.NewHub(client, settingsPath, version, pm)
 
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()

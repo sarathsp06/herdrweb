@@ -23,7 +23,7 @@ Bootstrap snapshot → `Subscribe` to Herdr events (each `markDirty`) → 1.5s `
 
 # REST
 
-- `GET/PUT /api/config` — read/write the [web] settings; a write persists then calls `server.reload_config`.
+- `GET/PUT /api/config` — read/write the UI settings file (`herdrweb-settings.json`, see [internal/config](/packages/config.md)).
 - `GET /api/health` — `{ok, herdr:<state>, version, socket}`.
 
 `Handler()` wires `/ws`, `/api/config`, `/api/health`, and `/` → [webui](/packages/webui.md). See the [HTTP service](/services/bridge-http.md).

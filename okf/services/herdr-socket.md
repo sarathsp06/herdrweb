@@ -21,7 +21,7 @@ Newline-delimited JSON over `~/.config/herdr/herdr.sock`, id-correlated request/
 | `agent.prompt` | submit a prompt to an agent pane |
 | `agent.send_keys` | send key tokens (arrows/enter/esc/ctrl+c, y/n approvals) |
 | `workspace.* / tab.* / pane.*` | create/rename/close/split/focus |
-| `server.reload_config` | applied after a settings write |
+| `server.reload_config` | Settings → Reload config (re-read Herdr's own config.toml) |
 
 Full protocol version is Herdr-owned (observed protocol 20 / v0.8.2). See the [reference](/references/herdr-socket-api.md).
 

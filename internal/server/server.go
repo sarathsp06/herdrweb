@@ -35,10 +35,10 @@ const (
 
 // Hub coordinates the Herdr connection and browser clients.
 type Hub struct {
-	client  *herdr.Client
-	cfgPath string
-	version string
-	push    *push.Manager
+	client       *herdr.Client
+	settingsPath string
+	version      string
+	push         *push.Manager
 
 	mu       sync.RWMutex
 	snapshot []byte // latest normalized snapshot JSON
@@ -82,17 +82,17 @@ func (b *browser) trySend(data []byte) {
 	}
 }
 
-// NewHub builds a hub. version is reported to the UI; pm may be nil to disable
-// push notifications.
-func NewHub(client *herdr.Client, cfgPath, version string, pm *push.Manager) *Hub {
+// NewHub builds a hub. settingsPath is the UI settings file (config.FileName);
+// version is reported to the UI; pm may be nil to disable push notifications.
+func NewHub(client *herdr.Client, settingsPath, version string, pm *push.Manager) *Hub {
 	return &Hub{
-		client:   client,
-		cfgPath:  cfgPath,
-		version:  version,
-		push:     pm,
-		state:    Connecting,
-		browsers: map[*browser]struct{}{},
-		dirty:    make(chan struct{}, 1),
+		client:       client,
+		settingsPath: settingsPath,
+		version:      version,
+		push:         pm,
+		state:        Connecting,
+		browsers:     map[*browser]struct{}{},
+		dirty:        make(chan struct{}, 1),
 	}
 }
 
@@ -219,7 +219,7 @@ func (h *Hub) notifyAttention(ctx context.Context, snap protocol.Snapshot) {
 	if len(hits) == 0 {
 		return
 	}
-	if s, err := config.Load(h.cfgPath); err == nil && !s.Notify {
+	if s, err := config.Load(h.settingsPath); err == nil && !s.Notify {
 		return
 	}
 	for _, hit := range hits {
@@ -353,7 +353,7 @@ func (h *Hub) handleCall(ctx context.Context, b *browser, req wsRequest) {
 func (h *Hub) handleConfig(w http.ResponseWriter, r *http.Request) {
 	switch r.Method {
 	case http.MethodGet:
-		s, _ := config.Load(h.cfgPath)
+		s, _ := config.Load(h.settingsPath)
 		writeJSON(w, s)
 	case http.MethodPut, http.MethodPost:
 		var s config.Settings
@@ -361,12 +361,11 @@ func (h *Hub) handleConfig(w http.ResponseWriter, r *http.Request) {
 			http.Error(w, "bad json", http.StatusBadRequest)
 			return
 		}
-		if err := config.Save(h.cfgPath, s); err != nil {
+		// Herdr never reads these settings, so there is nothing to reload.
+		if err := config.Save(h.settingsPath, s); err != nil {
 			http.Error(w, err.Error(), http.StatusInternalServerError)
 			return
 		}
-		// Persisted -> ask Herdr to reload.
-		_, _ = h.client.Call(r.Context(), "server.reload_config", map[string]any{})
 		writeJSON(w, map[string]any{"ok": true})
 	default:
 		http.Error(w, "method not allowed", http.StatusMethodNotAllowed)

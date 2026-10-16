@@ -16,7 +16,7 @@ OS/browser chrome tracks the active theme via the `theme-color` meta: `app.html`
 
 # Text size
 
-`font_scale` (S/M/L/XL → 0.9/1/1.15/1.3) is applied as document `zoom`, scaling the whole UI. Persisted in the `[web]` config and set from Settings.
+`font_scale` (S/M/L/XL → 0.9/1/1.15/1.3) is applied as document `zoom`, scaling the whole UI. Persisted as `fontScale` in the settings file and set from Settings.
 
 # Typography
 

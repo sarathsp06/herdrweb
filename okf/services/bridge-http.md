@@ -12,8 +12,8 @@ timestamp: 2026-09-03T00:00:00Z
 | Method | Path | Purpose |
 |---|---|---|
 | WS | `/ws` | receive `{type:"snapshot",…}` broadcasts; send `{id,method,params}` RPCs, receive `{id,result|error}` |
-| GET | `/api/config` | current `[web]` settings |
-| PUT/POST | `/api/config` | persist settings, then `server.reload_config` |
+| GET | `/api/config` | current UI settings |
+| PUT/POST | `/api/config` | persist settings to `herdrweb-settings.json` |
 | GET | `/api/health` | `{ok, herdr:<state>, version, socket}` |
 | GET | `/` (+ assets) | embedded SPA with `index.html` fallback |
 

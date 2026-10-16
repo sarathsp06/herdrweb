@@ -21,14 +21,14 @@
     { label: 'XL', scale: 1.3 }
   ];
   async function persist() {
-    // In live mode, write the [web] table to config.toml (bridge reloads Herdr).
+    // In live mode, save to the bridge's settings file (herdrweb-settings.json).
     try {
       await fetch('/api/config', { method: 'PUT', headers: { 'content-type': 'application/json' }, body: JSON.stringify($config) });
     } catch {
       // no bridge (fixtures/standalone); localStorage already holds the value
     }
   }
-  async function reload() { await persist(); await s.request({ method: 'server.reload_config', params: {} }).catch(() => {}); showToast('config reloaded'); }
+  async function reload() { await s.request({ method: 'server.reload_config', params: {} }).catch(() => {}); showToast('config reloaded'); }
   function setConfig(patch: Partial<typeof $config>) { config.update((c) => ({ ...c, ...patch })); persist(); }
   function testToast(t: Awaited<ReturnType<typeof sendTestPush>>) {
     if (!t.ok) showToast('test failed — check bridge logs');
@@ -114,7 +114,7 @@
       </button>
     {/each}
   </div>
-  <div class="mono mt-2 text-[10.5px] text-muted-foreground">writes [theme] in config.toml → server.reload_config</div>
+  <div class="mono mt-2 text-[10.5px] text-muted-foreground">saved on the bridge · herdrweb-settings.json</div>
 </section>
 
 <section class="p-3.5">
@@ -132,7 +132,7 @@
       </button>
     {/each}
   </div>
-  <div class="mono mt-2 text-[10.5px] text-muted-foreground">scales the whole UI · writes font_scale in config.toml</div>
+  <div class="mono mt-2 text-[10.5px] text-muted-foreground">scales the whole UI · saved on the bridge</div>
 </section>
 
 
