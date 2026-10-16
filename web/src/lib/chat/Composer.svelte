@@ -1,7 +1,8 @@
 <script lang="ts">
 	import { session } from '$lib/session/live';
 	import { findPaneIn } from '$lib/session/derive';
-	import { draft, config, showToast } from '$lib/ui/state';
+	import { drafts, setDraft, config, showToast } from '$lib/ui/state';
+	import { pokeScrollback } from '$lib/session/scrollback';
 	import type { Call } from '$lib/protocol';
 	import { filterSlash, loadSlashCommands, SLASH_COMMANDS, type SlashCommand } from './slash';
 	import { uploadImage } from './upload';
@@ -10,6 +11,17 @@
 	const s = session();
 	const spaces = s.spaces;
 	let ta: HTMLTextAreaElement | undefined = $state();
+	// Each pane keeps its own draft: switching panes swaps the text in the box,
+	// so nothing typed for one pane can be sent to another.
+	const draft = $derived($drafts[paneId] ?? '');
+	// Phones have no Shift+Enter, so on touch an agent composer's Enter makes a
+	// newline and the send button sends. Terminals send on Enter everywhere —
+	// a multi-line terminal line is the rare case.
+	const coarse = typeof matchMedia === 'function' && matchMedia('(pointer: coarse)').matches;
+	const enterSends = $derived(!agent || !coarse);
+	// Safari-only attribute, absent from Svelte's element types — spread it in.
+	// Autocorrect mangles paths, flags and code in both panes.
+	const NO_AUTOCORRECT = { autocorrect: 'off' };
 
 	// ---- Slash-command palette (agent panes only) ----------------------------
 	// Typing "/foo" (or tapping the / key) surfaces a filtered command list.
@@ -26,7 +38,7 @@
 		if (!agent) return;
 		void loadSlashCommands(cwd).then((c) => (commands = c));
 	});
-	const slashMatches = $derived(agent ? filterSlash($draft, commands) : []);
+	const slashMatches = $derived(agent ? filterSlash(draft, commands) : []);
 	const slashOpen = $derived(slashMatches.length > 0 && !slashDismissed);
 	// Reset the highlight to the top whenever the match set changes (on typing);
 	// arrow navigation mutates slashSel without touching slashMatches.
@@ -35,7 +47,7 @@
 		slashSel = 0;
 	});
 	function acceptSlash(cmd: string) {
-		draft.set(cmd + ' ');
+		setDraft(paneId, cmd + ' ');
 		slashDismissed = false;
 		queueMicrotask(() => {
 			ta?.focus();
@@ -45,7 +57,7 @@
 	// The "/" key button: start (or return to) a bare-slash draft and focus the
 	// box, so the full command list opens without typing on a phone keyboard.
 	function openSlash() {
-		draft.set('/');
+		setDraft(paneId, '/');
 		slashDismissed = false;
 		queueMicrotask(() => {
 			ta?.focus();
@@ -59,7 +71,8 @@
 	// operator reviews and sends. Attach via the button or paste into the box.
 	let fileInput: HTMLInputElement | undefined = $state();
 	function insertIntoDraft(text: string) {
-		draft.update((d) => d + (d && !d.endsWith(' ') ? ' ' : '') + text + ' ');
+		const d = draft;
+		setDraft(paneId, d + (d && !d.endsWith(' ') ? ' ' : '') + text + ' ');
 		queueMicrotask(() => {
 			ta?.focus();
 			autogrow();
@@ -93,27 +106,54 @@
 		slashDismissed = false;
 		if (!ta) return;
 		ta.style.height = 'auto';
-		ta.style.height = Math.min(ta.scrollHeight, 96) + 'px';
+		ta.style.height = Math.min(ta.scrollHeight, window.innerHeight * 0.4) + 'px';
 	}
-	function send(text?: string) {
-		const t = (text ?? $draft).trim();
+	// Re-fit when the draft changes underneath the box (pane switch, restore).
+	$effect(() => {
+		draft;
+		queueMicrotask(autogrow);
+	});
+	function onInput(e: Event) {
+		setDraft(paneId, (e.currentTarget as HTMLTextAreaElement).value);
+		autogrow();
+	}
+	// A rejection this soon after sending means the input never reached the
+	// pane (socket down, bad target) — put the text back. agent.prompt also
+	// rejects much later (its wait timing out, the socket dropping mid-wait),
+	// after the prompt was long delivered; those must not resurrect a draft.
+	const RESTORE_WINDOW_MS = 3000;
+	function restoreOnFailure(id: string, t: string, sentAt: number) {
+		if (Date.now() - sentAt > RESTORE_WINDOW_MS) return;
+		// Never clobber something typed since.
+		if (!($drafts[id] ?? '')) setDraft(id, t);
+		showToast('send failed — draft restored');
+	}
+	async function send() {
+		const t = draft.trim();
 		if (!t) return;
+		const id = paneId;
+		const sentAt = Date.now();
 		// Clear the composer as soon as input is submitted — the cleared box and
 		// the terminal echoing the input are the feedback; no toast. For agents,
 		// agent.prompt's wait resolves only when the agent next goes idle/blocked
 		// (long-lived), so the UI must not block on it. Terminals are not agents:
 		// type the literal text then press Enter via the pane.* API (agent.* is a
-		// silent no-op on a plain pane).
-		draft.set('');
-		if (ta) ta.style.height = 'auto';
+		// silent no-op on a plain pane) — in order, so Enter can't overtake it.
+		setDraft(id, '');
 		if (agent) {
-			void s
-				.request({ method: 'agent.prompt', params: { target: paneId, text: t, wait: { until: ['idle', 'blocked'], timeout_ms: 900000 } } })
-				.catch(() => {});
+			s.request({ method: 'agent.prompt', params: { target: id, text: t, wait: { until: ['idle', 'blocked'], timeout_ms: 900000 } } }).catch(
+				() => restoreOnFailure(id, t, sentAt)
+			);
+			setTimeout(() => pokeScrollback(id), 150);
 			return;
 		}
-		void s.request({ method: 'pane.send_text', params: { pane_id: paneId, text: t } }).catch(() => {});
-		void s.request({ method: 'pane.send_keys', params: { pane_id: paneId, keys: ['enter'] } }).catch(() => {});
+		try {
+			await s.request({ method: 'pane.send_text', params: { pane_id: id, text: t } });
+			await s.request({ method: 'pane.send_keys', params: { pane_id: id, keys: ['enter'] } });
+			pokeScrollback(id);
+		} catch {
+			restoreOnFailure(id, t, sentAt);
+		}
 	}
 	const NAV: { k: string; glyph: string; label: string }[] = [
 		{ k: 'up', glyph: '↑', label: 'up' },
@@ -131,7 +171,10 @@
 		const call: Call = agent
 			? { method: 'agent.send_keys', params: { target: paneId, keys: [k] } }
 			: { method: 'pane.send_keys', params: { pane_id: paneId, keys: [k] } };
-		void s.request(call).catch(() => {});
+		s.request(call).then(
+			() => pokeScrollback(paneId),
+			() => showToast(`${k} not sent`)
+		);
 	}
 	function onKeydown(e: KeyboardEvent) {
 		if (slashOpen) {
@@ -156,7 +199,7 @@
 				return;
 			}
 		}
-		if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
+		if (enterSends && e.key === 'Enter' && !e.shiftKey && !e.isComposing) {
 			e.preventDefault();
 			void send();
 		}
@@ -214,13 +257,18 @@
 	<div class="flex flex-col rounded-(--r-composer) border border-input bg-(--code-surface) px-2.5 py-2">
 		<textarea
 			bind:this={ta}
-			bind:value={$draft}
-			oninput={autogrow}
+			value={draft}
+			oninput={onInput}
 			onpaste={onPaste}
 			onkeydown={onKeydown}
 			placeholder={agent ? 'Message the agent' : 'Type into terminal'}
 			rows="1"
-			class="max-h-24 w-full resize-none border-none bg-transparent text-sm leading-[1.45] text-foreground outline-none"
+			autocomplete="off"
+			{...NO_AUTOCORRECT}
+			autocapitalize={agent ? 'sentences' : 'off'}
+			spellcheck={agent}
+			enterkeyhint={enterSends ? 'send' : 'enter'}
+			class="max-h-[40dvh] w-full resize-none border-none bg-transparent text-sm leading-[1.45] text-foreground outline-none"
 		></textarea>
 		<div class="mt-1 flex items-center gap-2">
 			{#if agent}
@@ -237,7 +285,7 @@
 			{/if}
 			<span class="mono text-[11px] text-muted-foreground">{blocked ? 'agent blocked — reply or use the keys above' : $config.devCaptions ? (agent ? 'agent.prompt' : 'pane.send_text') : ''}</span>
 			<button
-				class="ml-auto size-11 rounded-full border-none text-lg {$draft.trim().length > 0 ? 'bg-primary text-primary-foreground' : 'bg-(--control) text-(--text-on-light)'}"
+				class="ml-auto size-11 rounded-full border-none text-lg {draft.trim().length > 0 ? 'bg-primary text-primary-foreground' : 'bg-(--control) text-(--text-on-light)'}"
 				aria-label="send"
 				onclick={() => send()}
 			>↑</button>
