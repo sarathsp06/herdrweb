@@ -1,12 +1,42 @@
-import type { Call, CallResult, ConnState, SessionEvent, Snapshot } from '$lib/protocol';
+import type { Call, CallResult, ConnState, Prompt, SessionEvent, Snapshot } from '$lib/protocol';
 import type { Transport } from './index';
 
 // README mock: four spaces. Agent panes carry transcripts; the diff fixture
 // backs the diff viewer.
 
-function pane(id: string, label: string, sub: string, status: string, agent: boolean, tail: string[] = []) {
-  return { id, label, sub, status: status as any, agent, tail };
+function pane(id: string, label: string, sub: string, status: string, agent: boolean, tail: string[] = [], prompt?: Prompt, waitedMin = 0) {
+  return { id, label, sub, status: status as any, agent, tail, ...(prompt ? { prompt, blockedSince: Date.now() - waitedMin * 60_000 } : {}) };
 }
+
+// What the bridge parses off each blocked agent's screen (internal/prompt).
+const YES_NO: Prompt = {
+  question: 'Apply patch to src/routes/+layout.svelte?',
+  nav: 'keys',
+  options: [
+    { label: 'Yes', keys: ['y'] },
+    { label: 'No', keys: ['n'] }
+  ]
+};
+const CLAUDE_MENU: Prompt = {
+  question: 'Do you want to proceed?',
+  nav: 'digits',
+  options: [
+    { label: 'Yes', keys: ['1'] },
+    { label: "Yes, and don't ask again for migrations in this project", keys: ['2'] },
+    { label: 'No, and tell Claude what to do differently (esc)', keys: ['3'], needsText: true }
+  ]
+};
+const MULTI: Prompt = {
+  question: 'Where should generated reports be stored?',
+  nav: 'arrows',
+  tabs: ['Storage', 'Retention', 'Export format', 'Submit'],
+  options: [
+    { label: 'Object storage, per workspace', desc: 'One bucket prefix per workspace, signed URLs for downloads.', keys: ['enter'], recommended: true },
+    { label: 'Database blobs', desc: 'Store the rendered file next to the report row.', keys: ['down', 'enter'] },
+    { label: 'Local disk', desc: 'Fastest to build; lost on redeploy.', keys: ['down', 'down', 'enter'] },
+    { label: 'Other (type your own)', keys: ['down', 'down', 'down', 'enter'], needsText: true }
+  ]
+};
 
 export const FIXTURE_SNAPSHOT: Snapshot = {
   focus: { spaceId: 'w1', tabId: 'w1:t1', paneId: 'w1:p2' },
@@ -31,7 +61,7 @@ export const FIXTURE_SNAPSHOT: Snapshot = {
             pane('w1:p2', 'codex', 'codex · approval requested', 'blocked', true, [
               '? Apply patch to src/routes/+layout.svelte? (y/n)',
               '  1 file changed, 24 insertions(+)'
-            ])
+            ], YES_NO, 4)
           ]
         },
         {
@@ -82,8 +112,29 @@ export const FIXTURE_SNAPSHOT: Snapshot = {
           label: 'agents',
           panes: [
             pane('w3:p1', 'claude', 'claude · confirm destructive migration', 'blocked', true, [
-              '? Drop column invoices.legacy_total? This is irreversible. (y/n)'
-            ])
+              ' Bash command',
+              '   psql -c "ALTER TABLE invoices DROP COLUMN legacy_total"',
+              ' Do you want to proceed?',
+              ' ❯ 1. Yes',
+              "   2. Yes, and don't ask again for migrations in this project",
+              '   3. No, and tell Claude what to do differently (esc)'
+            ], CLAUDE_MENU, 1)
+          ]
+        },
+        {
+          id: 'w3:t2',
+          label: 'scope',
+          panes: [
+            pane('w3:p2', 'omp', 'omp · report service scope', 'blocked', true, [
+              '╭─ Ask ─────────────────────────────────────────╮',
+              '│  Storage    Retention    Export format    Submit │',
+              '│ Where should generated reports be stored?     │',
+              '│ ❯ ○ Object storage, per workspace (Recommended)│',
+              '│   ○ Database blobs                             │',
+              '│   ○ Local disk                                 │',
+              '│   ○ Other (type your own)                      │',
+              '╰───────────────────────────────────────────────╯'
+            ], MULTI, 2)
           ]
         }
       ]

@@ -1,0 +1,24 @@
+ I am testing something, just ask something and wait on me
+
+╭─── Ask 1 questions ─────────────────────────────────────────╮
+├─── [test] · options:2 ──────────────────────────────────────┤
+│  Test question: which option do you pick?                   │
+│  ○ Option A                                                 │
+│  ○ Option B                                                 │
+╰─────────────────────────────────────────────────────────────╯
+
+  ⎋ Asking test question
+
+╭─ Ask ───────────────────────────────────────────────────────╮
+│ Test question: which option do you pick?                    │
+├─────────────────────────────────────────────────────────────┤
+│ ❯ ○ Option A (Recommended)                                  │
+│   ○ Option B                                                │
+│   ○ Other (type your own)                                   │
+│                                                             │
+├─────────────────────────────────────────────────────────────┤
+│ ⏎ select · n note · ↑/↓ move · ⎋ cancel · ⌥H hide           │
+╰─────────────────────────────────────────────────────────────╯
+
+ ⠸ 16s · ◔ model · 📁 demo · ⑂ main                        Test chat
+● status: ok

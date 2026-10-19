@@ -1,0 +1,4 @@
+• Edited src/routes/+layout.svelte (+24)
+
+? Apply patch to src/routes/+layout.svelte? (y/n)
+  1 file changed, 24 insertions(+)

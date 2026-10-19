@@ -5,10 +5,10 @@ const q = '?fixtures=1';
 test.describe('routes reachable (phone)', () => {
   test.use({ viewport: { width: 402, height: 860 } });
 
-  test('inbox shows space chips, urgency sections and the tab bar', async ({ page }) => {
+  test('inbox shows blocked questions, urgency sections and the tab bar', async ({ page }) => {
     await page.goto('/' + q);
-    await expect(page.getByRole('listitem').filter({ hasText: 'hedr-web' })).toBeVisible();
     await expect(page.getByText('needs you', { exact: true })).toBeVisible();
+    await expect(page.getByText('Apply patch to src/routes/+layout.svelte?')).toBeVisible();
     await expect(page.locator('.section-label', { hasText: 'working' })).toBeVisible();
     const bar = page.getByRole('navigation', { name: 'primary' });
     await expect(bar.getByRole('button', { name: /Agents/ })).toBeVisible();
@@ -20,7 +20,7 @@ test.describe('routes reachable (phone)', () => {
     await page.goto('/' + q);
     await page.getByRole('button', { name: /codex w1:p2/ }).first().click();
     await expect(page).toHaveURL(/\/pane\/w1(%3A|:)p2/);
-    await expect(page.getByPlaceholder('Message the agent')).toBeVisible();
+    await expect(page.getByPlaceholder('Or type a different answer')).toBeVisible();
     await expect(page.getByRole('navigation', { name: 'primary' })).toHaveCount(0);
   });
 
@@ -40,7 +40,7 @@ test.describe('routes reachable (phone)', () => {
   });
 
   test('composer shows nav keys and no free-text chips', async ({ page }) => {
-    await page.goto('/pane/w1%3Ap2' + q);
+    await page.goto('/pane/w1%3Ap1' + q);
     await expect(page.getByRole('button', { name: 'up' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'enter' })).toBeVisible();
     await expect(page.getByRole('button', { name: 'run tests' })).toHaveCount(0);
@@ -94,12 +94,13 @@ test.describe('routes reachable (phone)', () => {
   });
 
   test('direct control toggles from the key row and one swipe surfaces the direction toast', async ({ page }) => {
-    await page.goto('/pane/w1%3Ap2' + q);
+    await page.goto('/pane/w1%3Ap1' + q);
     const toggle = page.getByRole('button', { name: 'direct control' });
     await expect(toggle).toBeVisible();
     await expect(toggle).toHaveAttribute('aria-pressed', 'false');
     await toggle.click();
     await expect(toggle).toHaveAttribute('aria-pressed', 'true');
+    await expect(page.getByText('Swipe keys on.')).toBeVisible();
 
     const scroll = page.locator('.scroll');
     const box = (await scroll.boundingBox())!;
@@ -119,6 +120,32 @@ test.describe('routes reachable (phone)', () => {
       [x, box.y + box.height - 20, box.y + 20]
     );
     await expect(page.getByText('swipe → up')).toBeVisible();
+  });
+
+  test('a short question is answered straight from the inbox', async ({ page }) => {
+    await page.goto('/' + q);
+    const card = page.locator('article').filter({ hasText: 'Apply patch to src/routes/+layout.svelte?' });
+    await card.getByRole('button', { name: 'Yes' }).click();
+    await expect(card.getByText('Sent Yes')).toBeVisible();
+  });
+
+  test('a blocked pane offers its parsed answers in place of the key row', async ({ page }) => {
+    await page.goto('/pane/w1%3Ap2' + q);
+    const panel = page.getByRole('region', { name: 'answer codex' });
+    await expect(panel.getByText('Apply patch to src/routes/+layout.svelte?')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'esc' })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'up' })).toHaveCount(0);
+    await panel.getByRole('button', { name: 'All keys' }).click();
+    await expect(page.getByRole('button', { name: 'up' })).toBeVisible();
+  });
+
+  test('a multi-question form shows its questions and the options with descriptions', async ({ page }) => {
+    await page.goto('/pane/w3%3Ap2' + q);
+    const steps = page.getByRole('list', { name: 'questions' });
+    await expect(steps.getByText('Storage')).toBeVisible();
+    await expect(page.getByText('One bucket prefix per workspace, signed URLs for downloads.')).toBeVisible();
+    await page.getByRole('button', { name: /Database blobs/ }).click();
+    await expect(page.getByText('sent Database blobs to omp')).toBeVisible();
   });
 
   test('direct control toggle is absent on a non-agent pane', async ({ page }) => {

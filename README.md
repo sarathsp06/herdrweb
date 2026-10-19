@@ -138,9 +138,10 @@ Desktop layout (≥ 880px) — the sidebar *is* the inbox:
 ## Screens
 
 - **Inbox** (`/`) — agents triaged by urgency: a **needs you** section
-  (blocked agents) on top, then **working**, then **idle/done**. A horizontal
-  strip of space chips (rollup glyph + label) sits above the list; tapping a
-  chip opens that space's chat pane. Status is carried by glyph shape, colour,
+  (blocked agents, longest wait first) on top, then **working**, then
+  **idle & done**. Each blocked agent is a card with the question it is asking
+  and how long it has waited; a short single question (e.g. y/n) can be
+  answered right on the card. Status is carried by glyph shape, colour,
   and word — never colour alone. On phones a fixed **bottom tab bar**
   (Agents · Spaces · Settings, with a blocked-count badge) is the primary
   navigation; on desktop (≥ 880px) the sidebar *is* the inbox.
@@ -150,13 +151,19 @@ Desktop layout (≥ 880px) — the sidebar *is* the inbox:
   auto-fit to the viewport width (a box diagram keeps its columns on any
   phone) and follow-on-new-output. The composer routes by pane kind — agent
   panes use `agent.prompt` + `agent.send_keys`, plain terminals use
-  `pane.send_text` + `pane.send_keys` — above a 44px key row
-  (↑ ↓ ← → ⇥ ⇧⇥ ⏎ esc ⌃C ⌃D). On agent panes, typing `/` opens a
+  `pane.send_text` + `pane.send_keys` — above a 44px key row, urgent keys
+  first (esc ⌃C ⏎ · ↑ ↓ ← → ⇥ ⇧⇥ ⌃D). While an agent is blocked an **answer
+  panel** replaces the key row: the question and one button per answer, each
+  sending the exact keys that pick it (a digit, y/n, or ↓…⏎ for arrow pickers);
+  multi-question forms show their questions as steps and a review before
+  Submit. "All keys" brings the key row back, and text typed while blocked goes
+  in as raw text (Herdr refuses `agent.prompt` to a blocked agent). On agent panes, typing `/` opens a
   slash-command palette (↑/↓ to select, Tab/Enter to fill the draft, Esc to
   dismiss), and an image can be attached (button) or pasted from the clipboard
   — the bridge writes it host-side and drops the file path into the draft.
   Everything only edits the draft; sending stays a deliberate act. The key row
-  also carries the **◎ direct control** toggle on agent panes: while on,
+  also carries the **Swipe keys** toggle on agent panes (a banner shows while it
+  is on): while on,
   swiping the transcript sends one arrow key per swipe via `agent.send_keys`
   (native scroll resumes the moment it's off, or if the pane stops being an
   agent) — a faster way to drive an agent's own interactive picker (e.g.

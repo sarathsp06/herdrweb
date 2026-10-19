@@ -1,7 +1,9 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
   import type { ConnState, Space } from '$lib/protocol';
-  import { agentsOf, rollupOf, chatPaneForSpace } from '$lib/session/derive';
+  import { agentsOf, rollupOf, chatPaneForSpace, inboxSections, plural } from '$lib/session/derive';
+  import { connLabel } from '$lib/chat/answer';
+  import BlockedCard from '$lib/screens/BlockedCard.svelte';
   import { get } from 'svelte/store';
   import { agentsGrouped, lastPane, lastTabBySpace } from '$lib/ui/state';
   import StatusGlyph from '$lib/ui/StatusGlyph.svelte';
@@ -12,6 +14,9 @@
   let { spaces, connection }: { spaces: Space[]; connection: ConnState } = $props();
 
   const agents = $derived(agentsOf(spaces));
+  // The sidebar is the desktop inbox: the same urgency sections as the phone,
+  // with spaces underneath.
+  const sections = $derived(inboxSections(agents));
 
   function openAgent(paneId: string) {
     lastPane.set(paneId);
@@ -35,12 +40,39 @@
     <span
       class="h-2 w-2 rounded-full animate-[hpulse_2.6s_ease-in-out_infinite]"
       style="background: {connColor[connection]}"
-      title={connection}
+      title={connLabel(connection)}
     ></span>
   </header>
-  <div class="mono mb-4 text-[11px] text-muted-foreground">default session · {spaces.length} spaces · {connection}</div>
+  <div class="mono mb-4 text-[11px] text-muted-foreground">{connLabel(connection)} · default session · {plural(spaces.length, 'space')}</div>
 
-  <div class="mb-[18px]">
+  {#each sections as sec, i (sec.label)}
+    <div class="mb-[14px]">
+      <div class="flex items-center gap-2 px-1.5 pb-2">
+        <span class="section-label {sec.label === 'needs you' ? 'text-(--blocked-badge-text)' : ''}">{sec.label}</span>
+        <span class="mono text-[10.5px] text-muted-foreground">{sec.items.length}</span>
+        {#if i === 0}
+          <button
+            class="mono ml-auto rounded-(--r-badge) border border-border px-1.5 py-px text-[10.5px] text-(--text-3b)"
+            aria-label="toggle grouped"
+            onclick={() => agentsGrouped.update((v) => !v)}>{$agentsGrouped ? 'grouped' : 'flat'}</button
+          >
+        {/if}
+      </div>
+      {#if sec.label === 'needs you'}
+        <div class="flex flex-col gap-1.5">
+          {#each sec.items as a (a.pane.id)}
+            <BlockedCard agent={a} compact onopen={() => openAgent(a.pane.id)} />
+          {/each}
+        </div>
+      {:else}
+        {#each sec.items as a (a.pane.id)}
+          <AgentRow agent={a} sub={$agentsGrouped ? a.space.label : a.pane.sub} onopen={() => openAgent(a.pane.id)} />
+        {/each}
+      {/if}
+    </div>
+  {/each}
+
+  <div class="mb-[18px] border-t border-(--hairline) pt-3">
     <div class="flex items-center justify-between px-1.5 pb-2"><span class="section-label">spaces</span></div>
     {#each spaces as sp (sp.id)}
       <div class="flex items-center gap-1">
@@ -64,20 +96,6 @@
           onclick={() => goto(`/spaces/${encodeURIComponent(sp.id)}`)}>tabs</Button
         >
       </div>
-    {/each}
-  </div>
-
-  <div class="mb-[18px]">
-    <div class="flex items-center justify-between px-1.5 pb-2">
-      <span class="section-label">agents</span>
-      <button
-        class="mono rounded-(--r-badge) border border-border px-1.5 py-px text-[10.5px] text-(--text-3b)"
-        aria-label="toggle grouped"
-        onclick={() => agentsGrouped.update((v) => !v)}>{$agentsGrouped ? 'grouped' : 'flat'}</button
-      >
-    </div>
-    {#each agents as a (a.pane.id)}
-      <AgentRow agent={a} sub={$agentsGrouped ? a.space.label : a.pane.sub} onopen={() => openAgent(a.pane.id)} />
     {/each}
   </div>
 

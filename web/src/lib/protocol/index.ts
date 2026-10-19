@@ -21,6 +21,25 @@ export interface Pane {
   status: Status;
   agent: boolean; // true when Herdr recognizes a coding agent in the pane
   tail: string[]; // recent output lines (may be empty until read)
+  prompt?: Prompt; // what a blocked agent asks, read off its screen by the bridge
+  blockedSince?: number; // unix ms the bridge first saw it blocked
+}
+
+/** One answer and the keys that pick it, as the screen was read. */
+export interface PromptOption {
+  label: string;
+  desc?: string;
+  keys: string[];
+  recommended?: boolean;
+  needsText?: boolean; // write-in: the agent waits for typed text after it
+}
+
+/** A blocked agent's question. Best effort: the UI must work without it. */
+export interface Prompt {
+  question: string;
+  nav: 'arrows' | 'digits' | 'keys' | '';
+  options: PromptOption[];
+  tabs?: string[]; // multi-question form, last entry "Submit"
 }
 
 export interface Tab {

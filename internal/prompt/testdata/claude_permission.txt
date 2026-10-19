@@ -1,0 +1,12 @@
+● Running the billing tests before the refactor.
+
+ Bash command
+
+   go test ./internal/billing/...
+   Run billing tests
+
+ Do you want to proceed?
+ ❯ 1. Yes
+   2. Yes, and don't ask again for go test commands in /home/u/api
+   3. No, and tell Claude what to do differently (esc)
+

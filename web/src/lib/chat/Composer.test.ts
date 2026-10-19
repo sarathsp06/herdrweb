@@ -250,16 +250,64 @@ describe('Composer', () => {
     expect(ta.value).toBe('/clear');
   });
 
-  it('blocked panes show quick replies that send single keys', async () => {
-    render(Composer, { paneId: 'w1:p1', blocked: true, agent: true });
-    await fireEvent.click(screen.getByLabelText('reply 2'));
-    expect(request).toHaveBeenCalledWith({ method: 'agent.send_keys', params: { target: 'w1:p1', keys: ['2'] } });
-    await fireEvent.click(screen.getByLabelText('reply y'));
-    expect(request).toHaveBeenCalledWith({ method: 'agent.send_keys', params: { target: 'w1:p1', keys: ['y'] } });
+  const yesNo = { question: 'Apply patch?', nav: 'keys' as const, options: [{ label: 'Yes', keys: ['y'] }, { label: 'No', keys: ['n'] }] };
+  const picker = {
+    question: 'Where should reports go?',
+    nav: 'arrows' as const,
+    options: [
+      { label: 'Object storage', keys: ['enter'], recommended: true },
+      { label: 'Database', keys: ['down', 'enter'] },
+      { label: 'Other (type your own)', keys: ['down', 'down', 'enter'], needsText: true }
+    ]
+  };
+
+  it('a blocked pane answers with the keys parsed from its prompt', async () => {
+    render(Composer, { paneId: 'w1:p1', blocked: true, agent: true, label: 'codex', prompt: yesNo });
+    expect(screen.getByText('Apply patch?')).toBeInTheDocument();
+    await fireEvent.click(screen.getByRole('button', { name: /^No/ }));
+    expect(request).toHaveBeenCalledWith({ method: 'agent.send_keys', params: { target: 'w1:p1', keys: ['n'] } });
   });
 
-  it('quick replies are hidden when not blocked', () => {
-    render(Composer, { paneId: 'w1:p1', blocked: false, agent: true });
-    expect(screen.queryByLabelText('reply 1')).toBeNull();
+  it('an arrow picker sends the whole move-and-select sequence in one call', async () => {
+    render(Composer, { paneId: 'w1:p1', blocked: true, agent: true, prompt: picker });
+    await fireEvent.click(screen.getByRole('button', { name: /Database/ }));
+    expect(request).toHaveBeenCalledWith({ method: 'agent.send_keys', params: { target: 'w1:p1', keys: ['down', 'enter'] } });
+  });
+
+  it('a write-in answer asks for typed text', async () => {
+    render(Composer, { paneId: 'w1:p1', blocked: true, agent: true, prompt: picker });
+    await fireEvent.click(screen.getByRole('button', { name: /Other \(type your own\)/ }));
+    expect(screen.getByPlaceholderText('Type your answer')).toBeInTheDocument();
+  });
+
+  it('without a parsed prompt it falls back to Enter and says why', async () => {
+    render(Composer, { paneId: 'w1:p1', blocked: true, agent: true });
+    expect(screen.getByText(/Couldn't read the question/)).toBeInTheDocument();
+    await fireEvent.click(screen.getByRole('button', { name: /Enter/ }));
+    expect(request).toHaveBeenCalledWith({ method: 'agent.send_keys', params: { target: 'w1:p1', keys: ['enter'] } });
+  });
+
+  it('the answer panel replaces the key row until All keys is opened', async () => {
+    render(Composer, { paneId: 'w1:p1', blocked: true, agent: true, prompt: yesNo });
+    expect(screen.queryByLabelText('up')).toBeNull();
+    await fireEvent.click(screen.getByRole('button', { name: 'All keys' }));
+    expect(screen.getByLabelText('up')).toBeInTheDocument();
+  });
+
+  it('text typed while blocked goes in as raw text, since agent.prompt refuses a blocked agent', async () => {
+    render(Composer, { paneId: 'w1:p1', blocked: true, agent: true, prompt: yesNo });
+    const ta = screen.getByPlaceholderText('Or type a different answer');
+    await fireEvent.input(ta, { target: { value: 'use the staging bucket' } });
+    await fireEvent.click(screen.getByLabelText('send'));
+    await waitFor(() =>
+      expect(request).toHaveBeenCalledWith({ method: 'pane.send_keys', params: { pane_id: 'w1:p1', keys: ['enter'] } })
+    );
+    expect(request).toHaveBeenCalledWith({ method: 'pane.send_text', params: { pane_id: 'w1:p1', text: 'use the staging bucket' } });
+    expect(request).not.toHaveBeenCalledWith(expect.objectContaining({ method: 'agent.prompt' }));
+  });
+
+  it('no answer panel when not blocked', () => {
+    render(Composer, { paneId: 'w1:p1', blocked: false, agent: true, prompt: yesNo });
+    expect(screen.queryByText('Apply patch?')).toBeNull();
   });
 });

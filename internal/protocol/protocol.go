@@ -22,6 +22,36 @@ type Pane struct {
 	Status Status   `json:"status"`
 	Agent  bool     `json:"agent"`
 	Tail   []string `json:"tail"`
+	// Prompt is what a blocked agent is asking, parsed by the bridge from the
+	// screen Herdr classified as blocked. Nil when not blocked or not parseable.
+	Prompt *Prompt `json:"prompt,omitempty"`
+	// BlockedSince is when the bridge first saw this pane blocked (unix ms).
+	BlockedSince int64 `json:"blockedSince,omitempty"`
+}
+
+// Prompt is a blocked agent's question and the answers it offers. Herdr has no
+// structured field for this, so it is read off the screen: treat it as a best
+// effort that the UI must be able to do without.
+type Prompt struct {
+	Question string `json:"question"`
+	// Nav is how an option is chosen: "arrows" (move the cursor, then enter),
+	// "digits" (press the option's number), "keys" (a y/n prompt) or "" when
+	// the options were found but how to pick one was not.
+	Nav     string         `json:"nav"`
+	Options []PromptOption `json:"options"`
+	// Tabs lists the questions of a multi-question form, last one "Submit".
+	Tabs []string `json:"tabs,omitempty"`
+}
+
+// PromptOption is one answer and the keys that select it from the screen as read.
+type PromptOption struct {
+	Label       string   `json:"label"`
+	Desc        string   `json:"desc,omitempty"`
+	Keys        []string `json:"keys"`
+	Recommended bool     `json:"recommended,omitempty"`
+	// NeedsText marks a write-in answer: after selecting it the agent waits
+	// for typed text.
+	NeedsText bool `json:"needsText,omitempty"`
 }
 
 // Tab groups panes.

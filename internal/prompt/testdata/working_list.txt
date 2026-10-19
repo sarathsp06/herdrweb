@@ -1,0 +1,6 @@
+Here is the plan:
+
+1. Read the config loader
+2. Add the new flag
+
+● Working (12s · esc to interrupt)

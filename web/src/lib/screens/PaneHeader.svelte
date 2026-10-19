@@ -11,6 +11,7 @@
   const desktop = $derived($width >= BREAKPOINT);
   const paneId = $derived(agentRef.pane.id);
   const multiTab = $derived(agentRef.space.tabs.length > 1);
+  const otherTabBlocked = $derived(agentRef.space.tabs.some((t) => t.id !== agentRef.tab.id && tabHasBlocked(t)));
 
   // Tab switching left the screen as a chip strip; the header title is the
   // switcher — tapping it lists the space's tabs in a bottom sheet.
@@ -75,10 +76,24 @@
     onclick={switchTab}
     aria-label={multiTab ? 'switch tab' : undefined}
   >
-    <span class="mono truncate text-sm font-semibold text-foreground">{agentRef.pane.label}</span>
-    <span class="truncate text-[11px] text-(--text-3b)"
-      >{agentRef.space.label} · {agentRef.tab.label}{#if multiTab}<span class="text-muted-foreground" aria-hidden="true"> ▾</span>{/if}</span
+    <span class="mono truncate text-sm font-semibold text-foreground"
+      >{agentRef.pane.label} <span class="text-[11px] font-normal text-muted-foreground">{agentRef.pane.id}</span></span
     >
+    {#if multiTab}
+      <!-- Looks like a control so the tab switcher is findable; the dot says
+           another tab in this space is waiting on you. -->
+      <span
+        class="mono inline-flex h-6 max-w-full items-center gap-1.5 self-start rounded-(--r-badge) border border-border bg-card px-2 text-[11px] text-(--text-2)"
+        ><span class="truncate">{agentRef.space.label} / {agentRef.tab.label}</span>{#if otherTabBlocked}<span
+            class="size-1.5 flex-none rounded-full bg-blocked"
+            title="another tab needs you"
+          ></span>{/if}<svg aria-hidden="true" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"
+          ><path d="m6 9 6 6 6-6" /></svg
+        ></span
+      >
+    {:else}
+      <span class="truncate text-[11px] text-(--text-3b)">{agentRef.space.label} · {agentRef.tab.label}</span>
+    {/if}
   </button>
   <StatusPill status={agentRef.pane.status} />
   <button

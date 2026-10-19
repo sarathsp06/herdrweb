@@ -19,6 +19,7 @@ import (
 	"github.com/sarathsp06/herdrweb/internal/attention"
 	"github.com/sarathsp06/herdrweb/internal/config"
 	"github.com/sarathsp06/herdrweb/internal/herdr"
+	"github.com/sarathsp06/herdrweb/internal/prompt"
 	"github.com/sarathsp06/herdrweb/internal/protocol"
 	"github.com/sarathsp06/herdrweb/internal/push"
 	"github.com/sarathsp06/herdrweb/internal/webui"
@@ -59,6 +60,11 @@ type Hub struct {
 	// forces each refresh's Snapshot RPC to start only after the previous
 	// one finished, so completion order always matches start order.
 	refreshMu sync.Mutex
+
+	// blockedAt records when each agent pane was first seen blocked, so the UI
+	// can say how long it has waited. Guarded by refreshMu; it restarts from
+	// the bridge's first sight after a restart.
+	blockedAt map[string]time.Time
 }
 
 type browser struct {
@@ -179,12 +185,68 @@ func (h *Hub) refresh(ctx context.Context) error {
 		return err
 	}
 	snap := protocol.Normalize(&hs)
+	h.annotateBlocked(rctx, &snap)
 	data, err := json.Marshal(snap)
 	if err != nil {
 		return err
 	}
 	h.applySnapshot(ctx, snap, data)
 	return nil
+}
+
+// annotateBlocked fills in, for every blocked agent pane, how long it has been
+// blocked and what it is asking. The question is read from the same screen
+// snapshot Herdr classified (`pane.read` source "detection") on every refresh,
+// so a multi-question form shows its current question as the operator answers.
+// A failed read leaves Prompt nil; the UI falls back to raw keys.
+func (h *Hub) annotateBlocked(ctx context.Context, snap *protocol.Snapshot) {
+	if h.blockedAt == nil {
+		h.blockedAt = map[string]time.Time{}
+	}
+	now := time.Now()
+	still := map[string]bool{}
+	for si := range snap.Spaces {
+		for ti := range snap.Spaces[si].Tabs {
+			panes := snap.Spaces[si].Tabs[ti].Panes
+			for pi := range panes {
+				p := &panes[pi]
+				if !p.Agent || p.Status != protocol.Blocked {
+					continue
+				}
+				still[p.ID] = true
+				since, ok := h.blockedAt[p.ID]
+				if !ok {
+					since = now
+					h.blockedAt[p.ID] = now
+				}
+				p.BlockedSince = since.UnixMilli()
+				p.Prompt = h.readPrompt(ctx, p.ID)
+			}
+		}
+	}
+	for id := range h.blockedAt {
+		if !still[id] {
+			delete(h.blockedAt, id)
+		}
+	}
+}
+
+func (h *Hub) readPrompt(ctx context.Context, paneID string) *protocol.Prompt {
+	rctx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	defer cancel()
+	res, err := h.client.Call(rctx, "pane.read", map[string]any{"pane_id": paneID, "source": "detection"})
+	if err != nil {
+		return nil
+	}
+	var r struct {
+		Read struct {
+			Text string `json:"text"`
+		} `json:"read"`
+	}
+	if json.Unmarshal(res, &r) != nil {
+		return nil
+	}
+	return prompt.Parse(r.Read.Text)
 }
 
 // applySnapshot stores the newly fetched snapshot and, only when it differs
@@ -223,12 +285,25 @@ func (h *Hub) notifyAttention(ctx context.Context, snap protocol.Snapshot) {
 	if s, err := config.Load(h.cfgPath); err == nil && !s.Notify {
 		return
 	}
+	asks := map[string]string{}
+	for _, sp := range snap.Spaces {
+		for _, tb := range sp.Tabs {
+			for _, p := range tb.Panes {
+				if p.Prompt != nil && p.Prompt.Question != "" {
+					asks[p.ID] = p.Prompt.Question
+				}
+			}
+		}
+	}
 	for _, hit := range hits {
 		label := hit.Label
 		if label == "" {
 			label = "An agent"
 		}
 		title, body := "Agent blocked", label+" needs you."
+		if q := asks[hit.PaneID]; hit.Status == protocol.Blocked && q != "" {
+			title, body = label+" needs you", prompt.Truncate(q, 180)
+		}
 		if hit.Status == protocol.Done || hit.Status == protocol.Idle {
 			title, body = "Agent done", label+" finished."
 		}

@@ -1,0 +1,22 @@
+      ▄▀▀▄        Antigravity CLI 1.3.5
+   ▄▀▀    ▀▀▄     ~/code/demo
+
+────────────────────────────────────────────────────────────
+> ask me something and wait
+
+▸ Thought for 15s, 1.7k tokens
+
+? What would you like to work on next?
+
+Question
+───────────────────────────────────────────────────────────────
+
+Question 1/1: What would you like to work on next?
+
+> 1. (Recommended) Confirm the prompt and wait behavior works
+  2. Run the test suite and verify the build (make verify)
+  3. Explore open issues in known-gaps.md
+  4. Write-in...
+
+  ↑/↓ Navigate · enter Select · esc Skip
+esc to cancel                                                 Gemini Flash · high

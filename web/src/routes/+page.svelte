@@ -1,13 +1,13 @@
 <script lang="ts">
   import { goto } from '$app/navigation';
-  import { get } from 'svelte/store';
   import { session } from '$lib/session/live';
   import { width, BREAKPOINT } from '$lib/layout/responsive';
-  import { lastPane, lastTabBySpace } from '$lib/ui/state';
-  import { agentsOf, rollupOf, chatPaneForSpace, type AgentRef } from '$lib/session/derive';
+  import { lastPane } from '$lib/ui/state';
+  import { agentsOf, inboxSections, plural } from '$lib/session/derive';
+  import { connLabel } from '$lib/chat/answer';
   import type { ConnState } from '$lib/protocol';
   import AgentRow from '$lib/screens/AgentRow.svelte';
-  import StatusGlyph from '$lib/ui/StatusGlyph.svelte';
+  import BlockedCard from '$lib/screens/BlockedCard.svelte';
 
   const s = session();
   const spaces = s.spaces;
@@ -23,25 +23,13 @@
 
   const agents = $derived(agentsOf($spaces));
   // Urgency triage: blocked agents are the reason to open the app — they get
-  // their own section on top; working next; idle/done last.
-  const sections = $derived(
-    (
-      [
-        { label: 'needs you', items: agents.filter((a) => a.pane.status === 'blocked') },
-        { label: 'working', items: agents.filter((a) => a.pane.status === 'working') },
-        { label: 'idle', items: agents.filter((a) => a.pane.status !== 'blocked' && a.pane.status !== 'working') }
-      ] as { label: string; items: AgentRef[] }[]
-    ).filter((sec) => sec.items.length > 0)
-  );
+  // their own section on top, each showing what it asks; working next; idle
+  // and done last. The desktop sidebar renders the same sections.
+  const sections = $derived(inboxSections(agents));
 
   function openAgent(paneId: string) {
     lastPane.set(paneId);
     goto(`/pane/${encodeURIComponent(paneId)}`);
-  }
-  function openSpace(spaceId: string) {
-    const paneId = chatPaneForSpace($spaces, spaceId, get(lastTabBySpace)[spaceId]);
-    if (paneId) { openAgent(paneId); return; }
-    goto(`/spaces/${encodeURIComponent(spaceId)}`);
   }
   const connColor: Record<ConnState, string> = {
     open: 'var(--done)', connecting: 'var(--working)', reconnecting: 'var(--working)', closed: 'var(--blocked)'
@@ -54,24 +42,12 @@
     <span
       class="h-2 w-2 rounded-full animate-[hpulse_2.6s_ease-in-out_infinite]"
       style="background: {connColor[$connection]}"
-      title={$connection}
+      title={connLabel($connection)}
     ></span>
-    <span class="mono text-[11px] text-muted-foreground">{$spaces.length} spaces · {$connection}</span>
+    <span class="mono text-[11px] text-muted-foreground"
+      >{connLabel($connection)} · {plural($spaces.length, 'space')} · {plural(agents.length, 'agent')}</span
+    >
   </header>
-
-  <ul class="m-0 flex list-none gap-2 overflow-x-auto px-3.5 pt-1 pb-3" aria-label="spaces">
-    {#each $spaces as sp (sp.id)}
-      <li class="flex flex-none">
-        <button
-          class="flex min-h-11 flex-none items-center gap-[7px] rounded-(--r-chip) border border-border bg-card px-3.5 text-(--text-2) hover:bg-muted"
-          onclick={() => openSpace(sp.id)}
-        >
-          <StatusGlyph status={rollupOf($spaces, sp.id)} />
-          <span class="mono text-[12.5px] font-semibold">{sp.label}</span>
-        </button>
-      </li>
-    {/each}
-  </ul>
 
   <div class="list px-2 pb-6">
     {#each sections as sec (sec.label)}
@@ -80,13 +56,21 @@
           >{sec.items.length}</span
         >
       </div>
-      {#each sec.items as a (a.pane.id)}
-        <AgentRow
-          agent={a}
-          sub={a.space.label + (a.space.branch ? ' · ' + a.space.branch : '')}
-          onopen={() => openAgent(a.pane.id)}
-        />
-      {/each}
+      {#if sec.label === 'needs you'}
+        <div class="flex flex-col gap-2 px-1.5">
+          {#each sec.items as a (a.pane.id)}
+            <BlockedCard agent={a} onopen={() => openAgent(a.pane.id)} />
+          {/each}
+        </div>
+      {:else}
+        {#each sec.items as a (a.pane.id)}
+          <AgentRow
+            agent={a}
+            sub={a.space.label + (a.space.branch ? ' · ' + a.space.branch : '')}
+            onopen={() => openAgent(a.pane.id)}
+          />
+        {/each}
+      {/if}
     {/each}
     {#if agents.length === 0}
       <div class="mono p-10 text-center text-muted-foreground">no agents running</div>

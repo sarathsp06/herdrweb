@@ -8,11 +8,11 @@
 
   const s = session();
   type ThemeId = 'herdr-dark' | 'paper' | 'gruvbox' | 'solarized-light';
-  const themes: { id: ThemeId; swatches: string[] }[] = [
-    { id: 'herdr-dark', swatches: ['#0a0a0a', '#fafafa', '#f0a500'] },
-    { id: 'paper', swatches: ['#ffffff', '#1a1a1b', '#0079d3'] },
-    { id: 'gruvbox', swatches: ['#1d2021', '#ebdbb2', '#b8bb26'] },
-    { id: 'solarized-light', swatches: ['#fdf6e3', '#586e75', '#b58900'] }
+  const themes: { id: ThemeId; name: string; swatches: string[] }[] = [
+    { id: 'herdr-dark', name: 'Herdr Dark', swatches: ['#0a0a0a', '#fafafa', '#f0a500'] },
+    { id: 'paper', name: 'Paper', swatches: ['#ffffff', '#1a1a1b', '#0079d3'] },
+    { id: 'gruvbox', name: 'Gruvbox', swatches: ['#1d2021', '#ebdbb2', '#b8bb26'] },
+    { id: 'solarized-light', name: 'Solarized Light', swatches: ['#fdf6e3', '#586e75', '#b58900'] }
   ];
   const sizes: { label: string; scale: number }[] = [
     { label: 'S', scale: 0.9 },
@@ -110,11 +110,11 @@
               style="background: {sw}"
             ></span>{/each}</span
         >
-        <span class="mono text-xs text-(--text-2)">{t.id}</span>
+        <span class="text-xs leading-tight text-(--text-2)">{t.name}</span>
       </button>
     {/each}
   </div>
-  <div class="mono mt-2 text-[10.5px] text-muted-foreground">writes [theme] in config.toml → server.reload_config</div>
+  {#if $config.devCaptions}<div class="mono mt-2 text-[10.5px] text-muted-foreground">writes [theme] in config.toml → server.reload_config</div>{/if}
 </section>
 
 <section class="p-3.5">
@@ -132,7 +132,7 @@
       </button>
     {/each}
   </div>
-  <div class="mono mt-2 text-[10.5px] text-muted-foreground">scales the whole UI · writes font_scale in config.toml</div>
+  <div class="mt-2 text-[11.5px] text-muted-foreground">Scales the whole interface.{#if $config.devCaptions}<span class="mono text-[10.5px]"> · writes font_scale in config.toml</span>{/if}</div>
 </section>
 
 
@@ -166,8 +166,8 @@
     </div>
     <div class="row flex items-center gap-3 border-t border-(--hairline) px-3.5 py-3">
       <div class="flex-1">
-        <div class="text-[13.5px] font-medium">Keep ANSI colors in raw</div>
-        <div class="text-[11.5px] text-muted-foreground">Render terminal colors in raw mode.</div>
+        <div class="text-[13.5px] font-medium">Keep terminal colors</div>
+        <div class="text-[11.5px] text-muted-foreground">Show the colors agents and tools print.</div>
       </div>
       <Toggle checked={$config.ansi} onchange={(v) => setConfig({ ansi: v })} />
     </div>

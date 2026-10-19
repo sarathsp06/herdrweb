@@ -1,0 +1,27 @@
+├─── [cache] · options:2 ─────────────────────────────────────────────┤
+│  Cache invalidation for the report service. Need anything new?      │
+│  ○ Reuse as-is                                                      │
+│    ↳ Keep the current TTL; only verify reports refresh on publish.  │
+│  ○ Purge on publish                                                 │
+│    ↳ Drop cached reports for a workspace whenever it publishes.     │
+╰─────────────────────────────────────────────────────────────────────╯
+
+  ⎋ Resolving report service scope
+
+╭─ Ask ───────────────────────────────────────────────────────────────╮
+│  Storage    Retention    Export format    Cache    Submit            │
+│ Where should generated reports be stored?                           │
+├─────────────────────────────────────────────────────────────────────┤
+│ ❯ ○ Object storage, per workspace (Recommended)                     │
+│       One bucket prefix per workspace, signed URLs for downloads.   │
+│   ○ Database blobs                                                  │
+│       Store the rendered file next to the report row.               │
+│   ○ Local disk                                                      │
+│       Fastest to build; lost on redeploy.                           │
+│   ○ Other (type your own)                                           │
+│                                                                     │
+├─────────────────────────────────────────────────────────────────────┤
+│ ⏎ select · n note · ↑/↓ move · ⇥/←/→ question · ⎋ cancel           │
+╰─────────────────────────────────────────────────────────────────────╯
+ ⠸ 7m · ◒ model · 📁 demo · ⑂ main
+● status: ok

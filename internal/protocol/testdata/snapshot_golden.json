@@ -19,6 +19,24 @@
               "status": "working",
               "agent": true,
               "tail": ["compiling…", "ok"]
+            },
+            {
+              "id": "w1:p2",
+              "label": "omp",
+              "sub": "omp · api",
+              "status": "blocked",
+              "agent": true,
+              "tail": [],
+              "prompt": {
+                "question": "Where should generated reports be stored?",
+                "nav": "arrows",
+                "options": [
+                  { "label": "Object storage", "desc": "One prefix per workspace.", "keys": ["enter"], "recommended": true },
+                  { "label": "Other", "keys": ["down", "enter"], "needsText": true }
+                ],
+                "tabs": ["Storage", "Retention", "Submit"]
+              },
+              "blockedSince": 1792400000000
             }
           ]
         }

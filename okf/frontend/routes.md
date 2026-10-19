@@ -10,7 +10,7 @@ timestamp: 2026-09-03T00:00:00Z
 
 | Path | Screen | Notes |
 |---|---|---|
-| `/` | Inbox / home | desktop redirects to the last/first agent pane; mobile shows agents triaged by urgency (needs you → working → idle/done) under a space-chip strip |
+| `/` | Inbox / home | desktop redirects to the last/first agent pane; mobile shows agents triaged by urgency (needs you → working → idle/done) with each blocked agent's question on a card (short ones answerable inline) |
 | `/pane/[id]` | Pane terminal | raw scrollback (`pane.read`, `recent_unwrapped`) + [Composer](/frontend/composer.md); soft-wraps < 880px; bottom-pinned autoscroll |
 | `/pane/[id]/diff` | Diff viewer | Shiki-highlighted unified diff (fixture-backed) |
 | `/spaces` | Spaces list | cards; tap opens chat, `⋯` overflow sheet for tabs/rename/close |

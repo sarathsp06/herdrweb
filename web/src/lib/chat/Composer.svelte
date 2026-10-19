@@ -3,11 +3,29 @@
 	import { findPaneIn } from '$lib/session/derive';
 	import { drafts, setDraft, history, pushHistory, config, showToast } from '$lib/ui/state';
 	import { pokeScrollback } from '$lib/session/scrollback';
-	import type { Call } from '$lib/protocol';
+	import type { Call, Prompt } from '$lib/protocol';
+	import PromptAnswers from './PromptAnswers.svelte';
 	import { filterSlash, loadSlashCommands, SLASH_COMMANDS, type SlashCommand } from './slash';
 	import { uploadImage } from './upload';
-	let { paneId, blocked, agent = true, controlMode = false, ontogglecontrol }:
-		{ paneId: string; blocked: boolean; agent?: boolean; controlMode?: boolean; ontogglecontrol?: () => void } = $props();
+	let {
+		paneId,
+		blocked,
+		agent = true,
+		label = 'agent',
+		prompt,
+		blockedSince,
+		controlMode = false,
+		ontogglecontrol
+	}: {
+		paneId: string;
+		blocked: boolean;
+		agent?: boolean;
+		label?: string;
+		prompt?: Prompt;
+		blockedSince?: number;
+		controlMode?: boolean;
+		ontogglecontrol?: () => void;
+	} = $props();
 	const s = session();
 	const spaces = s.spaces;
 	let ta: HTMLTextAreaElement | undefined = $state();
@@ -31,10 +49,25 @@
 	// browsing, so ↑/↓ go back to moving the caret.
 	let histIdx = $state(-1);
 	const past = $derived($history[paneId] ?? []);
+	// While an agent is blocked the answer panel replaces the key row; "All
+	// keys" brings the row back. writeIn is set after picking a write-in answer
+	// so the box says what to type.
+	let keysOpen = $state(false);
+	let writeIn = $state(false);
+	const answering = $derived(agent && blocked);
 	$effect(() => {
 		paneId;
 		histIdx = -1;
+		keysOpen = false;
+		writeIn = false;
 	});
+	$effect(() => {
+		if (!blocked) writeIn = false;
+	});
+	function startWriteIn() {
+		writeIn = true;
+		queueMicrotask(() => ta?.focus());
+	}
 	function recall(step: 1 | -1): boolean {
 		const next = histIdx + step;
 		if (next >= past.length) return false;
@@ -174,7 +207,10 @@
 		setDraft(id, '');
 		pushHistory(id, t);
 		histIdx = -1;
-		if (agent) {
+		// A blocked agent refuses agent.prompt (Herdr answers agent_blocked
+		// without typing anything), so an answer typed while it waits goes in as
+		// raw text plus Enter, like a terminal.
+		if (agent && !blocked) {
 			s.request({ method: 'agent.prompt', params: { target: id, text: t, wait: { until: ['idle', 'blocked'], timeout_ms: 900000 } } }).catch(
 				() => restoreOnFailure(id, t, sentAt)
 			);
@@ -189,6 +225,13 @@
 			restoreOnFailure(id, t, sentAt);
 		}
 	}
+	// The keys you need when an agent goes wrong come first, so they stay on
+	// screen at phone width; the row scrolls (with a fade) for the rest.
+	const URGENT: { k: string; glyph: string; label: string }[] = [
+		{ k: 'esc', glyph: 'esc', label: 'esc' },
+		{ k: 'ctrl+c', glyph: '⌃C', label: 'ctrl+c' },
+		{ k: 'enter', glyph: '⏎', label: 'enter' }
+	];
 	const NAV: { k: string; glyph: string; label: string }[] = [
 		{ k: 'up', glyph: '↑', label: 'up' },
 		{ k: 'down', glyph: '↓', label: 'down' },
@@ -196,19 +239,7 @@
 		{ k: 'right', glyph: '→', label: 'right' },
 		{ k: 'tab', glyph: '⇥', label: 'tab' },
 		{ k: 'shift+tab', glyph: '⇧⇥', label: 'shift+tab' },
-		{ k: 'enter', glyph: '⏎', label: 'enter' },
-		{ k: 'esc', glyph: 'esc', label: 'esc' },
-		{ k: 'ctrl+c', glyph: '⌃C', label: 'ctrl+c' },
 		{ k: 'ctrl+d', glyph: '⌃D', label: 'ctrl+d' }
-	];
-	// One-tap answers for the menus and y/n questions a blocked agent asks.
-	const QUICK: { k: string; glyph: string }[] = [
-		{ k: '1', glyph: '1' },
-		{ k: '2', glyph: '2' },
-		{ k: '3', glyph: '3' },
-		{ k: 'y', glyph: 'y' },
-		{ k: 'n', glyph: 'n' },
-		{ k: 'enter', glyph: '⏎' }
 	];
 	function sendKey(k: string) {
 		const call: Call = agent
@@ -260,53 +291,63 @@
 </script>
 
 <div class="border-t border-hairline bg-background px-3.5 pt-2 pb-[calc(10px+env(safe-area-inset-bottom))]">
-	<div class="flex gap-1.5 overflow-x-auto pb-2">
-		{#if agent && ontogglecontrol}
-			<button
-				class="mono h-11 min-w-11 flex-none rounded-(--r-chip) border px-2.5 text-sm {controlMode
-					? 'border-(--control-selected-2) bg-accent text-foreground'
-					: 'border-border bg-card text-(--text-2) hover:bg-muted'}"
-				aria-label="direct control"
-				aria-pressed={controlMode}
-				title="direct control — swipe the transcript to send arrow keys"
-				onclick={ontogglecontrol}
-			>{controlMode ? '◉' : '◎'}</button>
-		{/if}
-		{#if agent}
-			<button
-				class="mono h-11 min-w-11 flex-none rounded-(--r-chip) border border-border bg-card px-2.5 text-sm text-(--text-2) hover:bg-muted"
-				aria-label="slash commands"
-				title="slash commands"
-				onclick={openSlash}
-			>/</button>
-		{/if}
-		{#if past.length > 0}
-			<button
-				class="mono h-11 min-w-11 flex-none rounded-(--r-chip) border border-border bg-card px-2.5 text-sm text-(--text-2) hover:bg-muted"
-				aria-label="previous prompt"
-				title="previous prompt (↑)"
-				onclick={recallOlder}
-			>↺</button>
-		{/if}
-		{#each NAV as n (n.k)}
-			<button
-				class="mono h-11 min-w-11 flex-none rounded-(--r-chip) border border-border bg-card px-2.5 text-sm text-(--text-2) hover:bg-muted"
-				aria-label={n.label}
-				title={n.label}
-				onclick={() => sendKey(n.k)}
-			>{n.glyph}</button>
-		{/each}
-	</div>
-	{#if blocked}
-		<div class="flex items-center gap-1.5 overflow-x-auto pb-2" role="group" aria-label="quick replies">
-			<span class="mono flex-none text-[11px] text-muted-foreground">reply</span>
-			{#each QUICK as q (q.k)}
+	{#if answering}
+		<PromptAnswers
+			{paneId}
+			{label}
+			{prompt}
+			{blockedSince}
+			{keysOpen}
+			ontogglekeys={() => (keysOpen = !keysOpen)}
+			onwritein={startWriteIn}
+		/>
+	{/if}
+	{#if !answering || keysOpen}
+		<div class="keyrow flex gap-1.5 overflow-x-auto pb-2" role="group" aria-label="keys">
+			{#each URGENT as n (n.k)}
 				<button
-					class="mono h-11 min-w-11 flex-none rounded-(--r-chip) border border-(--control-selected-2) bg-accent px-2.5 text-sm text-foreground hover:bg-muted"
-					aria-label="reply {q.k}"
-					onclick={() => sendKey(q.k)}
-				>{q.glyph}</button>
+					class="mono h-11 min-w-11 flex-none rounded-(--r-chip) border border-(--control-selected-2) bg-card px-2.5 text-sm text-foreground hover:bg-muted"
+					aria-label={n.label}
+					title={n.label}
+					onclick={() => sendKey(n.k)}
+				>{n.glyph}</button>
 			{/each}
+			<span class="my-2 w-px flex-none bg-border" aria-hidden="true"></span>
+			{#each NAV as n (n.k)}
+				<button
+					class="mono h-11 min-w-11 flex-none rounded-(--r-chip) border border-border bg-card px-2.5 text-sm text-(--text-2) hover:bg-muted"
+					aria-label={n.label}
+					title={n.label}
+					onclick={() => sendKey(n.k)}
+				>{n.glyph}</button>
+			{/each}
+			{#if agent}
+				<button
+					class="mono h-11 min-w-11 flex-none rounded-(--r-chip) border border-border bg-card px-2.5 text-sm text-(--text-2) hover:bg-muted"
+					aria-label="slash commands"
+					title="slash commands"
+					onclick={openSlash}
+				>/</button>
+			{/if}
+			{#if past.length > 0}
+				<button
+					class="mono h-11 min-w-11 flex-none rounded-(--r-chip) border border-border bg-card px-2.5 text-sm text-(--text-2) hover:bg-muted"
+					aria-label="previous prompt"
+					title="previous prompt (↑)"
+					onclick={recallOlder}
+				>↺</button>
+			{/if}
+			{#if agent && ontogglecontrol}
+				<button
+					class="h-11 flex-none rounded-(--r-chip) border px-3 text-[13px] font-semibold {controlMode
+						? 'border-(--worktree-text) bg-(--worktree-bg) text-foreground'
+						: 'border-border bg-card text-(--text-2) hover:bg-muted'}"
+					aria-label="direct control: swipe keys"
+					aria-pressed={controlMode}
+					title="swipe the terminal to send arrow keys"
+					onclick={ontogglecontrol}
+				>Swipe keys</button>
+			{/if}
 		</div>
 	{/if}
 	{#if slashOpen}
@@ -334,7 +375,7 @@
 			oninput={onInput}
 			onpaste={onPaste}
 			onkeydown={onKeydown}
-			placeholder={agent ? 'Message the agent' : 'Type into terminal'}
+			placeholder={!agent ? 'Type into terminal' : writeIn ? 'Type your answer' : answering ? 'Or type a different answer' : 'Message the agent'}
 			rows="1"
 			autocomplete="off"
 			{...NO_AUTOCORRECT}
@@ -356,7 +397,7 @@
 				</button>
 				<input bind:this={fileInput} class="hidden" type="file" accept="image/*" onchange={onPickFile} />
 			{/if}
-			<span class="mono text-[11px] text-muted-foreground">{blocked ? 'agent blocked — reply or use the keys above' : $config.devCaptions ? (agent ? 'agent.prompt' : 'pane.send_text') : ''}</span>
+			<span class="mono text-[11px] text-muted-foreground">{$config.devCaptions ? (agent && !blocked ? 'agent.prompt' : 'pane.send_text') : ''}</span>
 			<button
 				class="ml-auto size-11 rounded-full border-none text-lg {draft.trim().length > 0 ? 'bg-primary text-primary-foreground' : 'bg-(--control) text-(--text-on-light)'}"
 				aria-label="send"
@@ -365,3 +406,11 @@
 		</div>
 	</div>
 </div>
+
+<style>
+	/* Show that the key row scrolls: fade its right edge. */
+	.keyrow {
+		-webkit-mask-image: linear-gradient(90deg, #000 85%, transparent);
+		mask-image: linear-gradient(90deg, #000 85%, transparent);
+	}
+</style>

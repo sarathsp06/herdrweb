@@ -16,7 +16,7 @@ Compact chrome on `/pane/*`: 44px back chevron, pane title + space sub-label (ta
 
 # Sidebar (`screens/Sidebar.svelte`)
 
-Desktop-only inbox column: spaces + agents (blocked-first). On phones the inbox is the `/` route itself (urgency sections + space chips); there is no drawer.
+Desktop-only inbox column: the same urgency sections as the phone inbox (needs you → working → idle & done), spaces underneath. On phones the inbox is the `/` route itself; there is no drawer.
 
 # BottomSheet (`ui/BottomSheet.svelte`)
 

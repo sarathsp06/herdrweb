@@ -11,6 +11,7 @@
   import Composer from '$lib/chat/Composer.svelte';
   import PaneHeader from '$lib/screens/PaneHeader.svelte';
   import { parseAnsiLines, segStyle } from '$lib/term/ansi';
+  import { clearAnswers } from '$lib/chat/answer';
   import type { Call } from '$lib/protocol';
 
   const s = session();
@@ -37,6 +38,11 @@
   $effect(() => {
     paneId;
     controlMode = false;
+  });
+
+  // Answers remembered for a multi-question form only matter while it waits.
+  $effect(() => {
+    if (ref && !blocked) clearAnswers(paneId);
   });
 
   $effect(() => {
@@ -79,6 +85,17 @@
   <section class="flex h-full flex-col">
     <PaneHeader agentRef={ref} />
 
+    {#if swipeEnabled}
+      <div class="flex flex-none items-center gap-2.5 border-b border-(--worktree-text) bg-(--worktree-bg) py-1.5 pr-2 pl-3.5" role="status">
+        <span class="flex-1 text-[12.5px] leading-snug text-(--text-2)"
+          ><b class="text-foreground">Swipe keys on.</b> Swipes send arrow keys.</span
+        >
+        <button class="h-11 rounded-(--r-chip) border border-border bg-card px-3 text-[13px] font-semibold text-foreground" onclick={() => (controlMode = false)}
+          >Turn off</button
+        >
+      </div>
+    {/if}
+
     <div
       class="scroll flex-1 overflow-y-auto p-3.5 {swipeEnabled ? 'touch-none outline-2 outline-ring -outline-offset-2' : ''}"
       use:followScroll={{ deps: raw.length, key: paneId }}
@@ -94,6 +111,9 @@
       paneId={ref.pane.id}
       {blocked}
       agent={ref.pane.agent}
+      label={ref.pane.label}
+      prompt={ref.pane.prompt}
+      blockedSince={ref.pane.blockedSince}
       {controlMode}
       ontogglecontrol={() => (controlMode = !controlMode)}
     />

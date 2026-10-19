@@ -2,7 +2,7 @@
   import { goto } from '$app/navigation';
   import { session } from '$lib/session/live';
   import { width, BREAKPOINT } from '$lib/layout/responsive';
-  import { rollupOf, countsOf, monogram, chatPaneForSpace } from '$lib/session/derive';
+  import { rollupOf, countsOf, monogram, chatPaneForSpace, plural } from '$lib/session/derive';
   import { get } from 'svelte/store';
   import { openSheet, openActions, showToast, lastTabBySpace } from '$lib/ui/state';
   import StatusDot from '$lib/ui/StatusDot.svelte';
@@ -55,7 +55,7 @@
 <header class="flex flex-wrap items-center gap-2.5 px-3.5 pt-4 pb-2">
   <h1 class="screen-title">Spaces</h1>
   <span class="mono text-[11px] text-muted-foreground"
-    >{$spaces.length} spaces · {$spaces.reduce((n, s2) => n + s2.tabs.length, 0)} tabs</span
+    >{plural($spaces.length, 'space')} · {plural($spaces.reduce((n, s2) => n + s2.tabs.length, 0), 'tab')}</span
   >
   <Button class="ml-auto min-h-11 rounded-lg px-3.5 font-semibold" onclick={newSpace}>＋ New</Button>
 </header>
@@ -85,7 +85,7 @@
           <span class="flex items-center gap-1.5 text-xs {rollupColor[r] ?? 'text-(--text-3)'}" data-status={r}
             ><StatusDot status={r} /> {rollupWord(r)}</span
           >
-          <span class="mono text-[10.5px] text-muted-foreground">{c.tabs} tabs · {c.panes} panes</span>
+          <span class="mono text-[10.5px] text-muted-foreground">{plural(c.tabs, 'tab')} · {plural(c.panes, 'pane')}</span>
         </span>
       </button>
       <button

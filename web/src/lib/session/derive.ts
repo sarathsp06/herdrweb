@@ -11,6 +11,19 @@ export function agentsOf(spaces: Space[]): AgentRef[] {
   return out.sort((a, b) => STATUS_ORDER[a.pane.status] - STATUS_ORDER[b.pane.status]);
 }
 
+/** Urgency triage shared by the phone inbox and the desktop sidebar: blocked
+ *  agents first (oldest wait first), then working, then idle and done. */
+export function inboxSections(agents: AgentRef[]): { label: string; items: AgentRef[] }[] {
+  const blocked = agents
+    .filter((a) => a.pane.status === 'blocked')
+    .sort((a, b) => (a.pane.blockedSince ?? Infinity) - (b.pane.blockedSince ?? Infinity));
+  return [
+    { label: 'needs you', items: blocked },
+    { label: 'working', items: agents.filter((a) => a.pane.status === 'working') },
+    { label: 'idle & done', items: agents.filter((a) => a.pane.status !== 'blocked' && a.pane.status !== 'working') }
+  ].filter((sec) => sec.items.length > 0);
+}
+
 export function findPaneIn(spaces: Space[], paneId: string): AgentRef | undefined {
   for (const space of spaces)
     for (const tab of space.tabs) {
@@ -75,9 +88,17 @@ export function tabHasBlocked(tab: Tab): boolean {
   return tab.panes.some((p) => p.agent && p.status === 'blocked');
 }
 
+/** Two letters for a space tile, from the last path segment so "api" and
+ *  "api/billing" read AP and BI rather than both AP. */
 export function monogram(label: string): string {
-  const cleaned = label.replace(/[^a-zA-Z0-9]/g, '');
+  const last = label.split('/').filter(Boolean).pop() ?? label;
+  const cleaned = last.replace(/[^a-zA-Z0-9]/g, '');
   return (cleaned.slice(0, 2) || label.slice(0, 2)).toUpperCase();
+}
+
+/** "1 tab", "3 tabs". */
+export function plural(n: number, word: string): string {
+  return `${n} ${word}${n === 1 ? '' : 's'}`;
 }
 
 /** Status glyph mirroring the Herdr TUI sidebar (shape carries status, not colour alone). */
