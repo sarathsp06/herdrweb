@@ -105,9 +105,8 @@ func TestApplySnapshotSkipsBroadcastWhenUnchanged(t *testing.T) {
 	}
 }
 
-// fakeHerdrServer answers session.snapshot requests on one persistent
-// connection (matching herdr.Client's multiplexed connection), each with a
-// per-arrival-order controllable delay and payload - lets a test force an
+// fakeHerdrServer answers session.snapshot requests, one per connection (as
+// Herdr does), each with a per-arrival-order controllable delay and payload - lets a test force an
 // earlier call to resolve after a later one. respond is invoked synchronously
 // right after a request line is read and numbered (before its delayed
 // response is even scheduled), so a test can use it to signal "the wire has
@@ -127,35 +126,30 @@ func fakeHerdrServer(t *testing.T, respond func(callNum int) (delay time.Duratio
 		t.Fatal(err)
 	}
 	t.Cleanup(func() { ln.Close() })
+	var callNum int64
 	go func() {
-		conn, err := ln.Accept()
-		if err != nil {
-			return
-		}
-		defer conn.Close()
-		var writeMu sync.Mutex
-		r := bufio.NewReader(conn)
-		callNum := 0
 		for {
-			line, err := r.ReadBytes('\n')
+			conn, err := ln.Accept()
 			if err != nil {
 				return
 			}
-			var req struct {
-				ID string `json:"id"`
-			}
-			_ = json.Unmarshal(line, &req)
-			callNum++
-			n := callNum
-			delay, label := respond(n)
 			go func() {
+				// Like Herdr: one request per connection, closed after the reply.
+				defer conn.Close()
+				line, err := bufio.NewReader(conn).ReadBytes('\n')
+				if err != nil {
+					return
+				}
+				var req struct {
+					ID string `json:"id"`
+				}
+				_ = json.Unmarshal(line, &req)
+				delay, label := respond(int(atomic.AddInt64(&callNum, 1)))
 				time.Sleep(delay)
 				b, _ := json.Marshal(map[string]any{"id": req.ID, "result": map[string]any{
 					"snapshot": map[string]any{"workspaces": []any{map[string]any{"workspace_id": "w1", "label": label}}},
 				}})
-				writeMu.Lock()
 				conn.Write(append(b, '\n'))
-				writeMu.Unlock()
 			}()
 		}
 	}()

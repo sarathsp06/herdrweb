@@ -211,7 +211,7 @@
 		// without typing anything), so an answer typed while it waits goes in as
 		// raw text plus Enter, like a terminal.
 		if (agent && !blocked) {
-			s.request({ method: 'agent.prompt', params: { target: id, text: t, wait: { until: ['idle', 'blocked'], timeout_ms: 900000 } } }).catch(
+			s.request({ method: 'agent.prompt', params: { target: id, text: t, wait: { until: ['idle', 'done', 'blocked'], timeout_ms: 900000 } } }).catch(
 				() => restoreOnFailure(id, t, sentAt)
 			);
 			setTimeout(() => pokeScrollback(id), 150);

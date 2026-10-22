@@ -46,6 +46,9 @@ func handleConn(conn net.Conn) {
 	}
 	_ = json.Unmarshal(line, &req)
 	switch req.Method {
+	case "slow":
+		time.Sleep(200 * time.Millisecond)
+		writeLine(conn, map[string]any{"id": req.ID, "result": map[string]any{"type": "slow"}})
 	case "ping":
 		writeLine(conn, map[string]any{"id": req.ID, "result": map[string]any{"type": "pong"}})
 	case "session.snapshot":
@@ -77,6 +80,36 @@ func TestCallCorrelatesResponse(t *testing.T) {
 	}
 	if json.Unmarshal(res, &got) != nil || got.Type != "pong" {
 		t.Fatalf("bad ping result: %s", res)
+	}
+}
+
+// Herdr closes a connection after its one reply, so a long call (agent.prompt
+// waiting for idle) must not share a socket with calls that finish first.
+func TestSlowCallNotShared(t *testing.T) {
+	c := New(fakeServer(t))
+	ctx := context.Background()
+	slow := make(chan error, 1)
+	go func() {
+		_, err := c.Call(ctx, "slow", nil)
+		slow <- err
+	}()
+	time.Sleep(20 * time.Millisecond)
+	for range 5 {
+		if _, err := c.Call(ctx, "ping", nil); err != nil {
+			t.Fatalf("ping: %v", err)
+		}
+	}
+	if err := <-slow; err != nil {
+		t.Fatalf("slow call failed after concurrent calls: %v", err)
+	}
+}
+
+func TestCallHonoursContext(t *testing.T) {
+	c := New(fakeServer(t))
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Millisecond)
+	defer cancel()
+	if _, err := c.Call(ctx, "slow", nil); err == nil {
+		t.Fatal("cancelled call returned nil error")
 	}
 }
 
