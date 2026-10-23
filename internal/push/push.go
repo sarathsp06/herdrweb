@@ -22,9 +22,12 @@ import (
 	webpush "github.com/SherClockHolmes/webpush-go"
 )
 
-// subscriber is the VAPID `sub` claim. Push services require a contact URI but
-// do not validate it for a loopback/tailnet single-operator deployment.
-const subscriber = "mailto:herdr-web@localhost"
+// subscriber is the VAPID `sub` claim. Apple's push service (iOS/Safari)
+// rejects the JWT with 403 BadJwtToken unless it is an https: URL or a mailto:
+// on a real domain (FCM and Mozilla accept anything). Pass it without a
+// scheme only for e-mail: webpush-go prefixes "mailto:" to any value not
+// starting with "https:".
+const subscriber = "https://github.com/sarathsp06/herdrweb"
 
 // Notification is the payload delivered to the service worker.
 type Notification struct {
