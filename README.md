@@ -11,6 +11,8 @@
 [![Platforms](https://img.shields.io/badge/platforms-linux%20%7C%20macOS%20%7C%20windows-555?style=flat-square)](#install)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue?style=flat-square)](https://opensource.org/license/mit)
 
+<a href="https://trendshift.io/repositories/210626?utm_source=trendshift-badge&amp;utm_medium=badge&amp;utm_campaign=badge-trendshift-210626" target="_blank" rel="noopener noreferrer"><img src="https://trendshift.io/api/badge/trendshift/repositories/210626/daily?language=Svelte" alt="sarathsp06%2Fherdrweb | Trendshift" width="250" height="55"/></a>
+
 [Install](#install) · [Screens](#screens) · [Mobile](#mobile) · [Contributing](#contributing)
 
 </div>
